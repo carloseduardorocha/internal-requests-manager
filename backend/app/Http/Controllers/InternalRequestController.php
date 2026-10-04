@@ -23,7 +23,7 @@ class InternalRequestController extends Controller
 
     public function index(IndexInternalRequestRequest $request): AnonymousResourceCollection
     {
-        $descending = $request->input('sort', '-created_at') === '-created_at';
+        $descending = ($request->input('sort') ?? '-created_at') === '-created_at';
         $direction = $descending ? 'desc' : 'asc';
 
         $query = InternalRequest::query()
@@ -40,7 +40,7 @@ class InternalRequestController extends Controller
             ->orderBy('id', $direction);
 
         return InternalRequestResource::collection(
-            $query->paginate($request->integer('per_page', 15))->withQueryString(),
+            $query->paginate($request->integer('per_page') ?: 15)->withQueryString(),
         );
     }
 

@@ -24,10 +24,10 @@ class IndexInternalRequestRequest extends FormRequest
     {
         return [
             'search' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'status' => ['sometimes', Rule::enum(InternalRequestStatus::class)],
-            'priority' => ['sometimes', Rule::enum(InternalRequestPriority::class)],
-            'sort' => ['sometimes', Rule::in(['created_at', '-created_at'])],
-            'per_page' => ['sometimes', 'integer', 'between:1,100'],
+            'status' => ['sometimes', 'nullable', Rule::enum(InternalRequestStatus::class)],
+            'priority' => ['sometimes', 'nullable', Rule::enum(InternalRequestPriority::class)],
+            'sort' => ['sometimes', 'nullable', Rule::in(['created_at', '-created_at'])],
+            'per_page' => ['sometimes', 'nullable', 'integer', 'between:1,100'],
         ];
     }
 
