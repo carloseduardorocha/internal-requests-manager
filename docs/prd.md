@@ -1,6 +1,6 @@
 # Gestão de Solicitações Internas
 
-**PRD · Versão 2.0 · 03/10/2026**
+**PRD · Versão 2.1 · 03/10/2026**
 
 ## Visão geral
 
@@ -36,7 +36,7 @@ Cada pessoa tem um perfil e pertence a uma área da empresa.
 - Não existe cadastro aberto. Até a Fase 3, as contas são criadas pela equipe de suporte.
 - A mensagem de erro no login não diz se o problema foi o e-mail ou a senha.
 - Depois de várias tentativas erradas seguidas, o acesso fica bloqueado por alguns minutos.
-- A sessão expira depois de um período sem uso, e a pessoa pode sair a qualquer momento.
+- A sessão termina quando a pessoa fecha o navegador ou depois de um período sem uso, a menos que ela marque "Mantenha-me conectado" ao entrar; nesse caso, continua conectada por até 30 dias. Ela pode sair a qualquer momento.
 
 ### 2. Solicitações
 
