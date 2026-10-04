@@ -7,7 +7,7 @@ RUN apt-get update \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# The container runs as the host user (see docker-compose.yml); keep caches writable for it.
+# The entrypoint drops privileges to the owner of the code; keep caches writable for any user.
 ENV HOME=/tmp COMPOSER_HOME=/tmp/composer
 
 WORKDIR /var/www/html

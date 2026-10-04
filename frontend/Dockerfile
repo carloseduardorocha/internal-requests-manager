@@ -1,13 +1,16 @@
 FROM node:24-alpine
 
-# The container runs as the host user (see docker-compose.yml); keep caches writable for it.
+RUN apk add --no-cache su-exec
+
+# The entrypoint drops privileges to the owner of the code; keep caches writable for any user.
 ENV HOME=/tmp npm_config_cache=/tmp/.npm
 
-# The node_modules named volume inherits this ownership when first created.
-RUN mkdir -p /app/node_modules && chown 1000:1000 /app /app/node_modules
 WORKDIR /app
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 EXPOSE 3000
 
-# Installs dependencies when the node_modules volume is empty, then starts the dev server.
-CMD ["sh", "-c", "[ -d node_modules/next ] || npm ci; npm run dev -- --hostname 0.0.0.0"]
+ENTRYPOINT ["entrypoint.sh"]
+CMD ["npm", "run", "dev", "--", "--hostname", "0.0.0.0"]
