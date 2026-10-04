@@ -102,7 +102,7 @@ Pergunte se pode executar. Se o usuário pedir ajustes, refaça e mostre de novo
 
 ## Passo 5: executar
 
-Com a aprovação, rode os comandos exatamente como foram mostrados. Depois confira com `git log --oneline -<n>` e `git status --short` e informe o resultado.
+Com a aprovação, rode os comandos exatamente como foram mostrados e faça o push da branch atual. Depois confira com `git log --oneline -<n>` e `git status --short` e informe o resultado.
 
 ## Regras fixas
 
@@ -111,4 +111,4 @@ Com a aprovação, rode os comandos exatamente como foram mostrados. Depois conf
 - **Nunca adicione `Co-Authored-By` nem outro trailer.**
 - **Nunca use `--gpg-sign`, `-S` ou `--no-verify`.**
 - **Nunca use amend, rebase ou qualquer comando que reescreva o histórico.**
-- **Nunca faça push** sem que o usuário peça.
+- **Push só junto com um commit aprovado:** a aprovação do commit vale também para o push.
