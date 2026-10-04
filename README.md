@@ -22,6 +22,22 @@ A primeira subida demora, por causa do `composer install` e do `npm ci`.
 - Parar: `docker compose down`. Zerar o banco: `docker compose down -v`.
 - O worker não recarrega o código: após mudar jobs, rode `docker compose restart worker`.
 
+### Várias branches ao mesmo tempo
+
+Cada branch pode ter a própria worktree, com uma stack própria (containers e banco separados):
+
+```bash
+git fetch
+git worktree add .claude/worktrees/<branch> -b <branch> origin/main
+cd .claude/worktrees/<branch>
+cp .env.example .env   # troque as portas, por exemplo 8001, 3001, 3307, 8026 e 1026
+docker compose up -d --build
+```
+
+- As URLs da tabela acima passam a usar as portas do `.env` da worktree.
+- O cookie de sessão vale para `localhost` em qualquer porta: para usar dois front-ends logados ao mesmo tempo, abra o segundo em outro perfil ou numa janela anônima.
+- Para remover: `docker compose down -v` dentro da worktree e depois `git worktree remove .claude/worktrees/<branch>`.
+
 ## Comandos
 
 Use sempre `-u "$(id -u):$(id -g)"` para não criar arquivos de root.

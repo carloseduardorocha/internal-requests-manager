@@ -2,3 +2,6 @@
 .DS_Store
 .idea/
 .vscode/
+
+# Claude Code worktrees (one per branch)
+.claude/worktrees/

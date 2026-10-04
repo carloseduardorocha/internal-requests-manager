@@ -1,4 +1,5 @@
 # Local development environment (the online deployment is a later phase).
+# Host ports come from the root .env (see .env.example), so several worktrees can run at once.
 services:
   mysql:
     image: mysql:8.4
@@ -21,15 +22,18 @@ services:
   mailpit:
     image: axllent/mailpit:v1.31.4
     ports:
-      - "127.0.0.1:8025:8025"
-      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:${MAILPIT_UI_PORT:-8025}:8025"
+      - "127.0.0.1:${MAILPIT_SMTP_PORT:-1025}:1025"
 
   api:
     build: ./backend
     environment:
       PHP_CLI_SERVER_WORKERS: 4
+      APP_URL: http://localhost:${API_PORT:-8000}
+      FRONTEND_URL: http://localhost:${FRONTEND_PORT:-3000}
+      SANCTUM_STATEFUL_DOMAINS: localhost:${FRONTEND_PORT:-3000}
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     volumes:
       - ./backend:/var/www/html
     depends_on:
@@ -50,6 +54,8 @@ services:
     restart: unless-stopped
     environment:
       RUN_MIGRATIONS: "false"
+      APP_URL: http://localhost:${API_PORT:-8000}
+      FRONTEND_URL: http://localhost:${FRONTEND_PORT:-3000}
     volumes:
       - ./backend:/var/www/html
     depends_on:
@@ -59,9 +65,9 @@ services:
   frontend:
     build: ./frontend
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://localhost:${API_PORT:-8000}
     ports:
-      - "3000:3000"
+      - "${FRONTEND_PORT:-3000}:3000"
     volumes:
       - ./frontend:/app
       - frontend-node-modules:/app/node_modules
