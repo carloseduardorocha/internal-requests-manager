@@ -1,8 +1,9 @@
 // @vitest-environment node
+import { unstable_doesMiddlewareMatch } from "next/experimental/testing/server";
 import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 
-import { proxy } from "./proxy";
+import { config, proxy } from "./proxy";
 
 function run(path: string, cookie?: string) {
   const request = new NextRequest(`http://localhost:3000${path}`, {
@@ -51,5 +52,26 @@ describe("proxy", () => {
 
     expect(response.headers.get("location")).toBeNull();
     expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+});
+
+describe("proxy matcher", () => {
+  const matches = (url: string) =>
+    unstable_doesMiddlewareMatch({ config, url });
+
+  it.each(["/", "/login", "/requests", "/requests/123"])(
+    "runs the proxy for %s",
+    (url) => {
+      expect(matches(url)).toBe(true);
+    },
+  );
+
+  it.each([
+    "/robots.txt",
+    "/brand/logo.svg",
+    "/icon.svg",
+    "/_next/static/a.js",
+  ])("skips %s", (url) => {
+    expect(matches(url)).toBe(false);
   });
 });

@@ -17,7 +17,8 @@ export async function login(input: LoginInput): Promise<User> {
 }
 
 export async function logout(): Promise<void> {
-  await api.post("/api/logout");
+  // The session may already be gone: a 401/419 must not bounce to "expired".
+  await api.post("/api/logout", undefined, { redirectOnAuthError: false });
 }
 
 export async function me(): Promise<User> {

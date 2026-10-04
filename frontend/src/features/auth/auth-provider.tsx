@@ -13,6 +13,7 @@ import {
 
 import { AppHeaderSkeleton } from "@/features/auth/components/app-header-skeleton";
 import { logout as logoutRequest, me } from "@/features/auth/api";
+import { ApiError } from "@/lib/api";
 import type { User } from "@/lib/types";
 
 type AuthContextValue = {
@@ -40,8 +41,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((current) => {
         if (active) setUser(current);
       })
-      .catch(() => {
-        // A 401/419 already redirected to the login; anything else is a failure.
+      .catch((error: unknown) => {
+        // A 401/419 already redirected to the login: keep the skeleton.
+        if (
+          error instanceof ApiError &&
+          (error.status === 401 || error.status === 419)
+        ) {
+          return;
+        }
         if (active) setFailed(true);
       });
 

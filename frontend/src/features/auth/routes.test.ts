@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { canAccess, homeFor, matchesRoute, routesFor } from "./routes";
+import {
+  canAccess,
+  canAccessIn,
+  appRoutes,
+  homeFor,
+  matchesRoute,
+  routesFor,
+  type AppRoute,
+} from "./routes";
 
 describe("homeFor", () => {
   it("sends the requester to the requests list", () => {
@@ -51,6 +59,26 @@ describe("canAccess", () => {
 
   it("allows any role on paths outside the map", () => {
     expect(canAccess("requester", "/other")).toBe(true);
+  });
+});
+
+describe("canAccessIn", () => {
+  const icon = appRoutes[0].icon;
+  const routes: AppRoute[] = [
+    { href: "/requests", label: "A", icon, roles: ["requester", "analyst"] },
+    { href: "/requests/new", label: "B", icon, roles: ["requester"] },
+  ];
+
+  it("uses the most specific route even when it comes after its parent", () => {
+    expect(canAccessIn(routes, "analyst", "/requests/new")).toBe(false);
+    expect(canAccessIn(routes, "analyst", "/requests/new/step")).toBe(false);
+    expect(canAccessIn(routes, "requester", "/requests/new")).toBe(true);
+    expect(canAccessIn(routes, "analyst", "/requests/123")).toBe(true);
+  });
+
+  it("does not depend on the order of the map", () => {
+    const reversed = [...routes].reverse();
+    expect(canAccessIn(reversed, "analyst", "/requests/new")).toBe(false);
   });
 });
 

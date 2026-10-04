@@ -39,8 +39,23 @@ export function routesFor(role: Role): AppRoute[] {
   return appRoutes.filter((route) => route.roles.includes(role));
 }
 
-// Paths without an entry in the map are open to any signed-in role.
-export function canAccess(role: Role, pathname: string): boolean {
-  const route = appRoutes.find((item) => matchesRoute(pathname, item.href));
+// The most specific (longest) matching entry wins, so the order of the map
+// does not matter. Paths without an entry are open to any signed-in role.
+export function canAccessIn(
+  routes: AppRoute[],
+  role: Role,
+  pathname: string,
+): boolean {
+  const route = routes
+    .filter((item) => matchesRoute(pathname, item.href))
+    .reduce<AppRoute | null>(
+      (best, item) =>
+        best === null || item.href.length > best.href.length ? item : best,
+      null,
+    );
   return route ? route.roles.includes(role) : true;
+}
+
+export function canAccess(role: Role, pathname: string): boolean {
+  return canAccessIn(appRoutes, role, pathname);
 }

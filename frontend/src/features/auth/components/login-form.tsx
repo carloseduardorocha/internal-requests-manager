@@ -65,6 +65,8 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
 
   const blocked = failure?.kind === "blocked" ? failure : null;
   const blockedSeconds = blocked?.seconds ?? null;
+  // Without Retry-After there is no wait to enforce: only show the message.
+  const locked = blockedSeconds !== null;
 
   // The block lifts on its own once the wait is over.
   useEffect(() => {
@@ -75,7 +77,7 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting || blocked) return;
+    if (submitting || locked) return;
 
     const errors: FieldErrors = {};
     if (!EMAIL_PATTERN.test(email.trim())) {
@@ -221,7 +223,7 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
 
         <Button
           type="submit"
-          disabled={submitting || blocked !== null}
+          disabled={submitting || locked}
           className="min-h-12 w-full rounded-lg bg-primary px-6 text-[15px] font-bold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
         >
           {submitting && (

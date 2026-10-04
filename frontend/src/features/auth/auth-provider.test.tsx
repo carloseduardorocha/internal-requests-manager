@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ApiError } from "@/lib/api";
+
 import { AuthProvider, useAuth } from "./auth-provider";
 
 const replace = vi.fn();
@@ -62,5 +64,40 @@ describe("AuthProvider logout", () => {
     await userEvent.setup().click(button);
 
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/login"));
+  });
+});
+
+describe("AuthProvider me failure", () => {
+  beforeEach(() => {
+    me.mockReset();
+  });
+
+  it("shows no failure alert on an expired session", async () => {
+    me.mockRejectedValue(new ApiError(401, "Unauthenticated.", {}, null));
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+
+    await waitFor(() => expect(me).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("shows the failure alert with retry on a server error", async () => {
+    me.mockRejectedValue(new ApiError(500, "Erro.", {}, null));
+    render(
+      <AuthProvider>
+        <Probe />
+      </AuthProvider>,
+    );
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Não foi possível carregar sua conta.",
+    );
+    expect(
+      screen.getByRole("button", { name: "Tentar de novo" }),
+    ).toBeInTheDocument();
   });
 });

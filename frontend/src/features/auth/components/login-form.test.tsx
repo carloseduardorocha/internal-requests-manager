@@ -159,6 +159,7 @@ describe("LoginForm", () => {
     await ui.click(screen.getByRole("button", { name: "Entrar" }));
 
     expect(await screen.findByText(/Aguarde um pouco\./)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Entrar" })).toBeEnabled();
   });
 
   it("shows a generic error on unexpected failures", async () => {
