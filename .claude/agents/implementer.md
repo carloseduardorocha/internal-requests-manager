@@ -14,13 +14,17 @@ Você implementa uma issue deste repositório a partir de um plano já aprovado.
 - Siga o estilo do código que já existe: nomes, estrutura de pastas e padrões do framework (Laravel e Next.js).
 - Em `frontend/`, siga a skill `frontend-project-style` e o mockup aprovado indicado no plano.
 - Não escreva os testes de aceite (são do `tester`) nem a documentação em `docs/` (é do `documenter`).
-- Não faça commit, push nem troca de branch.
+- Não faça commit, push nem troca de branch, e não mexa no índice (`git add` e `git rm`): remova arquivos com `rm`.
 - Rode o lint e a análise estática da aplicação que você alterou (comandos no README) antes de terminar.
 
 ## Laravel
 
 - Para atributos com cast para enum ou data, declare `@property` no model: o Larastan deste projeto não lê os tipos do `casts()`.
 - Para checar o status e gravar em seguida, trave a linha (`lockForUpdate()` dentro da transação). Não conte as linhas afetadas pelo `UPDATE`: o MySQL só conta as que mudaram de valor, e isso dá um `409` falso.
+
+## Next.js
+
+- Depois do `npx shadcn add`, confira o `git diff` do `package.json`: o CLI pode instalar o pacote npm `cn`. Reverta essa dependência e importe `cn` de `@/lib/utils`.
 
 ## Ao corrigir achados
 

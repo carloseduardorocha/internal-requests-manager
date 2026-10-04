@@ -108,6 +108,7 @@ Com a aprovação, rode os comandos exatamente como foram mostrados e faça o pu
 
 - **Nunca commite sem a aprovação do usuário.**
 - **Nunca use `git add .`, `git add -A` ou uma pasta inteira:** liste cada arquivo.
+- **Comece com o índice vazio:** o `git commit` leva tudo o que está no índice, e não só o que o `git add` passou. Se o `git diff --cached` mostrar algo antes do primeiro commit (um `git rm` de um agente, por exemplo), tire com `git restore --staged <arquivos>` e inclua esses arquivos no `git add` do commit certo.
 - **Nunca adicione `Co-Authored-By` nem outro trailer.**
 - **Nunca use `--gpg-sign`, `-S` ou `--no-verify`.**
 - **Nunca use amend, rebase ou qualquer comando que reescreva o histórico.**
