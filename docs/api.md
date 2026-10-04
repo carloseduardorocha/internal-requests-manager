@@ -17,7 +17,7 @@ Fluxos e regras: [PRD](prd.md). Autenticação e valores de sessão: [ADR 0004](
 Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `errors` por campo:
 
 ```json
-{ "message": "O campo título é obrigatório.", "errors": { "title": ["O campo título é obrigatório."] } }
+{ "message": "É obrigatória a indicação de um valor para o campo título.", "errors": { "title": ["É obrigatória a indicação de um valor para o campo título."] } }
 ```
 
 | Código | Quando |
@@ -56,7 +56,7 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | `PATCH /api/internal-requests/{id}` | Dono e administrador | `{title, description, priority}` | `200` pedido | `403`, `404`, `409`, `422` |
 | `DELETE /api/internal-requests/{id}` | Dono e administrador | n/d | `204` | `403`, `404`, `409` |
 
-Editar e excluir só valem com o pedido `open` (`409` caso contrário, inclusive se ele for assumido durante a requisição).
+Editar e excluir só valem com o pedido `open` (`409` caso contrário, inclusive se ele for assumido ou excluído durante a requisição, com a mesma mensagem: "Este pedido não está mais Aberto e não pode ser alterado.").
 
 **Query da listagem**
 
@@ -67,7 +67,9 @@ Editar e excluir só valem com o pedido `open` (`409` caso contrário, inclusive
 | `priority` | Filtra por prioridade |
 | `sort` | `created_at` ou `-created_at` (padrão `-created_at`) |
 | `page` | Página (padrão 1) |
-| `per_page` | Itens por página (padrão 15, máximo 100) |
+| `per_page` | Itens por página (padrão 15, máximo 100; acima disso responde `422`) |
+
+Parâmetros vazios (`search=`, `status=`, etc.) são ignorados e valem o padrão; valores inválidos respondem `422`. A listagem não traz `history`.
 
 Exemplo de detalhe (`200`):
 
@@ -89,10 +91,13 @@ Exemplo de detalhe (`200`):
       { "from_status": "open", "to_status": "in_review", "changed_by": { "id": 5, "name": "Bruno Lima" }, "created_at": "2026-10-03T14:00:00Z" },
       { "from_status": "in_review", "to_status": "approved", "changed_by": { "id": 5, "name": "Bruno Lima" }, "created_at": "2026-10-03T15:00:00Z" }
     ],
-    "created_at": "2026-10-03T13:00:00Z"
+    "created_at": "2026-10-03T13:00:00Z",
+    "can": { "update": false, "delete": false }
   }
 }
 ```
+
+`can` vem da Policy (e exige o pedido `open`) e vale na listagem e no detalhe, para o front mostrar ou esconder as ações.
 
 ## 3. Análise e decisão
 

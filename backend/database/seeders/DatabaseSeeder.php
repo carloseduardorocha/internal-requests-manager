@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         // Known passwords: never outside local development and tests.
         if (app()->environment('local', 'testing')) {
             $this->call(UserSeeder::class);
+            $this->call(InternalRequestSeeder::class);
         }
     }
 }
