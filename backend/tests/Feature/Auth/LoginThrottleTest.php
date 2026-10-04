@@ -60,6 +60,23 @@ class LoginThrottleTest extends TestCase
         $this->assertAuthenticatedAs($other);
     }
 
+    public function test_a_blocked_email_can_still_log_in_from_another_ip(): void
+    {
+        User::factory()->create(['email' => 'ana@empresa.com']);
+
+        $this->failTimes('ana@empresa.com', 5);
+        $this->attempt('ana@empresa.com', 'password')->assertStatus(429);
+
+        $this->withServerVariables(['REMOTE_ADDR' => '10.0.0.2'])
+            ->postJson('/api/login', ['email' => 'ana@empresa.com', 'password' => 'password'])
+            ->assertOk();
+
+        $this->app['auth']->forgetGuards();
+        $this->flushSession();
+        $this->withServerVariables(['REMOTE_ADDR' => '127.0.0.1']);
+        $this->attempt('ana@empresa.com', 'password')->assertStatus(429);
+    }
+
     public function test_block_is_case_insensitive_on_the_email(): void
     {
         User::factory()->create(['email' => 'ana@empresa.com']);

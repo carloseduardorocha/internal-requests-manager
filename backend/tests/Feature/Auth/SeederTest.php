@@ -39,4 +39,14 @@ class SeederTest extends TestCase
                 ->assertOk();
         }
     }
+
+    public function test_seeding_in_production_creates_areas_and_no_users(): void
+    {
+        $this->app['env'] = 'production';
+
+        $this->artisan('db:seed', ['--force' => true])->assertSuccessful();
+
+        $this->assertSame(4, Area::count());
+        $this->assertSame(0, User::count());
+    }
 }

@@ -77,6 +77,24 @@ class LoginTest extends TestCase
         $this->assertNotEmpty($this->rememberCookies($response));
     }
 
+    public function test_remember_cookie_lasts_about_thirty_days(): void
+    {
+        User::factory()->create(['email' => 'ana@empresa.com']);
+
+        $response = $this->postJson('/api/login', [
+            'email' => 'ana@empresa.com',
+            'password' => 'password',
+            'remember' => true,
+        ])->assertOk();
+
+        $cookie = collect($response->headers->getCookies())
+            ->first(fn ($c) => str_starts_with($c->getName(), 'remember_web_'));
+
+        $this->assertNotNull($cookie);
+        $expected = now()->addMinutes(43200)->getTimestamp();
+        $this->assertEqualsWithDelta($expected, $cookie->getExpiresTime(), 5 * 60);
+    }
+
     public function test_login_without_remember_does_not_set_the_remember_cookie(): void
     {
         User::factory()->create(['email' => 'ana@empresa.com']);
@@ -97,5 +115,16 @@ class LoginTest extends TestCase
             ->filter(fn ($name) => str_starts_with($name, 'remember_web_'))
             ->values()
             ->all();
+    }
+
+    public function test_login_without_a_session_returns_419_and_stays_logged_out(): void
+    {
+        User::factory()->create(['email' => 'ana@empresa.com']);
+
+        $this->withoutHeader('Referer')
+            ->postJson('/api/login', ['email' => 'ana@empresa.com', 'password' => 'password'])
+            ->assertStatus(419);
+
+        $this->assertGuest();
     }
 }

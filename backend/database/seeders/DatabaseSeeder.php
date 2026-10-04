@@ -14,9 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call([
-            AreaSeeder::class,
-            UserSeeder::class,
-        ]);
+        $this->call(AreaSeeder::class);
+
+        // Known passwords: never outside local development and tests.
+        if (app()->environment('local', 'testing')) {
+            $this->call(UserSeeder::class);
+        }
     }
 }
