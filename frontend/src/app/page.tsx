@@ -3,6 +3,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 
 // Provisional home page: confirms the environment is up. Replaced by the login screen.
 export default function Home() {
+  const unusedOnPurpose = 1;
   return (
     <>
       <header className="border-b border-border bg-header text-header-foreground">

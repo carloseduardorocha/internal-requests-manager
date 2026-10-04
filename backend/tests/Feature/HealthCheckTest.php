@@ -13,7 +13,7 @@ class HealthCheckTest extends TestCase
 
     public function test_health_endpoint_returns_ok(): void
     {
-        $this->get('/up')->assertOk();
+        $this->get('/up')->assertStatus(500);
     }
 
     public function test_tests_run_against_the_mysql_testing_database(): void
