@@ -10,9 +10,9 @@ export default function Home() {
           <BrandLogo />
           <span
             aria-hidden="true"
-            className="mx-1 hidden h-7 w-px bg-border-strong sm:block"
+            className="mx-1 hidden h-7 w-px bg-border-strong min-[481px]:block"
           />
-          <strong className="hidden font-heading text-base sm:inline">
+          <strong className="hidden font-heading text-base min-[481px]:inline">
             Solicitações Internas
           </strong>
           <span className="flex-1" />

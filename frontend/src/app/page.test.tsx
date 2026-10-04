@@ -42,7 +42,7 @@ describe("Home", () => {
     renderHome();
 
     expect(
-      screen.getByRole("button", { name: "Alternar tema" }),
+      screen.getByRole("button", { name: /ativar tema/i }),
     ).toBeInTheDocument();
   });
 
@@ -50,10 +50,15 @@ describe("Home", () => {
     const user = userEvent.setup();
     renderHome();
 
-    await user.click(screen.getByRole("button", { name: "Alternar tema" }));
+    await user.click(
+      screen.getByRole("button", { name: "Ativar tema escuro" }),
+    );
     expect(document.documentElement).toHaveClass("dark");
 
-    await user.click(screen.getByRole("button", { name: "Alternar tema" }));
+    await user.click(screen.getByRole("button", { name: "Ativar tema claro" }));
     expect(document.documentElement).not.toHaveClass("dark");
+    expect(
+      screen.getByRole("button", { name: "Ativar tema escuro" }),
+    ).toBeInTheDocument();
   });
 });

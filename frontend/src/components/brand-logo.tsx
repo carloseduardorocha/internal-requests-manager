@@ -9,7 +9,7 @@ export function BrandLogo() {
         alt="Sicredi"
         width={710}
         height={210}
-        priority
+        preload
         className="-mx-1.5 -my-1 block h-10 w-auto dark:hidden"
       />
       <Image
@@ -17,7 +17,6 @@ export function BrandLogo() {
         alt="Sicredi"
         width={709}
         height={209}
-        priority
         className="-mx-1.5 -my-1 hidden h-10 w-auto dark:block"
       />
     </>

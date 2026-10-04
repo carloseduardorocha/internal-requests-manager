@@ -8,13 +8,16 @@ import { Button } from "@/components/ui/button";
 export function ThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
 
+  // resolvedTheme is undefined until mounted, so server and first client render match.
+  const isDark = resolvedTheme === "dark";
+
   return (
     <Button
       type="button"
       variant="outline"
-      aria-label="Alternar tema"
+      aria-label={isDark ? "Ativar tema claro" : "Ativar tema escuro"}
       className="min-h-11 gap-1.5 border-primary bg-transparent px-3 text-primary hover:bg-primary hover:text-primary-foreground"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+      onClick={() => setTheme(isDark ? "light" : "dark")}
     >
       <Moon aria-hidden="true" className="dark:hidden" />
       <Sun aria-hidden="true" className="hidden dark:block" />
