@@ -14,6 +14,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Areas and users are added in the authentication issue.
+        $this->call([
+            AreaSeeder::class,
+            UserSeeder::class,
+        ]);
     }
 }
