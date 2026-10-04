@@ -34,7 +34,7 @@ Use a skill `/new-issue`: uma issue por fluxo da PRD em cada aplicação, com t�
 
 - Curta, com visão de produto, organizada por fluxo e cada regra dita uma vez só.
 - A PRD não leva detalhe técnico, que vai para os ADRs, a API ou o README.
-- O projeto é tratado como produto real: não use as palavras "teste técnico", "avaliador" ou "desafio" nos documentos.
+- O projeto é tratado como produto real.
 
 ## Idioma
 
