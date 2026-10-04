@@ -41,6 +41,33 @@ class InternalRequestPolicy
         return $this->manage($user, $internalRequest);
     }
 
+    public function assign(User $user, InternalRequest $internalRequest): Response
+    {
+        $visible = $this->view($user, $internalRequest);
+
+        if ($visible->denied()) {
+            return $visible;
+        }
+
+        return $user->role === Role::Requester ? Response::deny() : Response::allow();
+    }
+
+    public function decide(User $user, InternalRequest $internalRequest): Response
+    {
+        $visible = $this->view($user, $internalRequest);
+
+        if ($visible->denied()) {
+            return $visible;
+        }
+
+        if ($user->role === Role::Admin
+            || ($user->role === Role::Analyst && $internalRequest->assigned_to === $user->id)) {
+            return Response::allow();
+        }
+
+        return Response::deny();
+    }
+
     private function manage(User $user, InternalRequest $internalRequest): Response
     {
         $visible = $this->view($user, $internalRequest);
