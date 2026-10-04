@@ -8,9 +8,13 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property Role $role
+ */
 #[Fillable(['name', 'email', 'password', 'role', 'area_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
@@ -37,5 +41,13 @@ class User extends Authenticatable
     public function area(): BelongsTo
     {
         return $this->belongsTo(Area::class);
+    }
+
+    /**
+     * @return HasMany<InternalRequest, $this>
+     */
+    public function internalRequests(): HasMany
+    {
+        return $this->hasMany(InternalRequest::class, 'requester_id');
     }
 }
