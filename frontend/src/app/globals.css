@@ -1,0 +1,149 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Tokens from docs/mockups/design-system.html; see docs/design-system.md */
+:root {
+  --brand: #3fa110;
+  --brand-dark: #0a4b1e;
+  --primary: #33820d;
+  --primary-hover: #26610a;
+  --primary-foreground: #ffffff;
+  --background: #f8f9f7;
+  --card: #ffffff;
+  --popover: #ffffff;
+  --border: #e1e6e1;
+  --border-strong: #cdd3cd;
+  --foreground: #323c32;
+  --muted-foreground: #5a645a;
+  --accent: #ecf6e7;
+  --accent-foreground: #26610a;
+  --ring: #33820d;
+  --success: #047857;
+  --warning: #b45309;
+  --destructive: #b91c1c;
+  --error-hover: #991b1b;
+  --on-error: #ffffff;
+  --status-open-bg: #eff6ff;
+  --status-open-fg: #1d4ed8;
+  --status-review-bg: #fffbeb;
+  --status-review-fg: #b45309;
+  --status-approved-bg: #ecf6e7;
+  --status-approved-fg: #26610a;
+  --status-rejected-bg: #fef2f2;
+  --status-rejected-fg: #b91c1c;
+  --priority-low: #5a645a;
+  --priority-mid: #c2410c;
+  --priority-high: #b91c1c;
+  --header: #ffffff;
+  --header-foreground: #323c32;
+  --overlay: rgba(12, 14, 12, 0.5);
+  --radius: 8px;
+}
+
+.dark {
+  --brand: #64c832;
+  --primary: #64c832;
+  --primary-hover: #a0dc8c;
+  --primary-foreground: #0c0e0c;
+  --background: #0c0e0c;
+  --card: #161a16;
+  --popover: #161a16;
+  --border: #262c26;
+  --border-strong: #343c34;
+  --foreground: #e1e6e1;
+  --muted-foreground: #a0aaa0;
+  --accent: #1a2a16;
+  --accent-foreground: #a0dc8c;
+  --ring: #64c832;
+  --destructive: #f87171;
+  --error-hover: #fca5a5;
+  --on-error: #0c0e0c;
+  --status-open-bg: #172554;
+  --status-open-fg: #93c5fd;
+  --status-review-bg: #3b2a0a;
+  --status-review-fg: #fcd34d;
+  --status-approved-bg: #1a2a16;
+  --status-approved-fg: #a0dc8c;
+  --status-rejected-bg: #3a1212;
+  --status-rejected-fg: #fca5a5;
+  --priority-low: #a0aaa0;
+  --priority-mid: #fdba74;
+  --priority-high: #fca5a5;
+  --header: #161a16;
+  --header-foreground: #e1e6e1;
+  --overlay: rgba(0, 0, 0, 0.65);
+}
+
+@theme inline {
+  --font-sans: var(--font-nunito);
+  --font-heading: var(--font-exo);
+  --font-mono: var(--font-jetbrains);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--accent);
+  --color-secondary-foreground: var(--accent-foreground);
+  --color-muted: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-error-hover: var(--error-hover);
+  --color-on-error: var(--on-error);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--border-strong);
+  --color-ring: var(--ring);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-overlay: var(--overlay);
+  --color-header: var(--header);
+  --color-header-foreground: var(--header-foreground);
+  --color-status-open-bg: var(--status-open-bg);
+  --color-status-open-fg: var(--status-open-fg);
+  --color-status-review-bg: var(--status-review-bg);
+  --color-status-review-fg: var(--status-review-fg);
+  --color-status-approved-bg: var(--status-approved-bg);
+  --color-status-approved-fg: var(--status-approved-fg);
+  --color-status-rejected-bg: var(--status-rejected-bg);
+  --color-status-rejected-fg: var(--status-rejected-fg);
+  --color-priority-low: var(--priority-low);
+  --color-priority-mid: var(--priority-mid);
+  --color-priority-high: var(--priority-high);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
+  }
+}

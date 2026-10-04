@@ -9,7 +9,7 @@ O produto tem várias peças (front-end, API, worker, banco e servidor de e-mail
 
 ## Decisão
 
-Docker Compose com cinco serviços: `frontend`, `api`, `worker`, `mysql` e `mailpit`. O Compose em si é criado na issue #2; o passo a passo fica no `README.md`.
+Docker Compose com cinco serviços: `frontend`, `api`, `worker`, `mysql` e `mailpit`. É um ambiente de desenvolvimento: o código entra por bind mount e os containers rodam como o dono do código, para não criar arquivos de root. O passo a passo fica no `README.md`.
 
 ## Consequências
 
