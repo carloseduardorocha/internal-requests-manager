@@ -10,7 +10,7 @@ Executa o plano aprovado por `/plan-issue`. Esta sessão orquestra: ela delega o
 ## Passos
 
 1. **Leia o plano:** `gh issue view <número> --comments` e use o comentário `## Plano` mais recente. Se não existir, pare e sugira `/plan-issue <número>`. Mova a issue para **Doing** no board: `.claude/scripts/board-status.sh <número> "Doing"`.
-2. **Prepare a branch** indicada no plano a partir da `main` atualizada. Issues só de `docs/` vão direto na `main`; nesse caso, rode o passo 6 (documentar) e depois o passo 5 (revisar), com os achados indo para o `documenter`.
+2. **Entre na worktree da issue** (`EnterWorktree` com `path`), criada pelo `/plan-issue`; se não existir, crie-a do mesmo jeito. Todos os agentes, testes e commits rodam nela. Issues só de `docs/` usam a worktree da `main`; nesse caso, rode o passo 6 (documentar) e depois o passo 5 (revisar), com os achados indo para o `documenter`.
 3. **Implemente:** chame o agente `implementer` passando o número da issue e o plano completo. Se ele voltar com uma dúvida, pergunte ao usuário (com uma opção recomendada) e chame-o de novo com a resposta. Commit: `feat(<escopo>): ...` (ou `chore`/`fix`, conforme o tipo).
 4. **Teste:** chame o agente `tester` com o número da issue e o plano. Rode a suíte completa e o lint com os comandos do README. Se um teste falhar por defeito no código, mande a falha ao `implementer` e repita. Commit: `test(<escopo>): ...`.
 5. **Revise:** chame o agente `reviewer` com o número da issue. Envie os achados **bloqueantes** e **importantes** ao `implementer`, rode os testes de novo e, se a correção tiver sido grande, revise outra vez. Sugestões ficam a critério do usuário.
