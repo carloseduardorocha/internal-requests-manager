@@ -18,6 +18,7 @@ Laravel Sanctum em modo SPA: sessão em cookie httpOnly, com proteção CSRF. O 
 - **Bloqueio:** 5 tentativas erradas seguidas, contadas por e-mail + IP, bloqueiam por 15 minutos. Credencial errada responde `422` com mensagem genérica; o bloqueio responde `429` com `Retry-After`.
 - O contador de tentativas usa o RateLimiter no cache (store `database`, tabela `cache`) e é zerado no login correto.
 - Todos os valores acima ficam em variáveis de ambiente.
+- **Proteção de rotas no front:** o `src/proxy.ts` faz só uma checagem otimista do cookie (`irm_session` ou `remember_web_*`), sem chamar a API, e redireciona para `/login`. A identidade vem do `GET /api/me`, carregado pelo layout autenticado. A restrição por perfil (`RequireRole`, com o mapa único em `features/auth/routes.ts`) serve só à navegação; a autorização de verdade é da API. Em `401` ou `419`, o front leva a `/login?expired=1`.
 
 Alternativa descartada: tokens (JWT ou Sanctum com token) guardados no navegador, expostos a roubo por script.
 
