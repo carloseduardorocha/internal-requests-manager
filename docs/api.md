@@ -1,0 +1,123 @@
+# Contrato da API
+
+Fluxos e regras: [PRD](prd.md). Autenticação e valores de sessão: [ADR 0004](adr/0004-sanctum-spa-authentication.md).
+
+## Convenções
+
+- Base `/api`, JSON, sem versão.
+- Autenticação por sessão (Sanctum SPA). Antes do login, o cliente chama `GET /sanctum/csrf-cookie`; em todas as chamadas envia credenciais (`credentials: include`) e o token CSRF.
+- Todos os endpoints exigem sessão, exceto o CSRF e o login; por isso qualquer um pode responder `401` (e `419` nas escritas).
+- Paginação padrão do Laravel (`data`, `links`, `meta`); os limites estão na query da listagem.
+- Ordem das checagens: visibilidade (`404`: pedido inexistente, excluído ou de outra pessoa, para o solicitante) → perfil ou dono (`403`) → validação (`422`) → status (`409`).
+- Mensagens em português (`APP_LOCALE=pt_BR`, [ADR 0001](adr/0001-layered-laravel-backend.md)).
+- Status: `open`, `in_review`, `approved`, `rejected`. Prioridade: `low`, `medium`, `high`. Perfil: `requester`, `analyst`, `admin`.
+
+## Erros
+
+Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `errors` por campo:
+
+```json
+{ "message": "O campo título é obrigatório.", "errors": { "title": ["O campo título é obrigatório."] } }
+```
+
+| Código | Quando |
+|---|---|
+| 200 | Sucesso com corpo |
+| 201 | Recurso criado |
+| 204 | Sucesso sem corpo |
+| 401 | Sem sessão |
+| 419 | Token CSRF inválido ou sessão expirada; o cliente renova o CSRF e volta ao login |
+| 403 | Perfil ou dono sem permissão |
+| 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante) |
+| 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação (atualização condicional sem efeito) |
+| 422 | Validação falhou, filtro inválido na listagem ou credencial inválida no login |
+| 429 | Login bloqueado por tentativas; traz `Retry-After` |
+
+## 1. Acesso
+
+| Endpoint | Quem | Payload | Sucesso | Erros |
+|---|---|---|---|---|
+| `GET /sanctum/csrf-cookie` | Público | n/d | `204` | n/d |
+| `POST /api/login` | Público | `{email, password, remember}` | `200` usuário | `422` (mensagem genérica), `429` |
+| `POST /api/logout` | Autenticado | n/d | `204` | n/d |
+| `GET /api/me` | Autenticado | n/d | `200` usuário | n/d |
+
+```json
+{ "id": 1, "name": "Ana Souza", "email": "ana@empresa.com", "role": "requester", "area": { "id": 2, "name": "Financeiro" } }
+```
+
+## 2. Solicitações
+
+| Endpoint | Quem | Payload | Sucesso | Erros |
+|---|---|---|---|---|
+| `GET /api/internal-requests` | Autenticado (solicitante vê só os seus) | query abaixo | `200` paginado | `422` (filtro inválido) |
+| `POST /api/internal-requests` | Solicitante e administrador | `{title, description, priority}` | `201` pedido | `403`, `422` |
+| `GET /api/internal-requests/{id}` | Dono, analista e administrador | n/d | `200` com responsável, decisão e histórico | `404` |
+| `PATCH /api/internal-requests/{id}` | Dono e administrador | `{title, description, priority}` | `200` pedido | `403`, `404`, `409`, `422` |
+| `DELETE /api/internal-requests/{id}` | Dono e administrador | n/d | `204` | `403`, `404`, `409` |
+
+Editar e excluir só valem com o pedido `open` (`409` caso contrário, inclusive se ele for assumido durante a requisição).
+
+**Query da listagem**
+
+| Parâmetro | Descrição |
+|---|---|
+| `search` | Texto no título e na descrição |
+| `status` | Filtra por status |
+| `priority` | Filtra por prioridade |
+| `sort` | `created_at` ou `-created_at` (padrão `-created_at`) |
+| `page` | Página (padrão 1) |
+| `per_page` | Itens por página (padrão 15, máximo 100) |
+
+Exemplo de detalhe (`200`):
+
+```json
+{
+  "data": {
+    "id": 10,
+    "title": "Notebook novo",
+    "description": "Substituir o equipamento atual",
+    "priority": "medium",
+    "status": "approved",
+    "requester": { "id": 1, "name": "Ana Souza" },
+    "area": { "id": 2, "name": "Financeiro" },
+    "assigned_to": { "id": 5, "name": "Bruno Lima" },
+    "assigned_at": "2026-10-03T14:00:00Z",
+    "decision": { "decided_by": { "id": 5, "name": "Bruno Lima" }, "decided_at": "2026-10-03T15:00:00Z", "justification": "Dentro do orçamento" },
+    "history": [
+      { "from_status": null, "to_status": "open", "changed_by": { "id": 1, "name": "Ana Souza" }, "created_at": "2026-10-03T13:00:00Z" },
+      { "from_status": "open", "to_status": "in_review", "changed_by": { "id": 5, "name": "Bruno Lima" }, "created_at": "2026-10-03T14:00:00Z" },
+      { "from_status": "in_review", "to_status": "approved", "changed_by": { "id": 5, "name": "Bruno Lima" }, "created_at": "2026-10-03T15:00:00Z" }
+    ],
+    "created_at": "2026-10-03T13:00:00Z"
+  }
+}
+```
+
+## 3. Análise e decisão
+
+| Endpoint | Quem | Payload | Sucesso | Erros |
+|---|---|---|---|---|
+| `POST /api/internal-requests/{id}/assign` | Analista e administrador | n/d | `200` pedido `in_review` | `403`, `404`, `409` |
+| `POST /api/internal-requests/{id}/approve` | Quem assumiu e administrador | `{justification}` | `200` pedido `approved` | `403`, `404`, `409`, `422` |
+| `POST /api/internal-requests/{id}/reject` | Quem assumiu e administrador | `{justification}` | `200` pedido `rejected` | `403`, `404`, `409`, `422` |
+
+`assign` exige o pedido `open`; `approve` e `reject` exigem `in_review`. A resposta tem o mesmo formato do detalhe.
+
+## 4. Painel
+
+| Endpoint | Quem | Sucesso | Erros |
+|---|---|---|---|
+| `GET /api/dashboard` | Analista e administrador | `200` | `403` |
+
+```json
+{
+  "total": 12,
+  "by_status": { "open": 4, "in_review": 3, "approved": 3, "rejected": 2 },
+  "by_priority": { "low": 3, "medium": 6, "high": 3 }
+}
+```
+
+## 5. Notificações
+
+Sem endpoint: são disparadas pelas ações dos fluxos 2 e 3. Veja o [diagrama](architecture/notifications.md).
