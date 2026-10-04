@@ -63,4 +63,4 @@ Por que isso existe, em uma ou duas frases. Fluxo da PRD: [<nome do fluxo>](http
 - O que fica para outra issue (por exemplo, a parte da outra aplicação).
 ```
 
-Escreva em português do Brasil, de forma curta. Não use as palavras "teste técnico", "avaliador" ou "desafio": o projeto é tratado como produto real.
+Escreva em português do Brasil, de forma curta.
