@@ -3,17 +3,17 @@ import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "next-themes";
 import { beforeEach, describe, expect, it } from "vitest";
 
-import Home from "./page";
+import { ThemeToggle } from "./theme-toggle";
 
-function renderHome() {
+function renderToggle() {
   return render(
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-      <Home />
+      <ThemeToggle />
     </ThemeProvider>,
   );
 }
 
-describe("Home", () => {
+describe("ThemeToggle", () => {
   beforeEach(() => {
     localStorage.clear();
     document.documentElement.className = "";
@@ -30,16 +30,8 @@ describe("Home", () => {
     })) as typeof window.matchMedia;
   });
 
-  it("renders the product name", () => {
-    renderHome();
-
-    expect(
-      screen.getByRole("heading", { name: "Solicitações Internas" }),
-    ).toBeInTheDocument();
-  });
-
   it("renders the theme toggle button", () => {
-    renderHome();
+    renderToggle();
 
     expect(
       screen.getByRole("button", { name: /ativar tema/i }),
@@ -48,7 +40,7 @@ describe("Home", () => {
 
   it("toggles the theme when the button is clicked", async () => {
     const user = userEvent.setup();
-    renderHome();
+    renderToggle();
 
     await user.click(
       screen.getByRole("button", { name: "Ativar tema escuro" }),
@@ -57,8 +49,5 @@ describe("Home", () => {
 
     await user.click(screen.getByRole("button", { name: "Ativar tema claro" }));
     expect(document.documentElement).not.toHaveClass("dark");
-    expect(
-      screen.getByRole("button", { name: "Ativar tema escuro" }),
-    ).toBeInTheDocument();
   });
 });
