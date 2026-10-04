@@ -175,4 +175,16 @@ class UpdateInternalRequestTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['title']);
     }
+
+    public function test_saving_the_same_values_right_after_creating_is_ok(): void
+    {
+        $owner = User::factory()->create();
+        $payload = ['title' => 'Mesmo título', 'description' => 'Mesma descrição', 'priority' => 'low'];
+
+        $id = $this->actingAs($owner)->postJson('/api/internal-requests', $payload)->assertCreated()->json('data.id');
+
+        $this->patchJson("/api/internal-requests/{$id}", $payload)
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Mesmo título');
+    }
 }

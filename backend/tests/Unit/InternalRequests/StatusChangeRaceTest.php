@@ -43,4 +43,33 @@ class StatusChangeRaceTest extends TestCase
             $this->assertNull($request->fresh()->deleted_by);
         }
     }
+
+    public function test_update_conflicts_when_deleted_after_loading(): void
+    {
+        $request = InternalRequest::factory()->create(['title' => 'Original']);
+        $stale = InternalRequest::findOrFail($request->id);
+        InternalRequest::whereKey($request->id)->update(['deleted_at' => now()]);
+
+        try {
+            app(UpdateInternalRequest::class)->handle($stale, ['title' => 'Alterado']);
+            $this->fail('Expected ConflictHttpException.');
+        } catch (ConflictHttpException) {
+            $this->assertSame('Original', InternalRequest::withTrashed()->findOrFail($request->id)->title);
+        }
+    }
+
+    public function test_delete_conflicts_when_already_deleted_after_loading(): void
+    {
+        $original = User::factory()->admin()->create();
+        $request = InternalRequest::factory()->create();
+        $stale = InternalRequest::findOrFail($request->id);
+        InternalRequest::whereKey($request->id)->update(['deleted_at' => now(), 'deleted_by' => $original->id]);
+
+        try {
+            app(DeleteInternalRequest::class)->handle($stale, User::factory()->admin()->create());
+            $this->fail('Expected ConflictHttpException.');
+        } catch (ConflictHttpException) {
+            $this->assertSame($original->id, InternalRequest::withTrashed()->findOrFail($request->id)->deleted_by);
+        }
+    }
 }
