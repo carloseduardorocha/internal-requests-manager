@@ -16,7 +16,7 @@ erDiagram
 
     areas {
         bigint id PK
-        varchar name
+        varchar name UK
     }
     users {
         bigint id PK
@@ -60,7 +60,8 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 | Coluna | Tipo | Nulo | Descrição |
 |---|---|---|---|
 | `id` | bigint | não | Chave primária |
-| `name` | varchar | não | Nome da área |
+| `name` | varchar | não | Nome da área, único |
+| `created_at`, `updated_at` | timestamp | sim | Controle do Laravel |
 
 ### `users`
 
@@ -123,7 +124,7 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 
 ### Tabelas do Laravel
 
-`sessions`, `jobs`, `failed_jobs` e `cache`: sessão, fila ([ADR 0005](adr/0005-database-queue-and-retries.md)) e cache do framework.
+`sessions`, `jobs`, `failed_jobs` e `cache`: sessão, fila ([ADR 0005](adr/0005-database-queue-and-retries.md)) e cache do framework. `password_reset_tokens`: tokens da recuperação de senha (Fase 3).
 
 ## Onde cada regra é gravada
 
