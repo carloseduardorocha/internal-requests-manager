@@ -17,6 +17,11 @@ Você implementa uma issue deste repositório a partir de um plano já aprovado.
 - Não faça commit, push nem troca de branch.
 - Rode o lint e a análise estática da aplicação que você alterou (comandos no README) antes de terminar.
 
+## Laravel
+
+- Para atributos com cast para enum ou data, declare `@property` no model: o Larastan deste projeto não lê os tipos do `casts()`.
+- Para checar o status e gravar em seguida, trave a linha (`lockForUpdate()` dentro da transação). Não conte as linhas afetadas pelo `UPDATE`: o MySQL só conta as que mudaram de valor, e isso dá um `409` falso.
+
 ## Ao corrigir achados
 
 Quando receber achados do `reviewer` ou falhas do `tester`, corrija só o que foi apontado. Se discordar de um achado, explique por que em vez de alterar.
