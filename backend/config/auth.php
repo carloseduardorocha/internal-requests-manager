@@ -41,6 +41,7 @@ return [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
+            'remember' => (int) env('AUTH_REMEMBER_MINUTES', 43200),
         ],
     ],
 
@@ -113,5 +114,20 @@ return [
     */
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Login Throttling
+    |--------------------------------------------------------------------------
+    |
+    | Wrong attempts are counted per e-mail + IP. After max_attempts, the login
+    | is blocked for decay_minutes (ADR 0004).
+    |
+    */
+
+    'login_throttle' => [
+        'max_attempts' => (int) env('LOGIN_MAX_ATTEMPTS', 5),
+        'decay_minutes' => (int) env('LOGIN_DECAY_MINUTES', 15),
+    ],
 
 ];

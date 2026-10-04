@@ -7,7 +7,7 @@ Fluxos e regras: [PRD](prd.md). Autenticação e valores de sessão: [ADR 0004](
 - Base `/api`, JSON, sem versão.
 - Autenticação por sessão (Sanctum SPA). Antes do login, o cliente chama `GET /sanctum/csrf-cookie`; em todas as chamadas envia credenciais (`credentials: include`) e o token CSRF.
 - Todos os endpoints exigem sessão, exceto o CSRF e o login; por isso qualquer um pode responder `401` (e `419` nas escritas).
-- Paginação padrão do Laravel (`data`, `links`, `meta`); os limites estão na query da listagem.
+- Respostas de recurso vêm dentro de `data`; a paginação padrão do Laravel acrescenta `links` e `meta`, com os limites na query da listagem.
 - Ordem das checagens: visibilidade (`404`: pedido inexistente, excluído ou de outra pessoa, para o solicitante) → perfil ou dono (`403`) → validação (`422`) → status (`409`).
 - Mensagens em português (`APP_LOCALE=pt_BR`, [ADR 0001](adr/0001-layered-laravel-backend.md)).
 - Status: `open`, `in_review`, `approved`, `rejected`. Prioridade: `low`, `medium`, `high`. Perfil: `requester`, `analyst`, `admin`.
@@ -26,24 +26,24 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | 201 | Recurso criado |
 | 204 | Sucesso sem corpo |
 | 401 | Sem sessão |
-| 419 | Token CSRF inválido ou sessão expirada; o cliente renova o CSRF e volta ao login |
+| 419 | Token CSRF inválido ou sessão expirada (inclui o login por cliente fora do SPA, que não tem sessão); o cliente renova o CSRF e volta ao login |
 | 403 | Perfil ou dono sem permissão |
 | 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante) |
 | 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação (atualização condicional sem efeito) |
 | 422 | Validação falhou, filtro inválido na listagem ou credencial inválida no login |
-| 429 | Login bloqueado por tentativas; traz `Retry-After` |
+| 429 | Login bloqueado por tentativas; traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
 
 ## 1. Acesso
 
 | Endpoint | Quem | Payload | Sucesso | Erros |
 |---|---|---|---|---|
 | `GET /sanctum/csrf-cookie` | Público | n/d | `204` | n/d |
-| `POST /api/login` | Público | `{email, password, remember}` | `200` usuário | `422` (mensagem genérica), `429` |
+| `POST /api/login` | Público | `{email, password, remember}` | `200` usuário | `419`, `422` (mensagem genérica), `429` |
 | `POST /api/logout` | Autenticado | n/d | `204` | n/d |
 | `GET /api/me` | Autenticado | n/d | `200` usuário | n/d |
 
 ```json
-{ "id": 1, "name": "Ana Souza", "email": "ana@empresa.com", "role": "requester", "area": { "id": 2, "name": "Financeiro" } }
+{ "data": { "id": 1, "name": "Ana Souza", "email": "ana@empresa.com", "role": "requester", "area": { "id": 2, "name": "Financeiro" } } }
 ```
 
 ## 2. Solicitações

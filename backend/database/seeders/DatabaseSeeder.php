@@ -14,6 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Areas and users are added in the authentication issue.
+        $this->call(AreaSeeder::class);
+
+        // Known passwords: never outside local development and tests.
+        if (app()->environment('local', 'testing')) {
+            $this->call(UserSeeder::class);
+        }
     }
 }

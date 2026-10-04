@@ -12,7 +12,7 @@ O front-end e a API são aplicações separadas, e o navegador chama a API diret
 Laravel Sanctum em modo SPA: sessão em cookie httpOnly, com proteção CSRF. O navegador envia credenciais em toda chamada.
 
 - **Ambientes:** local em `localhost:3000` (front) e `localhost:8000` (API), sem domínio de cookie. Produção em `app.<domínio>` e `api.<domínio>`, configurada só por variáveis de ambiente (`SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS` e CORS com credenciais).
-- **Sessão:** `SESSION_EXPIRE_ON_CLOSE=true` e 120 minutos sem uso.
+- **Sessão:** `SESSION_EXPIRE_ON_CLOSE=true` e 120 minutos sem uso. O cookie tem nome estável (`SESSION_COOKIE=irm_session`), usado pelo front para checar se há sessão.
 - **Mantenha-me conectado:** usa o *remember me* nativo do Laravel; o limite de 30 dias é configurado na duração do *remember* do guard.
 - **Logout:** invalida a sessão e o *remember token*.
 - **Bloqueio:** 5 tentativas erradas seguidas, contadas por e-mail + IP, bloqueiam por 15 minutos. Credencial errada responde `422` com mensagem genérica; o bloqueio responde `429` com `Retry-After`.
