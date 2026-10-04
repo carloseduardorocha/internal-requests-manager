@@ -13,7 +13,7 @@ Next.js com App Router e TypeScript.
 
 - `src/app/` contém só as rotas.
 - `src/features/<fluxo>/` reúne componentes, chamadas à API, hooks e tipos de cada fluxo: `auth`, `requests`, `review` e `dashboard`.
-- Biblioteca de componentes e design system ficam para as issues #2 e #4.
+- Biblioteca de componentes: [ADR 0009](0009-shadcn-ui-component-library.md). Visual: [design-system.md](../design-system.md).
 
 Alternativa descartada: organização por tipo de arquivo.
 
