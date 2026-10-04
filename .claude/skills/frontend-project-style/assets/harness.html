@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mockup preview</title>
+  <style>
+    :root {
+      --bar-bg: #ffffff;
+      --bar-border: #e5e7eb;
+      --stage-bg: #f3f4f6;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #1c02e4;
+      --btn-bg: #f9fafb;
+      --btn-border: #d1d5db;
+      --frame-border: #d1d5db;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      display: flex;
+      flex-direction: column;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: var(--text);
+      background: var(--stage-bg);
+    }
+
+    /* Top bar */
+    .bar {
+      flex: 0 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 16px 24px;
+      padding: 12px 20px;
+      background: var(--bar-bg);
+      border-bottom: 1px solid var(--bar-border);
+    }
+    .bar__title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-right: auto;
+    }
+    .bar__title small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+    .group { display: flex; align-items: center; gap: 8px; }
+    .group__label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      font-weight: 600;
+    }
+    .segmented { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+    .seg {
+      appearance: none;
+      border: 1px solid var(--btn-border);
+      background: var(--btn-bg);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s, color 0.12s;
+      white-space: nowrap;
+    }
+    .seg:hover { border-color: var(--accent); }
+    .seg[aria-pressed="true"] {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+    .seg:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .readout { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 62px; }
+
+    /* Stage */
+    .stage {
+      flex: 1 1 auto;
+      overflow: auto;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 24px;
+    }
+    .frame {
+      background: #fff;
+      border: 1px solid var(--frame-border);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(17, 24, 39, 0.10);
+      overflow: hidden;
+      transition: width 0.2s ease;
+      max-width: 100%;
+    }
+    .frame iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+    .empty {
+      margin: auto;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      max-width: 420px;
+      line-height: 1.5;
+    }
+    .empty code {
+      background: #fff;
+      border: 1px solid var(--bar-border);
+      border-radius: 6px;
+      padding: 2px 6px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <div class="bar__title" id="title">Mockups<small id="subtitle">carregando…</small></div>
+
+    <div class="group" id="entries-group" hidden>
+      <span class="group__label">Versão</span>
+      <div class="segmented" id="entries" role="group" aria-label="Versões / opções"></div>
+    </div>
+
+    <div class="group">
+      <span class="group__label">Device</span>
+      <div class="segmented" id="devices" role="group" aria-label="Tamanho de tela">
+        <button class="seg" data-w="375" type="button">📱 375</button>
+        <button class="seg" data-w="768" type="button">▭ 768</button>
+        <button class="seg" data-w="0" type="button">🖥 100%</button>
+      </div>
+      <span class="readout" id="readout"></span>
+    </div>
+  </header>
+
+  <main class="stage" id="stage">
+    <div class="empty" id="empty" hidden></div>
+    <div class="frame" id="frame" hidden>
+      <iframe id="preview" title="Preview do mockup"></iframe>
+    </div>
+  </main>
+
+  <script>
+    const state = { entries: [], activeId: null, width: 0 };
+    const els = {
+      title: document.getElementById('title'),
+      subtitle: document.getElementById('subtitle'),
+      entriesGroup: document.getElementById('entries-group'),
+      entries: document.getElementById('entries'),
+      devices: document.getElementById('devices'),
+      readout: document.getElementById('readout'),
+      stage: document.getElementById('stage'),
+      frame: document.getElementById('frame'),
+      preview: document.getElementById('preview'),
+      empty: document.getElementById('empty'),
+    };
+
+    function sizeFrame() {
+      const avail = els.stage.clientWidth - 48; // padding
+      const availH = els.stage.clientHeight - 48;
+      const w = state.width === 0 ? avail : Math.min(state.width, avail);
+      els.frame.style.width = w + 'px';
+      els.frame.style.height = availH + 'px';
+      els.readout.textContent = state.width === 0 ? Math.round(avail) + 'px' : state.width + 'px';
+    }
+
+    function selectEntry(id) {
+      state.activeId = id;
+      const entry = state.entries.find(e => e.id === id);
+      if (!entry) return;
+      els.preview.src = encodeURIComponent(entry.file).replace(/%2F/g, '/');
+      [...els.entries.children].forEach(btn =>
+        btn.setAttribute('aria-pressed', String(btn.dataset.id === id)));
+    }
+
+    function selectDevice(w) {
+      state.width = w;
+      [...els.devices.children].forEach(btn =>
+        btn.setAttribute('aria-pressed', String(Number(btn.dataset.w) === w)));
+      sizeFrame();
+    }
+
+    els.devices.addEventListener('click', e => {
+      const btn = e.target.closest('.seg');
+      if (btn) selectDevice(Number(btn.dataset.w));
+    });
+    window.addEventListener('resize', () => { if (state.activeId) sizeFrame(); });
+
+    async function init() {
+      let manifest;
+      try {
+        const res = await fetch('manifest.json', { cache: 'no-store' });
+        if (!res.ok) throw new Error(res.status);
+        manifest = await res.json();
+      } catch (err) {
+        els.subtitle.textContent = 'sem manifest.json';
+        els.empty.hidden = false;
+        els.empty.innerHTML = 'Não encontrei <code>manifest.json</code> neste diretório.<br>' +
+          'Gere ao menos um mockup e o manifest antes de abrir o viewer.';
+        return;
+      }
+
+      state.entries = Array.isArray(manifest.entries) ? manifest.entries : [];
+      els.title.firstChild.textContent = manifest.feature || 'Mockups';
+      els.subtitle.textContent = state.entries.length +
+        (state.entries.length === 1 ? ' versão' : ' versões');
+
+      if (state.entries.length === 0) {
+        els.empty.hidden = false;
+        els.empty.textContent = 'O manifest não lista nenhuma entrada ainda.';
+        return;
+      }
+
+      state.entries.forEach((entry, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'seg';
+        btn.type = 'button';
+        btn.dataset.id = entry.id;
+        btn.textContent = entry.label || entry.id;
+        btn.addEventListener('click', () => selectEntry(entry.id));
+        els.entries.appendChild(btn);
+      });
+      els.entriesGroup.hidden = false; // switcher visible even with a single version
+
+      els.frame.hidden = false;
+      selectDevice(0);                                   // default: desktop 100%
+      selectEntry(state.entries[state.entries.length - 1].id); // default: latest version
+    }
+
+    init();
+  </script>
+</body>
+</html>

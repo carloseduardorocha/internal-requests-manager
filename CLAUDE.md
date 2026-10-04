@@ -15,6 +15,7 @@ Produto de gestão de solicitações internas: API em Laravel (`backend/`), fron
 | Diagramas | `docs/architecture/` |
 | Modelo de dados | `docs/database.md` |
 | Contrato da API | `docs/api.md` |
+| Design system e mockups aprovados | `docs/design-system.md` e `docs/mockups/` |
 | Backlog | GitHub Issues, milestones por fase e o project "Board de Atividades" |
 
 Antes de propor escopo, leia a PRD. Não duplique informação entre documentos: cada assunto tem um lugar só, e os outros documentos apontam para ele.
