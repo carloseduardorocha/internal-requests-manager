@@ -5,6 +5,7 @@ namespace Tests\Feature\InternalRequests;
 use App\Models\InternalRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ListInternalRequestsTest extends TestCase
@@ -182,5 +183,50 @@ class ListInternalRequestsTest extends TestCase
             ->getJson('/api/internal-requests')
             ->assertJsonPath('data.0.can.update', true)
             ->assertJsonPath('data.0.can.delete', true);
+    }
+
+    public function test_requester_email_is_not_exposed(): void
+    {
+        $request = InternalRequest::factory()->create();
+
+        $this->actingAs(User::factory()->analyst()->create())
+            ->getJson('/api/internal-requests')
+            ->assertOk()
+            ->assertJsonPath('data.0.requester.id', $request->requester_id)
+            ->assertJsonMissingPath('data.0.requester.email');
+    }
+
+    public function test_empty_filters_fall_back_to_defaults(): void
+    {
+        $old = InternalRequest::factory()->create(['created_at' => now()->subDay()]);
+        $new = InternalRequest::factory()->create(['created_at' => now()]);
+
+        $response = $this->actingAs(User::factory()->admin()->create())
+            ->getJson('/api/internal-requests?status=&priority=&sort=&per_page=')
+            ->assertOk()
+            ->assertJsonPath('meta.per_page', 15);
+
+        $this->assertSame([$new->id, $old->id], array_column($response->json('data'), 'id'));
+    }
+
+    public function test_listing_does_not_run_more_queries_with_more_requests(): void
+    {
+        $admin = User::factory()->admin()->create();
+        InternalRequest::factory()->approved()->count(3)->create();
+
+        $countQueries = function () use ($admin): int {
+            DB::flushQueryLog();
+            DB::enableQueryLog();
+            $this->actingAs($admin)->getJson('/api/internal-requests')->assertOk();
+            $count = count(DB::getQueryLog());
+            DB::disableQueryLog();
+
+            return $count;
+        };
+
+        $before = $countQueries();
+        InternalRequest::factory()->approved()->count(7)->create();
+
+        $this->assertSame($before, $countQueries());
     }
 }

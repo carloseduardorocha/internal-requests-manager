@@ -155,4 +155,26 @@ class ShowInternalRequestTest extends TestCase
         $this->actingAs($admin)->getJson("/api/internal-requests/{$inReview->id}")
             ->assertJsonPath('data.can.update', false)->assertJsonPath('data.can.delete', false);
     }
+
+    public function test_other_people_emails_are_not_exposed(): void
+    {
+        $owner = User::factory()->create();
+        $analyst = User::factory()->analyst()->create();
+        $request = InternalRequest::factory()->approved($analyst)->create(['requester_id' => $owner->id]);
+        InternalRequestStatusChange::factory()->create([
+            'internal_request_id' => $request->id,
+            'from_status' => null,
+            'to_status' => InternalRequestStatus::Open,
+            'changed_by' => $owner->id,
+        ]);
+
+        $this->actingAs($analyst)
+            ->getJson("/api/internal-requests/{$request->id}")
+            ->assertOk()
+            ->assertJsonPath('data.decision.decided_by.id', $analyst->id)
+            ->assertJsonMissingPath('data.requester.email')
+            ->assertJsonMissingPath('data.assigned_to.email')
+            ->assertJsonMissingPath('data.decision.decided_by.email')
+            ->assertJsonMissingPath('data.history.0.changed_by.email');
+    }
 }
