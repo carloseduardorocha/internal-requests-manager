@@ -21,10 +21,11 @@ Antes de propor escopo, leia a PRD. Não duplique informação entre documentos:
 
 ## Git
 
-- Conventional Commits em inglês.
+- Conventional Commits em inglês, sempre pela skill `/git-commit`.
 - Raiz do repositório e `docs/`: commit e merge direto na `main`.
 - `backend/` e `frontend/`: sempre em branch própria e PR, fechando exatamente uma issue.
 - Push só quando o usuário pedir.
+- Sem atribuição de IA em commits, PRs, issues e comentários: nada de `Co-Authored-By`, "Generated with Claude Code" ou equivalentes.
 
 ## Issues
 

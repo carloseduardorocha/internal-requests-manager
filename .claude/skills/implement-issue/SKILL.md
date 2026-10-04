@@ -11,18 +11,17 @@ Executa o plano aprovado por `/plan-issue`. Esta sessão orquestra: ela delega o
 
 1. **Leia o plano:** `gh issue view <número> --comments` e use o comentário `## Plano` mais recente. Se não existir, pare e sugira `/plan-issue <número>`.
 2. **Prepare a branch** indicada no plano a partir da `main` atualizada. Issues só de `docs/` vão direto na `main`; nesse caso, pule para o passo 6.
-3. **Implemente:** chame o agente `implementer` passando o número da issue e o plano completo. Se ele voltar com uma dúvida, pergunte ao usuário (com uma opção recomendada) e chame-o de novo com a resposta. Commit: `feat(<área>): ...` (ou `chore`/`fix`, conforme o tipo).
-4. **Teste:** chame o agente `tester` com o número da issue e o plano. Rode a suíte completa e o lint com os comandos do README. Se um teste falhar por defeito no código, mande a falha ao `implementer` e repita. Commit: `test(<área>): ...`.
+3. **Implemente:** chame o agente `implementer` passando o número da issue e o plano completo. Se ele voltar com uma dúvida, pergunte ao usuário (com uma opção recomendada) e chame-o de novo com a resposta. Commit: `feat(<escopo>): ...` (ou `chore`/`fix`, conforme o tipo).
+4. **Teste:** chame o agente `tester` com o número da issue e o plano. Rode a suíte completa e o lint com os comandos do README. Se um teste falhar por defeito no código, mande a falha ao `implementer` e repita. Commit: `test(<escopo>): ...`.
 5. **Revise:** chame o agente `reviewer` com o número da issue. Envie os achados **bloqueantes** e **importantes** ao `implementer`, rode os testes de novo e, se a correção tiver sido grande, revise outra vez. Sugestões ficam a critério do usuário.
 6. **Documente:** chame o agente `documenter` com o número da issue e o plano. Commit: `docs: ...`.
 7. **Feche a checagem:** confira cada critério de aceite da issue e mostre ao usuário um resumo com os commits, o resultado dos testes, os achados do review (corrigidos e pendentes) e a checagem dos critérios.
-8. **Abra o PR só quando o usuário pedir:** faça o push e rode `gh pr create` com `Closes #<número>` no corpo, o resumo do passo 7 e a linha de atribuição do Claude Code.
+8. **Abra o PR só quando o usuário pedir:** faça o push e rode `gh pr create` com `Closes #<número>` e o resumo do passo 7 no corpo.
 9. **Retrospectiva** (veja abaixo).
 
 ## Commits
 
-- Conventional Commits em inglês, terminando com a linha `Co-Authored-By` indicada pelo sistema.
-- `git add` sempre pelo caminho exato. Nunca use `git add .`, `-A` ou uma pasta inteira: há arquivos pessoais não versionados no repositório.
+Todo commit desta skill passa pela skill `git-commit`, que exige a aprovação do usuário antes de executar.
 
 ## Retrospectiva
 
