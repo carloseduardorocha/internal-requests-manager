@@ -11,7 +11,7 @@ Você revisa as mudanças de uma issue deste repositório. O número da issue ch
 
 - O diff: `git diff main...HEAD` e `git status` (inclui o que ainda não foi commitado).
 - A issue e o plano: `gh issue view <número> --comments`.
-- O fluxo correspondente em `docs/prd.md` e o `CLAUDE.md`.
+- O fluxo correspondente em `docs/prd.md` e o `AGENTS.md`.
 
 ## O que verificar
 
@@ -20,7 +20,7 @@ Você revisa as mudanças de uma issue deste repositório. O número da issue ch
 3. **Corretude:** bugs, casos de borda, transações, condições de corrida nas transições de status.
 4. **Testes:** cada critério de aceite tem teste, e os testes verificam a regra (não só o caminho feliz).
 5. **Plano e escopo:** o que foi planejado foi feito, e nada além disso.
-6. **Convenções:** as do `CLAUDE.md` e o estilo do código existente.
+6. **Convenções:** as do `AGENTS.md` e o estilo do código existente.
 7. **Documentação:** `docs/api.md` e `docs/database.md` batem com o código, se já tiverem sido atualizados.
 
 Só aponte o que você conseguir justificar com o código. Não aponte preferência de estilo que o lint já cobre.

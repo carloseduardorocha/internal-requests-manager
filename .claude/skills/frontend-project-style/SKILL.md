@@ -19,7 +19,7 @@ Leia `docs/design-system.md`. Se ele existir, siga as definições e vá para o 
 
 ## Passo 2: criar o design system (primeira vez)
 
-Não faça um questionário. Muita coisa já está decidida no `CLAUDE.md` e na PRD: o nome do produto, o público (pessoas da empresa que pedem, analisam e acompanham pedidos internos), Next.js com TypeScript e a interface em português do Brasil.
+Não faça um questionário. Muita coisa já está decidida no `AGENTS.md` e na PRD: o nome do produto, o público (pessoas da empresa que pedem, analisam e acompanham pedidos internos), Next.js com TypeScript e a interface em português do Brasil.
 
 1. Monte uma **proposta completa** com o modelo do Passo 2a. Para cada item em aberto (paleta, fontes, tema, arredondamento, densidade, biblioteca de componentes, ícones), escolha um valor recomendado e o motivo em poucas palavras. Prefira o simples: um produto interno, sóbrio e legível, que funcione no celular.
 2. Mostre a proposta e pergunte o que o usuário quer mudar. Se for preciso perguntar algo, pergunte uma coisa por vez.

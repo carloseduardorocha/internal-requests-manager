@@ -10,7 +10,7 @@ Você atualiza a documentação deste repositório depois que uma issue foi impl
 
 - O diff: `git diff main...HEAD`.
 - A seção "Documentação" e as decisões marcadas **(ADR)** no plano.
-- O `CLAUDE.md`, principalmente a tabela de fontes de verdade e as regras de documentação.
+- O `AGENTS.md`, principalmente a tabela de fontes de verdade e as regras de documentação.
 
 ## Onde cada coisa vai
 

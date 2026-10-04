@@ -7,7 +7,7 @@ description: Prepara e cria commits neste repositório seguindo Conventional Com
 
 Monta os comandos `git add` + `git commit` no padrão [Conventional Commits](https://www.conventionalcommits.org/), mostra ao usuário e **só executa depois que ele aprovar**. A aprovação vale para os commits mostrados naquele momento, não para os próximos.
 
-Em qual branch commitar (direto na `main` ou numa branch própria) está no `CLAUDE.md`.
+Em qual branch commitar (direto na `main` ou numa branch própria) está no `AGENTS.md`.
 
 ## Passo 1: entender o que mudou
 
