@@ -109,4 +109,12 @@ class InternalRequest extends Model
     {
         return $this->hasMany(InternalRequestStatusChange::class)->orderBy('created_at')->orderBy('id');
     }
+
+    /**
+     * @return HasMany<NotificationLog, $this>
+     */
+    public function notificationLogs(): HasMany
+    {
+        return $this->hasMany(NotificationLog::class);
+    }
 }
