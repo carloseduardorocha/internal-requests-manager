@@ -62,7 +62,7 @@ Editar e excluir só valem com o pedido `open` (`409` caso contrário, inclusive
 
 | Parâmetro | Descrição |
 |---|---|
-| `search` | Texto no título e na descrição |
+| `search` | Texto no título e na descrição (máximo 255 caracteres; acima disso responde `422`) |
 | `status` | Filtra por status |
 | `priority` | Filtra por prioridade |
 | `sort` | `created_at` ou `-created_at` (padrão `-created_at`) |
