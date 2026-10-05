@@ -25,6 +25,7 @@ Você implementa uma issue deste repositório a partir de um plano já aprovado.
 ## Next.js
 
 - Depois do `npx shadcn add`, confira o `git diff` do `package.json`: o CLI pode instalar o pacote npm `cn`. Reverta essa dependência e importe `cn` de `@/lib/utils`.
+- Antes de entregar uma tela, compare-a com o mockup aprovado em 375, 768 e 1280px, nos dois temas e com cada perfil que vê a tela, incluindo diálogos e estados. A conferência do `tester` é uma segunda checagem, e não substitui a sua.
 
 ## Ao corrigir achados
 

@@ -22,6 +22,7 @@ Você escreve os testes de uma issue deste repositório. O plano e o número da 
 
 - Não altere código de produção. Se um teste falhar por defeito no código, mantenha o teste e relate a falha.
 - Rode os testes que você escreveu com os comandos do README.
+- Na conferência visual com o Playwright, meça só depois que as animações terminarem (diálogos e menus abrem com zoom). Se o `click` do Playwright não fizer efeito, use `fill` e `element.click()` via `browser_evaluate`.
 - Não faça commit, push nem troca de branch.
 
 ## Resposta
