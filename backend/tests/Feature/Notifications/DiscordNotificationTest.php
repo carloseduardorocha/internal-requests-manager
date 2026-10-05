@@ -259,6 +259,8 @@ class DiscordNotificationTest extends TestCase
     {
         config(['queue.default' => 'database']);
         Http::fake(['*' => Http::response(['message' => 'Unknown Webhook'], 500)]);
+        $this->freezeTime();
+        $backoff = [60, 300, 900];
 
         $id = $this->actingAs(User::factory()->create())->postJson('/api/internal-requests', $this->payload())
             ->assertCreated()->json('data.id');
@@ -270,8 +272,20 @@ class DiscordNotificationTest extends TestCase
             $this->assertDatabaseCount('notification_logs', $i);
 
             if ($i < 4) {
+                $wait = $backoff[$i - 1];
                 $this->assertSame(1, DB::table('jobs')->count(), "job released after attempt {$i}");
-                $this->travel(16)->minutes();
+                $this->assertSame(
+                    now()->addSeconds($wait)->getTimestamp(),
+                    (int) DB::table('jobs')->value('available_at'),
+                    "available_at after attempt {$i} must be now + {$wait}s",
+                );
+
+                $this->travel($wait - 1)->seconds();
+                $this->artisan('queue:work', ['--once' => true, '--sleep' => 0])->assertSuccessful();
+                $this->assertDatabaseCount('notification_logs', $i);
+                $this->assertSame(1, DB::table('jobs')->count(), "job must not run before {$wait}s");
+
+                $this->travel(1)->seconds();
             }
         }
 
