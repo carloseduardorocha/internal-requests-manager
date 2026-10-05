@@ -94,14 +94,14 @@ class DiscordNotificationTest extends TestCase
         $request = InternalRequest::factory()->create(['requester_id' => $owner->id]);
 
         $this->actingAs($analyst)->postJson("/api/internal-requests/{$request->id}/assign")->assertOk();
-        Notification::assertNothingSent();
+        $this->assertNothingSentToTheTeam();
 
         $open = InternalRequest::factory()->create(['requester_id' => $owner->id]);
         $this->actingAs($owner)->patchJson("/api/internal-requests/{$open->id}", ['title' => 'Outro título'])->assertOk();
-        Notification::assertNothingSent();
+        $this->assertNothingSentToTheTeam();
 
         $this->actingAs($owner)->deleteJson("/api/internal-requests/{$open->id}")->assertSuccessful();
-        Notification::assertNothingSent();
+        $this->assertNothingSentToTheTeam();
     }
 
     public function test_without_webhook_nothing_is_sent_queued_or_logged(): void
@@ -116,7 +116,7 @@ class DiscordNotificationTest extends TestCase
             $request = InternalRequest::factory()->inReview($analyst)->create();
             $this->decide($request, $analyst, 'approve');
 
-            Notification::assertNothingSent();
+            $this->assertNothingSentToTheTeam();
         }
 
         // Real queue and logging path, without fake.
@@ -152,7 +152,8 @@ class DiscordNotificationTest extends TestCase
         $this->decide($request, $analyst, 'reject');
 
         Http::assertNothingSent();
-        $this->assertSame(1, DB::table('jobs')->count());
+        // One job for the Discord channel and one for the requester's email.
+        $this->assertSame(2, DB::table('jobs')->count());
     }
 
     public function test_rolled_back_transaction_queues_nothing(): void
@@ -371,5 +372,11 @@ class DiscordNotificationTest extends TestCase
         $error = (string) DB::table('notification_logs')->value('error');
         $this->assertStringContainsString('status 500', $error);
         $this->assertStringNotContainsString('token', $error);
+    }
+
+    private function assertNothingSentToTheTeam(): void
+    {
+        Notification::assertSentOnDemandTimes(InternalRequestCreated::class, 0);
+        Notification::assertSentOnDemandTimes(InternalRequestDecided::class, 0);
     }
 }

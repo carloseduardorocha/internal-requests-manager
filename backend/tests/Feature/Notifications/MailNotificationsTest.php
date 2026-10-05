@@ -51,7 +51,7 @@ class MailNotificationsTest extends TestCase
         Notification::assertSentOnDemand(
             InternalRequestDecided::class,
             fn ($notification, $channels, AnonymousNotifiable $notifiable) => $channels === ['discord']
-                && $notifiable->routes['discord'] === 'https://discord.test/hook',
+                && $notifiable->routes['discord'] === 'team',
         );
         Notification::assertSentTimes(InternalRequestDecided::class, 2);
         Notification::assertSentTimes(InternalRequestAssumed::class, 0);
