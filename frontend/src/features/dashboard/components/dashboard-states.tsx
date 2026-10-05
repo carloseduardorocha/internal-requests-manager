@@ -1,7 +1,7 @@
 import { RefreshCw, TriangleAlert } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { CARD } from "@/features/dashboard/components/stat-cards";
+import { CARD, STAT_CARD } from "@/features/dashboard/components/stat-cards";
 import { StateMessage } from "@/features/requests/components/request-list-states";
 
 function Bar({ className }: { className: string }) {
@@ -16,14 +16,14 @@ export function DashboardSkeleton() {
         {Array.from({ length: 5 }, (_, index) => (
           <div
             key={index}
-            className={`${CARD} ${index === 0 ? "col-span-2 border-l-4 border-l-brand md:col-span-1" : ""}`}
+            className={`${CARD} ${STAT_CARD} ${index === 0 ? "col-span-2 border-l-4 border-l-brand md:col-span-1" : ""}`}
           >
-            <Bar className="h-3.5 w-3/5" />
-            <Bar className="mt-2 h-7 w-2/5" />
+            <Bar className={`h-3.5 ${index === 0 ? "w-[30%]" : "w-3/5"}`} />
+            <Bar className={`mt-2 h-7 ${index === 0 ? "w-[20%]" : "w-2/5"}`} />
           </div>
         ))}
       </div>
-      <div className={`${CARD} min-h-0 gap-4.5 p-5`}>
+      <div className={`${CARD} grid gap-4.5 p-5`}>
         <Bar className="h-3.5 w-30" />
         {Array.from({ length: 3 }, (_, index) => (
           <Bar key={index} className="h-3 w-full" />
@@ -35,7 +35,7 @@ export function DashboardSkeleton() {
 
 export function DashboardError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className={`${CARD} min-h-0 p-0`}>
+    <div className={`${CARD} p-5`}>
       <StateMessage
         icon={TriangleAlert}
         tone="error"

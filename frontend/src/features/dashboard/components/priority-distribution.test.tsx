@@ -28,7 +28,7 @@ describe("PriorityDistribution", () => {
     const widths = screen
       .getAllByRole("listitem")
       .map((item) => item.querySelectorAll("rect")[1].getAttribute("width"));
-    expect(widths).toEqual(["30", "43", "26"]);
+    expect(widths).toEqual(["30%", "43%", "26%"]);
   });
 
   it("shows the empty message and no bars when total is 0", () => {

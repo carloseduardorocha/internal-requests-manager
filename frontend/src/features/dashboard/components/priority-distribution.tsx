@@ -18,7 +18,7 @@ function percent(n: number, total: number) {
 
 export function PriorityDistribution({ data }: { data: Dashboard }) {
   return (
-    <section aria-labelledby="h-prio" className={`${CARD} min-h-0 p-5`}>
+    <section aria-labelledby="h-prio" className={`${CARD} p-5`}>
       <h2
         id="h-prio"
         className="mb-3 text-[13px] font-bold tracking-[0.06em] text-muted-foreground uppercase"
@@ -44,13 +44,25 @@ export function PriorityDistribution({ data }: { data: Dashboard }) {
               >
                 <PriorityBadge priority={priority} />
                 <svg
-                  viewBox="0 0 100 12"
-                  preserveAspectRatio="none"
                   aria-hidden="true"
-                  className="order-last col-span-full h-3 w-full overflow-hidden rounded-full border border-border md:order-none md:col-span-1"
+                  width="100%"
+                  height="12"
+                  className="col-span-full block overflow-hidden rounded-full border border-border md:col-span-1"
                 >
-                  <rect width="100" height="12" className="fill-background" />
-                  <rect width={pct} height="12" className={fills[priority]} />
+                  <rect
+                    width="100%"
+                    height="12"
+                    rx="6"
+                    className="fill-background"
+                  />
+                  {pct > 0 && (
+                    <rect
+                      width={`${pct}%`}
+                      height="12"
+                      rx="6"
+                      className={fills[priority]}
+                    />
+                  )}
                 </svg>
                 <span className="text-[13px] whitespace-nowrap text-muted-foreground md:text-right">
                   <b className="text-[15px] text-foreground">{n}</b> · {pct}%

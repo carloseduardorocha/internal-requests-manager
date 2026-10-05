@@ -7,7 +7,8 @@ import { statusStyles } from "@/features/requests/components/status-badge";
 import { statuses } from "@/features/requests/labels";
 
 export const CARD =
-  "relative grid min-h-28 content-start gap-1 rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm";
+  "rounded-lg border border-border bg-card text-card-foreground shadow-sm";
+export const STAT_CARD = "relative grid min-h-28 content-start gap-1 p-4";
 
 function plural(n: number) {
   return `${n} ${n === 1 ? "solicitação" : "solicitações"}`;
@@ -34,7 +35,7 @@ function StatCard({
     <Link
       href={href}
       aria-label={`${label}: ${plural(count)}. ${action}`}
-      className={`${CARD} transition-[border-color,box-shadow] hover:border-primary hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-hidden ${className}`}
+      className={`${CARD} ${STAT_CARD} group outline-hidden transition-[border-color,box-shadow] hover:border-primary hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid ${className}`}
     >
       <span className="inline-flex items-center gap-1.5 text-[13px] font-bold text-muted-foreground">
         <span
@@ -47,7 +48,7 @@ function StatCard({
       <span className="font-heading text-[32px] leading-[1.1] font-extrabold">
         {count}
       </span>
-      <span className="mt-auto inline-flex items-center gap-1 text-[13px] font-bold text-primary">
+      <span className="mt-auto inline-flex items-center gap-1 text-[13px] font-bold text-primary group-hover:underline">
         {action}
         <ArrowRight aria-hidden="true" className="size-4" />
       </span>
