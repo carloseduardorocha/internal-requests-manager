@@ -26,7 +26,13 @@ export function makeRequest(
       },
     ],
     created_at: "2026-10-03T13:00:00.000000Z",
-    can: { update: true, delete: true },
+    can: {
+      update: true,
+      delete: true,
+      assign: false,
+      approve: false,
+      reject: false,
+    },
     ...overrides,
   };
 }

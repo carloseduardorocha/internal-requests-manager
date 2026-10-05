@@ -38,7 +38,14 @@ export type InternalRequest = {
   // Only on the detail (the list does not bring it).
   history?: StatusChange[];
   created_at: string;
-  can: { update: boolean; delete: boolean };
+  // The analysis flags come with the analysis flow (docs/api.md, section 3).
+  can: {
+    update: boolean;
+    delete: boolean;
+    assign?: boolean;
+    approve?: boolean;
+    reject?: boolean;
+  };
 };
 
 export type PaginationMeta = {
