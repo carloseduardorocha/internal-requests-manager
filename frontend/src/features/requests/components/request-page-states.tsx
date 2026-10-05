@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { StateMessage } from "@/features/requests/components/request-list-states";
 
 const CARD = "rounded-lg border border-border bg-card shadow-sm";
+const STATE_CARD = `${CARD} p-5`;
 
 export function RequestDetailSkeleton() {
   return (
@@ -23,7 +24,7 @@ export function RequestDetailSkeleton() {
 
 export function RequestNotFound() {
   return (
-    <div className={CARD}>
+    <div className={STATE_CARD}>
       <StateMessage
         icon={Search}
         title="Solicitação não encontrada"
@@ -39,7 +40,7 @@ export function RequestNotFound() {
 
 export function RequestLoadError({ onRetry }: { onRetry: () => void }) {
   return (
-    <div className={CARD}>
+    <div className={STATE_CARD}>
       <StateMessage
         icon={TriangleAlert}
         tone="error"

@@ -58,7 +58,7 @@ export function RequestList({ requests }: { requests: InternalRequest[] }) {
     <div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
       <div
         aria-hidden="true"
-        className={`hidden gap-3 bg-background px-4 py-2.5 text-xs font-bold tracking-[0.05em] text-muted-foreground uppercase md:grid ${COLUMNS}`}
+        className={`hidden gap-3 bg-background px-4 py-2.5 text-xs leading-[18px] font-bold tracking-[0.05em] text-muted-foreground uppercase md:grid ${COLUMNS}`}
       >
         <span>Solicitação</span>
         <span>Prioridade</span>

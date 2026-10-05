@@ -37,7 +37,7 @@ export function StatusBadge({ status }: { status: InternalRequestStatus }) {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap ${colors}`}
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs leading-[18px] font-bold whitespace-nowrap ${colors}`}
     >
       <Icon aria-hidden="true" className="size-4 shrink-0" />
       {statusLabels[status]}

@@ -34,7 +34,9 @@ function Section({
 function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="grid gap-0.5">
-      <dt className="text-xs font-bold text-muted-foreground">{label}</dt>
+      <dt className="text-xs leading-[18px] font-bold text-muted-foreground">
+        {label}
+      </dt>
       <dd>{children}</dd>
     </div>
   );
@@ -90,7 +92,7 @@ export function RequestDetail({
           <StatusBadge status={request.status} />
           <PriorityBadge priority={request.priority} />
         </div>
-        <h1 className="font-heading text-2xl font-extrabold [overflow-wrap:anywhere]">
+        <h1 className="font-heading text-2xl leading-9 font-extrabold [overflow-wrap:anywhere]">
           {request.title}
         </h1>
         {(can.update || can.delete) && (
@@ -133,7 +135,7 @@ export function RequestDetail({
                 <>
                   {request.assigned_to.name}
                   {request.assigned_at && (
-                    <small className="block text-muted-foreground">
+                    <small className="block text-[12.5px] text-muted-foreground">
                       desde {formatDateTime(request.assigned_at)}
                     </small>
                   )}

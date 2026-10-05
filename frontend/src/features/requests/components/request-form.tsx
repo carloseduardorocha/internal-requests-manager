@@ -15,7 +15,7 @@ import {
   updateInternalRequest,
 } from "@/features/requests/api";
 import { PriorityBadge } from "@/features/requests/components/priority-badge";
-import { priorities } from "@/features/requests/labels";
+import { prioritiesAscending } from "@/features/requests/labels";
 import type {
   InternalRequest,
   InternalRequestPriority,
@@ -185,7 +185,7 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
             <legend className="mb-1.5 p-0 text-[13px] font-bold">
               Prioridade
             </legend>
-            {priorities.map((option) => (
+            {prioritiesAscending.map((option) => (
               <label
                 key={option}
                 className={`relative flex min-h-12 cursor-pointer items-center justify-center gap-1.5 rounded-lg border bg-background font-bold has-checked:border-primary has-checked:bg-accent has-checked:shadow-[inset_0_0_0_1px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring has-focus-visible:outline-solid ${errors.priority ? "border-destructive" : "border-border-strong"}`}

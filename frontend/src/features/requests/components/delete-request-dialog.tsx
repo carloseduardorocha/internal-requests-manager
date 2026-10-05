@@ -66,23 +66,23 @@ export function DeleteRequestDialog({
           Excluir
         </Button>
       </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
+      <AlertDialogContent className="gap-[18px]">
+        <AlertDialogHeader className="place-items-start gap-1.5 text-left">
           <AlertDialogTitle>Excluir esta solicitação?</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="text-left text-[15px]">
             “{request.title}” sai das listas e do painel. Não é possível
             desfazer.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={deleting} className="max-sm:flex-1">
+        <AlertDialogFooter className="flex-row gap-3">
+          <AlertDialogCancel disabled={deleting} className="max-[480px]:flex-1">
             Cancelar
           </AlertDialogCancel>
           <Button
             variant="destructive"
             disabled={deleting}
             onClick={handleConfirm}
-            className="max-sm:flex-1"
+            className="max-[480px]:flex-1"
           >
             {deleting ? (
               <Loader2 aria-hidden="true" className="animate-spin" />

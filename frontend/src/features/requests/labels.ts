@@ -11,7 +11,7 @@ export const statusLabels: Record<InternalRequestStatus, string> = {
   rejected: "Rejeitada",
 };
 
-// "Alta" first, as in the mockup filters and form.
+// "Alta" first, as in the mockup filters (the form lists them the other way round).
 export const priorityLabels: Record<InternalRequestPriority, string> = {
   high: "Alta",
   medium: "Média",
@@ -30,3 +30,6 @@ export const priorities = Object.keys(
 export const sorts = Object.keys(sortLabels) as InternalRequestSort[];
 
 export const DEFAULT_SORT: InternalRequestSort = "-created_at";
+
+// Order of the radios in the form (the mockup goes from low to high).
+export const prioritiesAscending = [...priorities].reverse();
