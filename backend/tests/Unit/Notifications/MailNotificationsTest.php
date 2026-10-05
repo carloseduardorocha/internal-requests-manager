@@ -130,6 +130,36 @@ class MailNotificationsTest extends TestCase
         $this->assertStringNotContainsString('<br', $text);
     }
 
+    public function test_title_whitespace_cannot_break_the_paragraph(): void
+    {
+        $request = InternalRequest::factory()->approved()->create(['title' => "Linha\n\n    codigo"]);
+
+        $html = (string) (new InternalRequestDecided($request))->toMail($request->requester)->render();
+
+        $this->assertStringNotContainsString('<pre>', $html);
+        $this->assertStringContainsString('"Linha codigo"', html_entity_decode($html));
+    }
+
+    public function test_user_names_are_shown_literally(): void
+    {
+        $name = 'Ana [x](https://evil.test) **b**';
+        $user = User::factory()->analyst()->create(['name' => $name]);
+
+        $assumed = InternalRequest::factory()->inReview($user)->create(['requester_id' => $user->id]);
+        $decided = InternalRequest::factory()->approved($user)->create(['requester_id' => $user->id]);
+
+        foreach ([
+            (new InternalRequestAssumed($assumed))->toMail($user),
+            (new InternalRequestDecided($decided))->toMail($user),
+        ] as $mail) {
+            $html = (string) $mail->render();
+
+            $this->assertStringNotContainsString('href="https://evil.test"', $html);
+            $this->assertStringNotContainsString('<strong>', $html);
+            $this->assertStringContainsString($name, html_entity_decode($html));
+        }
+    }
+
     private function text(MailMessage $mail): string
     {
         $lines = array_map(
