@@ -4,6 +4,7 @@ import { Clock, Eye, EyeOff, Loader2, Lock, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 
+import { FieldError } from "@/components/field-error";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -164,11 +165,7 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
             aria-invalid={fieldErrors.email ? true : undefined}
             aria-describedby={fieldErrors.email ? "email-error" : undefined}
           />
-          {fieldErrors.email && (
-            <span id="email-error" className="text-xs text-destructive">
-              {fieldErrors.email}
-            </span>
-          )}
+          <FieldError id="email-error" message={fieldErrors.email} />
         </div>
 
         <div className="grid gap-1.5">
@@ -201,11 +198,7 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
               )}
             </button>
           </div>
-          {fieldErrors.password && (
-            <span id="password-error" className="text-xs text-destructive">
-              {fieldErrors.password}
-            </span>
-          )}
+          <FieldError id="password-error" message={fieldErrors.password} />
         </div>
 
         <Label

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
+import { FieldError } from "@/components/field-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,16 +29,6 @@ const DESCRIPTION_MAX = 10000;
 
 type Field = "title" | "description" | "priority";
 type FieldErrors = Partial<Record<Field, string>>;
-
-function FieldError({ id, message }: { id: string; message?: string }) {
-  if (!message) return null;
-
-  return (
-    <span id={id} className="text-xs text-destructive">
-      {message}
-    </span>
-  );
-}
 
 // Same count as Laravel's mb_strlen: one per code point (an emoji is 1).
 function countChars(value: string): number {

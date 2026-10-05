@@ -3,6 +3,7 @@
 import { CircleCheck, CircleX } from "lucide-react";
 import { useRef, useState, type FormEvent } from "react";
 
+import { FieldError } from "@/components/field-error";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -78,9 +79,7 @@ export function DecisionForm({
           className="min-h-28"
         />
         {error ? (
-          <span id="justification-error" className="text-xs text-destructive">
-            {error}
-          </span>
+          <FieldError id="justification-error" message={error} />
         ) : (
           <p
             id="justification-help"
