@@ -30,4 +30,12 @@ abstract class InternalRequestNotification extends Notification implements Shoul
     }
 
     abstract public function event(): NotificationEvent;
+
+    /**
+     * Link to the request detail in the front-end.
+     */
+    protected function requestUrl(): string
+    {
+        return rtrim((string) config('app.frontend_url'), '/').'/requests/'.$this->internalRequest->id;
+    }
 }

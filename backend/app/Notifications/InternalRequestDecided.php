@@ -33,7 +33,7 @@ class InternalRequestDecided extends InternalRequestNotification
             'embeds' => [[
                 'title' => __($approved ? 'notifications.approved.title' : 'notifications.rejected.title', ['id' => $request->id]),
                 'description' => $request->title,
-                'url' => rtrim((string) config('app.frontend_url'), '/').'/requests/'.$request->id,
+                'url' => $this->requestUrl(),
                 'fields' => [
                     ['name' => __('notifications.fields.priority'), 'value' => __('notifications.priority.'.$request->priority->value), 'inline' => true],
                     ['name' => __('notifications.fields.requester'), 'value' => $request->requester->name, 'inline' => true],
