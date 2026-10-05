@@ -5,12 +5,16 @@ namespace App\Actions\InternalRequests;
 use App\Enums\InternalRequestStatus;
 use App\Models\InternalRequest;
 use App\Models\User;
+use App\Notifications\InternalRequestDecided;
+use App\Notifications\NotifyTeam;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class DecideInternalRequest
 {
+    public function __construct(private readonly NotifyTeam $notifyTeam) {}
+
     /**
      * Approves or rejects a request under review, with a justification (row locked during the check and the write).
      *
@@ -55,6 +59,8 @@ class DecideInternalRequest
             ]);
             $change->created_at = $now;
             $change->save();
+
+            $this->notifyTeam->handle(new InternalRequestDecided($current));
 
             return $current;
         });

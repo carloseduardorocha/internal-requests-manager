@@ -6,10 +6,14 @@ use App\Enums\InternalRequestPriority;
 use App\Enums\InternalRequestStatus;
 use App\Models\InternalRequest;
 use App\Models\User;
+use App\Notifications\InternalRequestCreated;
+use App\Notifications\NotifyTeam;
 use Illuminate\Support\Facades\DB;
 
 class CreateInternalRequest
 {
+    public function __construct(private readonly NotifyTeam $notifyTeam) {}
+
     /**
      * Creates an open request in the user's current area and records the first history row.
      */
@@ -30,6 +34,8 @@ class CreateInternalRequest
                 'to_status' => InternalRequestStatus::Open,
                 'changed_by' => $user->id,
             ]);
+
+            $this->notifyTeam->handle(new InternalRequestCreated($internalRequest));
 
             return $internalRequest;
         });
