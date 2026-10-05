@@ -7,6 +7,7 @@ use App\Enums\InternalRequestPriority;
 use App\Models\Area;
 use App\Models\InternalRequest;
 use App\Models\User;
+use App\Notifications\InternalRequestAssumed;
 use App\Notifications\InternalRequestCreated;
 use App\Notifications\InternalRequestDecided;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -95,13 +96,15 @@ class DiscordNotificationTest extends TestCase
 
         $this->actingAs($analyst)->postJson("/api/internal-requests/{$request->id}/assign")->assertOk();
         $this->assertNothingSentToTheTeam();
+        Notification::assertCount(1);
+        Notification::assertSentTo($owner, InternalRequestAssumed::class);
 
         $open = InternalRequest::factory()->create(['requester_id' => $owner->id]);
         $this->actingAs($owner)->patchJson("/api/internal-requests/{$open->id}", ['title' => 'Outro título'])->assertOk();
-        $this->assertNothingSentToTheTeam();
+        Notification::assertCount(1);
 
         $this->actingAs($owner)->deleteJson("/api/internal-requests/{$open->id}")->assertSuccessful();
-        $this->assertNothingSentToTheTeam();
+        Notification::assertCount(1);
     }
 
     public function test_without_webhook_nothing_is_sent_queued_or_logged(): void
@@ -154,6 +157,14 @@ class DiscordNotificationTest extends TestCase
         Http::assertNothingSent();
         // One job for the Discord channel and one for the requester's email.
         $this->assertSame(2, DB::table('jobs')->count());
+
+        $channels = DB::table('jobs')->pluck('payload')
+            ->map(fn (string $payload) => unserialize(json_decode($payload, true)['data']['command'])->channels)
+            ->flatten()
+            ->sort()
+            ->values()
+            ->all();
+        $this->assertSame(['discord', 'mail'], $channels);
     }
 
     public function test_rolled_back_transaction_queues_nothing(): void
