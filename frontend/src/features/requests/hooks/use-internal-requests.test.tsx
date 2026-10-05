@@ -75,6 +75,75 @@ describe("useInternalRequests", () => {
     expect(list).toHaveBeenLastCalledWith({ ...filters, page: 3 });
   });
 
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  type Page = Awaited<ReturnType<typeof listInternalRequests>>;
+
+  it("ignores a late answer for old filters that arrives after the new one", async () => {
+    const oldCall = deferred<Page>();
+    const newCall = deferred<Page>();
+    list.mockReturnValueOnce(oldCall.promise);
+    list.mockReturnValueOnce(newCall.promise);
+
+    const { result, rerender } = renderHook(({ f }) => useInternalRequests(f), {
+      initialProps: { f: filters },
+    });
+    rerender({ f: { ...filters, page: 3 } });
+    expect(list).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      newCall.resolve({
+        data: [makeRequest({ id: 2, title: "Nova" })],
+        meta: makeMeta({ current_page: 3 }),
+      });
+    });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data.map((r) => r.id)).toEqual([2]);
+
+    await act(async () => {
+      oldCall.resolve({
+        data: [makeRequest({ id: 1, title: "Antiga" })],
+        meta: makeMeta({ current_page: 2 }),
+      });
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe(false);
+    expect(result.current.data.map((r) => r.id)).toEqual([2]);
+    expect(result.current.meta?.current_page).toBe(3);
+  });
+
+  it("ignores a late failure for old filters that arrives after the new answer", async () => {
+    const oldCall = deferred<Page>();
+    const newCall = deferred<Page>();
+    list.mockReturnValueOnce(oldCall.promise);
+    list.mockReturnValueOnce(newCall.promise);
+
+    const { result, rerender } = renderHook(({ f }) => useInternalRequests(f), {
+      initialProps: { f: filters },
+    });
+    rerender({ f: { ...filters, page: 3 } });
+
+    await act(async () => {
+      newCall.resolve({ data: [makeRequest({ id: 2 })], meta: makeMeta() });
+    });
+    await act(async () => {
+      oldCall.reject(new Error("late"));
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe(false);
+    expect(result.current.data.map((r) => r.id)).toEqual([2]);
+  });
+
   it("does not refetch when the filters are equal but a new object", async () => {
     list.mockResolvedValue({ data: [], meta: makeMeta({ total: 0 }) });
 

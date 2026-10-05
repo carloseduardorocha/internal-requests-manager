@@ -83,4 +83,73 @@ describe("useInternalRequest", () => {
 
     expect(get).toHaveBeenLastCalledWith("2");
   });
+
+  function deferred<T>() {
+    let resolve!: (value: T) => void;
+    let reject!: (reason: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+      resolve = res;
+      reject = rej;
+    });
+    return { promise, resolve, reject };
+  }
+
+  type Item = Awaited<ReturnType<typeof getInternalRequest>>;
+
+  it("ignores a late answer for the old id that arrives after the new one", async () => {
+    const oldCall = deferred<Item>();
+    const newCall = deferred<Item>();
+    get.mockReturnValueOnce(oldCall.promise);
+    get.mockReturnValueOnce(newCall.promise);
+
+    const { result, rerender } = renderHook(
+      ({ id }) => useInternalRequest(id),
+      {
+        initialProps: { id: "1" },
+      },
+    );
+    rerender({ id: "2" });
+    expect(get).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      newCall.resolve(makeRequest({ id: 2 }));
+    });
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data?.id).toBe(2);
+
+    await act(async () => {
+      oldCall.resolve(makeRequest({ id: 1 }));
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBe(false);
+    expect(result.current.data?.id).toBe(2);
+  });
+
+  it("ignores a late 404 for the old id that arrives after the new answer", async () => {
+    const oldCall = deferred<Item>();
+    const newCall = deferred<Item>();
+    get.mockReturnValueOnce(oldCall.promise);
+    get.mockReturnValueOnce(newCall.promise);
+
+    const { result, rerender } = renderHook(
+      ({ id }) => useInternalRequest(id),
+      {
+        initialProps: { id: "1" },
+      },
+    );
+    rerender({ id: "2" });
+
+    await act(async () => {
+      newCall.resolve(makeRequest({ id: 2 }));
+    });
+    await act(async () => {
+      oldCall.reject(new ApiError(404, "Não encontrado"));
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.notFound).toBe(false);
+    expect(result.current.error).toBe(false);
+    expect(result.current.data?.id).toBe(2);
+  });
 });
