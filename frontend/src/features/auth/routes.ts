@@ -1,4 +1,4 @@
-import { LayoutDashboard, List, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, List, Plus, type LucideIcon } from "lucide-react";
 
 import type { Role } from "@/lib/types";
 
@@ -7,6 +7,8 @@ export type AppRoute = {
   label: string;
   icon: LucideIcon;
   roles: Role[];
+  // false keeps the entry out of the menu (it only declares who may open it).
+  nav?: boolean;
 };
 
 // Single source of truth for authenticated routes: the navigation and
@@ -24,6 +26,13 @@ export const appRoutes: AppRoute[] = [
     icon: List,
     roles: ["requester", "analyst", "admin"],
   },
+  {
+    href: "/requests/new",
+    label: "Nova solicitação",
+    icon: Plus,
+    roles: ["requester", "admin"],
+    nav: false,
+  },
 ];
 
 export function homeFor(role: Role): string {
@@ -36,7 +45,9 @@ export function matchesRoute(pathname: string, href: string): boolean {
 }
 
 export function routesFor(role: Role): AppRoute[] {
-  return appRoutes.filter((route) => route.roles.includes(role));
+  return appRoutes.filter(
+    (route) => route.nav !== false && route.roles.includes(role),
+  );
 }
 
 // The most specific (longest) matching entry wins, so the order of the map
