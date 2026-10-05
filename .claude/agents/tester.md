@@ -11,6 +11,7 @@ Você escreve os testes de uma issue deste repositório. O plano e o número da 
 - A fonte do que testar são os **critérios de aceite** da issue (`gh issue view <número>`), a tabela de testes do plano e as regras do fluxo em `docs/prd.md`.
 - Leia o código implementado só para saber nomes de rotas, classes e campos. Não copie o comportamento dele: o teste verifica o que a regra pede, não o que o código faz.
 - Cubra quem pode e quem não pode fazer cada ação (por perfil), os casos de erro e os limites das regras (por exemplo, editar fora de Aberta).
+- Quando o plano, a PRD ou o `docs/api.md` definem a mensagem de uma resposta de erro, o teste confere a mensagem, não só o status.
 
 ## Tipos de teste
 
