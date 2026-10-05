@@ -59,15 +59,32 @@ describe("useInternalRequest", () => {
     const { result } = renderHook(() => useInternalRequest("10"));
     await waitFor(() => expect(result.current.loading).toBe(false));
 
+    // The second answer stays pending, to look at the reload in between.
+    get.mockImplementationOnce(() => new Promise(() => {}));
     act(() => result.current.reload());
-    expect(result.current.loading).toBe(true);
-    await waitFor(() => expect(result.current.loading).toBe(false));
 
+    expect(result.current.loading).toBe(true);
+    // The same request keeps its data while it reloads.
+    expect(result.current.data?.id).toBe(10);
     expect(get).toHaveBeenCalledTimes(2);
   });
 
+  it("reload shows the new answer when it arrives", async () => {
+    get.mockResolvedValue(makeRequest({ id: 10, title: "Antes" }));
+
+    const { result } = renderHook(() => useInternalRequest("10"));
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    get.mockResolvedValue(makeRequest({ id: 10, title: "Depois" }));
+    act(() => result.current.reload());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(result.current.data?.title).toBe("Depois");
+  });
+
   it("refetches when the id changes", async () => {
-    get.mockResolvedValue(makeRequest());
+    get.mockImplementationOnce(async () => makeRequest({ id: 1 }));
+    get.mockImplementationOnce(async () => makeRequest({ id: 2 }));
 
     const { result, rerender } = renderHook(
       ({ id }) => useInternalRequest(id),
@@ -76,12 +93,16 @@ describe("useInternalRequest", () => {
       },
     );
     await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.data?.id).toBe(1);
 
     rerender({ id: "2" });
     expect(result.current.loading).toBe(true);
+    // Another request: never show the previous one while loading.
+    expect(result.current.data).toBeNull();
     await waitFor(() => expect(result.current.loading).toBe(false));
 
     expect(get).toHaveBeenLastCalledWith("2");
+    expect(result.current.data?.id).toBe(2);
   });
 
   function deferred<T>() {
