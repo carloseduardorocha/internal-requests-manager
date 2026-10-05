@@ -137,7 +137,7 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 | Quem assumiu e quando (fluxo 3) | `assigned_to` e `assigned_at` no próprio pedido (relação 1:1) |
 | Decisão, justificativa, data e autor | `decided_by`, `decided_at` e `decision_justification` no pedido |
 | Decisão definitiva | Só se decide um pedido `in_review`; depois, o status não aceita nova mudança |
-| Sem assumir duas vezes, nem editar ou excluir durante uma decisão | Assumir, decidir, editar e excluir usam atualização condicional dentro de uma transação, por exemplo `UPDATE ... WHERE status = 'open' AND deleted_at IS NULL`; se nenhuma linha for afetada, a API responde `409` |
+| Sem assumir duas vezes, nem editar ou excluir durante uma decisão | Assumir, decidir, editar e excluir travam a linha do pedido (`SELECT ... FOR UPDATE`) dentro de uma transação e checam o status; se ele não permitir a ação, a API responde `409` |
 | Histórico de cada mudança de status | Uma linha em `internal_request_status_changes` por mudança; a criação registra `from_status` nulo e `to_status = open` |
 | Painel por status e prioridade (fluxo 4) | Contagem por `status` e `priority`, usando os índices |
 | Pesquisa por texto | `LIKE` em `title` e `description` |

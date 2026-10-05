@@ -19,7 +19,7 @@ A primeira subida demora, por causa do `composer install` e do `npm ci`.
 | Mailpit | http://localhost:8025 |
 | MySQL | localhost:3306 (banco, usuário e senha no `docker-compose.yml`) |
 
-- Usuários do seed para uso local (senha `password`): `solicitante@empresa.com` (solicitante), `analista@empresa.com` (analista) e `admin@empresa.com` (administrador). Só são criados nos ambientes `local` e `testing`; as áreas são criadas sempre. O seed também cria pedidos abertos de exemplo para a solicitante.
+- Usuários do seed para uso local (senha `password`): `solicitante@empresa.com` (solicitante), `analista@empresa.com` (analista) e `admin@empresa.com` (administrador). Só são criados nos ambientes `local` e `testing`; as áreas são criadas sempre. O seed também cria pedidos de exemplo para a solicitante, abertos, em análise e decididos.
 - Parar: `docker compose down`. Zerar o banco: `docker compose down -v`.
 - O worker não recarrega o código: após mudar jobs, rode `docker compose restart worker`.
 
