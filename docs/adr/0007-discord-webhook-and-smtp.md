@@ -10,7 +10,7 @@ A [PRD](../prd.md) define dois canais: Discord para a equipe e e-mail para o sol
 ## Decisão
 
 - **Discord:** *webhook* do canal da equipe, configurado por variável de ambiente (`DISCORD_WEBHOOK_URL`, ver [README](../../README.md#discord)). Sem ela, nada é enviado: nenhum job é criado e nenhum log é gravado.
-- **E-mail:** SMTP padrão do Laravel. No desenvolvimento, o Mailpit do Docker recebe as mensagens.
+- **E-mail:** SMTP padrão do Laravel. No desenvolvimento, o Mailpit do Docker recebe as mensagens. Trocar para o Gmail ou outro SMTP é só configuração (variáveis `MAIL_*` no `backend/.env`, sem mudança de código): ver [README](../../README.md#e-mail).
 
 Alternativa descartada: um bot do Discord, que exige hospedagem e autenticação próprias para uma necessidade que o *webhook* resolve.
 

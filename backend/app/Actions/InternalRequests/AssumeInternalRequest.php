@@ -5,6 +5,7 @@ namespace App\Actions\InternalRequests;
 use App\Enums\InternalRequestStatus;
 use App\Models\InternalRequest;
 use App\Models\User;
+use App\Notifications\InternalRequestAssumed;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -44,6 +45,8 @@ class AssumeInternalRequest
             ]);
             $change->created_at = $now;
             $change->save();
+
+            $current->requester->notify(new InternalRequestAssumed($current));
 
             return $current;
         });

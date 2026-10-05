@@ -61,6 +61,7 @@ class DecideInternalRequest
             $change->save();
 
             $this->notifyTeam->handle(new InternalRequestDecided($current));
+            $current->requester->notify(new InternalRequestDecided($current));
 
             return $current;
         });

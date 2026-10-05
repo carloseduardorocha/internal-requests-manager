@@ -4,6 +4,8 @@ namespace App\Notifications;
 
 use App\Enums\InternalRequestStatus;
 use App\Enums\NotificationEvent;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Str;
 
 class InternalRequestDecided extends InternalRequestNotification
@@ -18,7 +20,33 @@ class InternalRequestDecided extends InternalRequestNotification
      */
     public function via(object $notifiable): array
     {
-        return ['discord'];
+        return $notifiable instanceof AnonymousNotifiable ? ['discord'] : ['mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $request = $this->internalRequest;
+        $approved = $request->status === InternalRequestStatus::Approved;
+
+        $mail = (new MailMessage)
+            ->subject(__($approved ? 'notifications.mail.approved.subject' : 'notifications.mail.rejected.subject', ['id' => $request->id]))
+            ->greeting($this->line('notifications.mail.greeting', ['name' => $request->requester->name]))
+            ->line($this->line($approved ? 'notifications.mail.approved.intro' : 'notifications.mail.rejected.intro', ['title' => $request->title]))
+            ->line($this->line('notifications.mail.decided.decided_by', ['name' => $request->decidedBy->name]))
+            ->line(__('notifications.mail.decided.justification'));
+
+        // One line per justification line, so the breaks survive in both the HTML and the text part.
+        foreach (preg_split('/\R/', (string) $request->decision_justification) ?: [] as $line) {
+            if (trim($line) !== '') {
+                $mail->line($this->text($line));
+            }
+        }
+
+        return $mail
+            ->action(
+                __('notifications.mail.action'),
+                $this->requestUrl(),
+            );
     }
 
     /**

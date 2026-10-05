@@ -1,0 +1,172 @@
+<?php
+
+namespace Tests\Unit\Notifications;
+
+use App\Models\InternalRequest;
+use App\Models\User;
+use App\Notifications\InternalRequestAssumed;
+use App\Notifications\InternalRequestDecided;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\Markdown;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Notifications\Messages\MailMessage;
+use Tests\TestCase;
+
+class MailNotificationsTest extends TestCase
+{
+    use RefreshDatabase;
+
+    public function test_assumed_goes_by_mail(): void
+    {
+        $notification = new InternalRequestAssumed(InternalRequest::factory()->inReview()->create());
+
+        $this->assertSame(['mail'], $notification->via(User::factory()->make()));
+    }
+
+    public function test_decided_goes_by_mail_to_a_user_and_by_discord_to_the_team(): void
+    {
+        $notification = new InternalRequestDecided(InternalRequest::factory()->approved()->create());
+
+        $this->assertSame(['mail'], $notification->via(User::factory()->make()));
+        $this->assertSame(['discord'], $notification->via(new AnonymousNotifiable));
+    }
+
+    public function test_assumed_is_queued_after_commit_with_four_tries_and_backoff(): void
+    {
+        $notification = new InternalRequestAssumed(InternalRequest::factory()->inReview()->create());
+
+        $this->assertInstanceOf(ShouldQueue::class, $notification);
+        $this->assertTrue($notification->afterCommit);
+        $this->assertSame(4, $notification->tries);
+        $this->assertSame([60, 300, 900], $notification->backoff());
+    }
+
+    public function test_assumed_mail_content(): void
+    {
+        $analyst = User::factory()->analyst()->create(['name' => 'Ana Analista']);
+        $request = InternalRequest::factory()->inReview($analyst)->create(['title' => 'Troca de monitor']);
+
+        $mail = (new InternalRequestAssumed($request))->toMail($request->requester);
+
+        $this->assertInstanceOf(MailMessage::class, $mail);
+        $this->assertSame("Seu pedido #{$request->id} está em análise", $mail->subject);
+        $this->assertSame('Ver pedido', $mail->actionText);
+        $this->assertSame("http://localhost:3000/requests/{$request->id}", $mail->actionUrl);
+        $text = $this->text($mail);
+        $this->assertStringContainsString('Troca de monitor', $text);
+        $this->assertStringContainsString('Ana Analista', $text);
+    }
+
+    public function test_decided_mail_content_when_approved(): void
+    {
+        $analyst = User::factory()->analyst()->create(['name' => 'Ana Analista']);
+        $request = InternalRequest::factory()->approved($analyst)->create(['title' => 'Troca de monitor']);
+
+        $mail = (new InternalRequestDecided($request))->toMail($request->requester);
+
+        $this->assertSame("Seu pedido #{$request->id} foi aprovado", $mail->subject);
+        $this->assertSame('Ver pedido', $mail->actionText);
+        $this->assertSame("http://localhost:3000/requests/{$request->id}", $mail->actionUrl);
+        $text = $this->text($mail);
+        $this->assertStringContainsString('Troca de monitor', $text);
+        $this->assertStringContainsString('Ana Analista', $text);
+        $this->assertStringContainsString($request->decision_justification, $text);
+    }
+
+    public function test_decided_mail_content_when_rejected(): void
+    {
+        $request = InternalRequest::factory()->rejected()->create();
+
+        $mail = (new InternalRequestDecided($request))->toMail($request->requester);
+
+        $this->assertSame("Seu pedido #{$request->id} foi rejeitado", $mail->subject);
+        $this->assertStringContainsString($request->decision_justification, $this->text($mail));
+    }
+
+    public function test_action_url_follows_the_configured_frontend_url(): void
+    {
+        config(['app.frontend_url' => 'https://app.example.com/']);
+        $request = InternalRequest::factory()->inReview()->create();
+
+        $mail = (new InternalRequestAssumed($request))->toMail($request->requester);
+
+        $this->assertSame("https://app.example.com/requests/{$request->id}", $mail->actionUrl);
+    }
+
+    public function test_decided_mail_shows_user_text_literally_and_keeps_line_breaks(): void
+    {
+        $request = InternalRequest::factory()->approved()->create([
+            'title' => '    # Título [x](https://evil.test)',
+            'decision_justification' => "[link](https://x)\n`código` e <b>negrito</b>\n    indentada quatro\n\tcom tab",
+        ]);
+
+        $html = (string) (new InternalRequestDecided($request))->toMail($request->requester)->render();
+
+        $this->assertStringContainsString('[link](https://x)</p>', html_entity_decode($html));
+        $this->assertStringContainsString('`código` e &lt;b&gt;negrito&lt;/b&gt;', $html);
+        $this->assertStringContainsString('# Título [x](https://evil.test)', html_entity_decode($html));
+        $this->assertStringNotContainsString('href="https://x"', $html);
+        $this->assertStringNotContainsString('href="https://evil.test"', $html);
+        $this->assertStringNotContainsString('<code>', $html);
+        $this->assertStringNotContainsString('<b>', $html);
+        $this->assertStringNotContainsString('<pre>', $html);
+        $this->assertStringContainsString('indentada quatro', $html);
+        $this->assertStringContainsString('com tab', $html);
+    }
+
+    public function test_decided_mail_text_part_keeps_justification_lines_without_markup(): void
+    {
+        $request = InternalRequest::factory()->approved()->create([
+            'decision_justification' => "Primeira linha.\nSegunda linha.",
+        ]);
+
+        $text = (string) app(Markdown::class)->renderText(
+            'notifications::email',
+            (new InternalRequestDecided($request))->toMail($request->requester)->data(),
+        );
+
+        $this->assertStringContainsString("Primeira linha.\n\nSegunda linha.", $text);
+        $this->assertStringNotContainsString('<br', $text);
+    }
+
+    public function test_title_whitespace_cannot_break_the_paragraph(): void
+    {
+        $request = InternalRequest::factory()->approved()->create(['title' => "Linha\n\n    codigo"]);
+
+        $html = (string) (new InternalRequestDecided($request))->toMail($request->requester)->render();
+
+        $this->assertStringNotContainsString('<pre>', $html);
+        $this->assertStringContainsString('"Linha codigo"', html_entity_decode($html));
+    }
+
+    public function test_user_names_are_shown_literally(): void
+    {
+        $name = 'Ana [x](https://evil.test) **b**';
+        $user = User::factory()->analyst()->create(['name' => $name]);
+
+        $assumed = InternalRequest::factory()->inReview($user)->create(['requester_id' => $user->id]);
+        $decided = InternalRequest::factory()->approved($user)->create(['requester_id' => $user->id]);
+
+        foreach ([
+            (new InternalRequestAssumed($assumed))->toMail($user),
+            (new InternalRequestDecided($decided))->toMail($user),
+        ] as $mail) {
+            $html = (string) $mail->render();
+
+            $this->assertStringNotContainsString('href="https://evil.test"', $html);
+            $this->assertStringNotContainsString('<strong>', $html);
+            $this->assertStringContainsString($name, html_entity_decode($html));
+        }
+    }
+
+    private function text(MailMessage $mail): string
+    {
+        $lines = array_map(
+            fn ($line) => html_entity_decode((string) $line, ENT_QUOTES, 'UTF-8'),
+            array_merge($mail->introLines, $mail->outroLines),
+        );
+
+        return implode("\n", array_merge([$mail->greeting], $lines));
+    }
+}
