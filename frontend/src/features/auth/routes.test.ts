@@ -57,6 +57,20 @@ describe("canAccess", () => {
     },
   );
 
+  it.each(["requester", "admin"] as const)(
+    "allows %s to create a request",
+    (role) => {
+      expect(canAccess(role, "/requests/new")).toBe(true);
+    },
+  );
+
+  it("blocks the analyst from creating a request but not from reading one", () => {
+    expect(canAccess("analyst", "/requests/new")).toBe(false);
+    expect(canAccess("analyst", "/requests")).toBe(true);
+    expect(canAccess("analyst", "/requests/123")).toBe(true);
+    expect(canAccess("analyst", "/requests/123/edit")).toBe(true);
+  });
+
   it("allows any role on paths outside the map", () => {
     expect(canAccess("requester", "/other")).toBe(true);
   });
@@ -83,6 +97,17 @@ describe("canAccessIn", () => {
 });
 
 describe("routesFor", () => {
+  it.each(["requester", "analyst", "admin"] as const)(
+    "keeps /requests/new out of the menu for %s",
+    (role) => {
+      expect(routesFor(role).map((r) => r.href)).not.toContain("/requests/new");
+    },
+  );
+
+  it("skips entries with nav false even when the role matches", () => {
+    expect(appRoutes.find((r) => r.href === "/requests/new")?.nav).toBe(false);
+  });
+
   it("lists only requests for the requester", () => {
     expect(routesFor("requester").map((r) => r.href)).toEqual(["/requests"]);
   });
