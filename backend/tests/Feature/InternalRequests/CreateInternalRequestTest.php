@@ -92,7 +92,8 @@ class CreateInternalRequestTest extends TestCase
     {
         $this->actingAs(User::factory()->analyst()->create())
             ->postJson('/api/internal-requests', $this->payload())
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertJsonPath('message', 'Esta ação não é autorizada.');
 
         $this->assertSame(0, InternalRequest::count());
     }

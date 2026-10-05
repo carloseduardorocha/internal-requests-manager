@@ -44,7 +44,8 @@ class DashboardTest extends TestCase
 
     public function test_requester_is_forbidden(): void
     {
-        $this->actingAs(User::factory()->create())->getJson('/api/dashboard')->assertForbidden();
+        $this->actingAs(User::factory()->create())->getJson('/api/dashboard')->assertForbidden()
+            ->assertJsonPath('message', 'Esta ação não é autorizada.');
     }
 
     public function test_numbers_match_the_database(): void
