@@ -4,6 +4,8 @@ namespace App\Notifications;
 
 use App\Enums\InternalRequestStatus;
 use App\Enums\NotificationEvent;
+use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Str;
 
 class InternalRequestDecided extends InternalRequestNotification
@@ -18,7 +20,24 @@ class InternalRequestDecided extends InternalRequestNotification
      */
     public function via(object $notifiable): array
     {
-        return ['discord'];
+        return $notifiable instanceof AnonymousNotifiable ? ['discord'] : ['mail'];
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $request = $this->internalRequest;
+        $approved = $request->status === InternalRequestStatus::Approved;
+
+        return (new MailMessage)
+            ->subject(__($approved ? 'notifications.mail.approved.subject' : 'notifications.mail.rejected.subject', ['id' => $request->id]))
+            ->greeting(__('notifications.mail.greeting', ['name' => $request->requester->name]))
+            ->line(__($approved ? 'notifications.mail.approved.intro' : 'notifications.mail.rejected.intro', ['title' => $request->title]))
+            ->line(__('notifications.mail.decided.decided_by', ['name' => $request->decidedBy->name]))
+            ->line(__('notifications.mail.decided.justification', ['justification' => (string) $request->decision_justification]))
+            ->action(
+                __('notifications.mail.action'),
+                rtrim((string) config('app.frontend_url'), '/').'/requests/'.$request->id,
+            );
     }
 
     /**
