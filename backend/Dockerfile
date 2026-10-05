@@ -16,5 +16,5 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["entrypoint.sh"]
-# --no-reload keeps the compose environment: without it, serve strips those variables when a .env exists.
+# --no-reload keeps the compose environment: without it, serve drops every variable outside its passthrough list when a .env exists.
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]
