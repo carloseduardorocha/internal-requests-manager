@@ -92,6 +92,7 @@ class DecideInternalRequestTest extends TestCase
 
         $this->assertSame('in_review', $request->fresh()->status->value);
         $this->assertNull($request->fresh()->decided_at);
+        $this->assertSame(0, $request->statusChanges()->count());
     }
 
     public function test_justification_is_required_and_limited(): void
@@ -184,6 +185,15 @@ class DecideInternalRequestTest extends TestCase
         $this->actingAs(User::factory()->admin()->create())
             ->postJson("/api/internal-requests/{$open->id}/approve", ['justification' => ''])
             ->assertUnprocessable();
+    }
+
+    public function test_missing_request_is_not_found(): void
+    {
+        foreach (array_keys(self::ACTIONS) as $action) {
+            $this->actingAs(User::factory()->admin()->create())
+                ->postJson("/api/internal-requests/999999/{$action}", ['justification' => 'ok'])
+                ->assertNotFound();
+        }
     }
 
     public function test_deleted_request_is_not_found(): void

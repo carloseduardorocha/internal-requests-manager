@@ -99,6 +99,13 @@ class AssumeInternalRequestTest extends TestCase
         }
     }
 
+    public function test_missing_request_is_not_found(): void
+    {
+        $this->actingAs(User::factory()->admin()->create())
+            ->postJson('/api/internal-requests/999999/assign')
+            ->assertNotFound();
+    }
+
     public function test_deleted_request_is_not_found(): void
     {
         $request = InternalRequest::factory()->create();
