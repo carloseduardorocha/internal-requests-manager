@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use App\Enums\InternalRequestStatus;
 use App\Enums\NotificationEvent;
+use App\Support\MailText;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Str;
@@ -31,9 +32,9 @@ class InternalRequestDecided extends InternalRequestNotification
         return (new MailMessage)
             ->subject(__($approved ? 'notifications.mail.approved.subject' : 'notifications.mail.rejected.subject', ['id' => $request->id]))
             ->greeting(__('notifications.mail.greeting', ['name' => $request->requester->name]))
-            ->line(__($approved ? 'notifications.mail.approved.intro' : 'notifications.mail.rejected.intro', ['title' => $request->title]))
+            ->line(MailText::line($approved ? 'notifications.mail.approved.intro' : 'notifications.mail.rejected.intro', ['title' => $request->title]))
             ->line(__('notifications.mail.decided.decided_by', ['name' => $request->decidedBy->name]))
-            ->line(__('notifications.mail.decided.justification', ['justification' => (string) $request->decision_justification]))
+            ->line(MailText::line('notifications.mail.decided.justification', ['justification' => $request->decision_justification]))
             ->action(
                 __('notifications.mail.action'),
                 rtrim((string) config('app.frontend_url'), '/').'/requests/'.$request->id,

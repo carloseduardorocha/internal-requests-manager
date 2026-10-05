@@ -93,8 +93,31 @@ class MailNotificationsTest extends TestCase
         $this->assertSame("https://app.example.com/requests/{$request->id}", $mail->actionUrl);
     }
 
+    public function test_decided_mail_shows_user_text_literally_and_keeps_line_breaks(): void
+    {
+        $request = InternalRequest::factory()->approved()->create([
+            'title' => '# Título [x](https://evil.test)',
+            'decision_justification' => "[link](https://x)\n`código` e <b>negrito</b>",
+        ]);
+
+        $html = (string) (new InternalRequestDecided($request))->toMail($request->requester)->render();
+
+        $this->assertStringContainsString('[link](https://x)<br>', html_entity_decode($html));
+        $this->assertStringContainsString('`código` e &lt;b&gt;negrito&lt;/b&gt;', $html);
+        $this->assertStringContainsString('# Título [x](https://evil.test)', html_entity_decode($html));
+        $this->assertStringNotContainsString('href="https://x"', $html);
+        $this->assertStringNotContainsString('href="https://evil.test"', $html);
+        $this->assertStringNotContainsString('<code>', $html);
+        $this->assertStringNotContainsString('<b>', $html);
+    }
+
     private function text(MailMessage $mail): string
     {
-        return implode("\n", array_merge([$mail->greeting], $mail->introLines, $mail->outroLines));
+        $lines = array_map(
+            fn ($line) => html_entity_decode((string) $line, ENT_QUOTES, 'UTF-8'),
+            array_merge($mail->introLines, $mail->outroLines),
+        );
+
+        return implode("\n", array_merge([$mail->greeting], $lines));
     }
 }
