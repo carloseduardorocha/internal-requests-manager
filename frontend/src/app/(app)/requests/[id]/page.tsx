@@ -17,20 +17,24 @@ function RequestDetailContent({ id }: { id: string }) {
   const { loading, notFound, data, reload } = useInternalRequest(id);
   const refocus = useRef(false);
 
-  // After a conflict the detail reloads under the closed dialog: the focus
-  // goes to the title instead of falling back to the body.
+  // After an action the detail reloads under the closed dialog: the focus goes
+  // to the justification field (the next step) or to the title, instead of
+  // falling back to the body.
   useEffect(() => {
     if (!refocus.current || loading) return;
     refocus.current = false;
-    document.getElementById("request-title")?.focus();
+    (
+      document.getElementById("justification") ??
+      document.getElementById("request-title")
+    )?.focus();
   }, [loading]);
 
-  function handleConflict() {
+  function handleRefresh() {
     refocus.current = true;
     reload();
   }
 
-  if (data) return <RequestDetail request={data} onConflict={handleConflict} />;
+  if (data) return <RequestDetail request={data} onRefresh={handleRefresh} />;
   if (loading) return <RequestDetailSkeleton />;
   if (notFound) return <RequestNotFound />;
   return <RequestLoadError onRetry={reload} />;

@@ -17,6 +17,11 @@ class InternalRequestPolicy
         return true;
     }
 
+    public function viewDashboard(User $user): bool
+    {
+        return in_array($user->role, [Role::Analyst, Role::Admin], true);
+    }
+
     public function view(User $user, InternalRequest $internalRequest): Response
     {
         if ($user->role !== Role::Requester || $internalRequest->requester_id === $user->id) {
