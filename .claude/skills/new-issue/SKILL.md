@@ -52,6 +52,8 @@ Para várias issues de uma vez, mostre todos os rascunhos numa lista só, peça 
 ## Contexto
 Por que isso existe, em uma ou duas frases. Fluxo da PRD: [<nome do fluxo>](https://github.com/carloseduardorocha/internal-requests-manager/blob/main/docs/prd.md#<âncora>).
 
+Em bugs, descreva o sintoma e como reproduzir. Uma causa ou correção que ainda não foi testada fica marcada como hipótese: quem confirma é o `/plan-issue`.
+
 ## O que fazer
 - Entregas concretas desta issue, só desta aplicação.
 
