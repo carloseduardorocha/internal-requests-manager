@@ -29,7 +29,7 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | 419 | Token CSRF inválido ou sessão expirada (inclui o login por cliente fora do SPA, que não tem sessão); o cliente renova o CSRF e volta ao login |
 | 403 | Perfil ou dono sem permissão |
 | 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante) |
-| 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação (atualização condicional sem efeito) |
+| 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação |
 | 422 | Validação falhou, filtro inválido na listagem ou credencial inválida no login |
 | 429 | Login bloqueado por tentativas; traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
 
@@ -92,7 +92,7 @@ Exemplo de detalhe (`200`):
       { "from_status": "in_review", "to_status": "approved", "changed_by": { "id": 5, "name": "Bruno Lima" }, "created_at": "2026-10-03T15:00:00Z" }
     ],
     "created_at": "2026-10-03T13:00:00Z",
-    "can": { "update": false, "delete": false }
+    "can": { "update": false, "delete": false, "assign": false, "approve": false, "reject": false }
   }
 }
 ```
@@ -107,7 +107,7 @@ Exemplo de detalhe (`200`):
 | `POST /api/internal-requests/{id}/approve` | Quem assumiu e administrador | `{justification}` | `200` pedido `approved` | `403`, `404`, `409`, `422` |
 | `POST /api/internal-requests/{id}/reject` | Quem assumiu e administrador | `{justification}` | `200` pedido `rejected` | `403`, `404`, `409`, `422` |
 
-`assign` exige o pedido `open`; `approve` e `reject` exigem `in_review`. A resposta tem o mesmo formato do detalhe.
+`assign` exige o pedido `open`; `approve` e `reject` exigem `in_review`. A resposta tem o mesmo formato do detalhe, e o pedido traz `can.assign`, `can.approve` e `can.reject`, calculados como `can.update` e `can.delete` (seção 2).
 
 ## 4. Painel
 

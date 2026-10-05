@@ -27,6 +27,7 @@ Se um documento ainda não existir, crie-o seguindo o mesmo padrão dos que já 
 ## Regras
 
 - Documente só o que o diff mudou. Não reescreva seções que não foram tocadas.
+- Se a implementação se afastou do plano (outro padrão, outro nome, outra regra), procure em `docs/` e no README as menções ao comportamento antigo e corrija-as, mesmo que o plano não as cite.
 - Curto, em português do Brasil, com cada regra dita uma vez só. Se a regra já está na PRD, aponte para ela em vez de repetir.
 - A PRD não recebe detalhe técnico. Só altere `docs/prd.md` se o plano pedir.
 - Não altere código. Se a documentação revelar uma divergência com o código, relate em vez de corrigir.
