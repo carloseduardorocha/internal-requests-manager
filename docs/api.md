@@ -123,6 +123,8 @@ Exemplo de detalhe (`200`):
 }
 ```
 
+A resposta não vem dentro de `data`. Todas as chaves de status e prioridade aparecem sempre, com `0` quando não há pedidos, e `total` é a soma de `by_status`. Pedidos excluídos ficam fora da contagem.
+
 ## 5. Notificações
 
 Sem endpoint: são disparadas pelas ações dos fluxos 2 e 3. Veja o [diagrama](architecture/notifications.md).
