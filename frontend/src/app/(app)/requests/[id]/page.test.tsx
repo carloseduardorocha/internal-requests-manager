@@ -101,7 +101,13 @@ describe("RequestDetailPage", () => {
     get.mockResolvedValue(
       makeRequest({
         status: "in_review",
-        can: { update: false, delete: false },
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: false,
+          reject: false,
+        },
       }),
     );
     render(<RequestDetailPage />);
@@ -120,7 +126,13 @@ describe("RequestDetailPage", () => {
     get.mockResolvedValueOnce(
       makeRequest({
         status: "in_review",
-        can: { update: false, delete: false },
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: false,
+          reject: false,
+        },
       }),
     );
     remove.mockRejectedValue(
@@ -174,7 +186,13 @@ describe("RequestDetailPage", () => {
     get.mockResolvedValueOnce(
       makeRequest({
         status: "in_review",
-        can: { update: false, delete: false },
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: false,
+          reject: false,
+        },
       }),
     );
     remove.mockRejectedValue(new ApiError(409, "Não está mais Aberto."));

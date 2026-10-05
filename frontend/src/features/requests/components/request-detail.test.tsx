@@ -15,7 +15,7 @@ vi.mock("@/features/requests/api", () => ({
 
 function renderDetail(overrides = {}) {
   return render(
-    <RequestDetail request={makeRequest(overrides)} onConflict={vi.fn()} />,
+    <RequestDetail request={makeRequest(overrides)} onRefresh={vi.fn()} />,
   );
 }
 

@@ -46,3 +46,24 @@ export async function updateInternalRequest(
 export function deleteInternalRequest(id: number): Promise<undefined> {
   return api.delete(`${BASE_PATH}/${id}`);
 }
+
+export async function assignInternalRequest(
+  id: number,
+): Promise<InternalRequest> {
+  const { data } = await api.post<{ data: InternalRequest }>(
+    `${BASE_PATH}/${id}/assign`,
+  );
+  return data;
+}
+
+export async function decideInternalRequest(
+  id: number,
+  decision: "approve" | "reject",
+  justification: string,
+): Promise<InternalRequest> {
+  const { data } = await api.post<{ data: InternalRequest }>(
+    `${BASE_PATH}/${id}/${decision}`,
+    { justification },
+  );
+  return data;
+}
