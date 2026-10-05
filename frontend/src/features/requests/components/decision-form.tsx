@@ -32,6 +32,7 @@ export function DecisionForm({
 }) {
   const [justification, setJustification] = useState("");
   const [error, setError] = useState<string>();
+  const [decided, setDecided] = useState(false);
   const [pending, setPending] = useState<DecisionKind | null>(null);
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -47,7 +48,6 @@ export function DecisionForm({
 
   function handleInvalid(message: string) {
     setError(message);
-    ref.current?.focus();
   }
 
   return (
@@ -64,6 +64,7 @@ export function DecisionForm({
           id="justification"
           ref={ref}
           maxLength={JUSTIFICATION_MAX}
+          readOnly={decided}
           value={justification}
           placeholder="Explique o motivo da decisão."
           onChange={(event) => {
@@ -96,6 +97,7 @@ export function DecisionForm({
           <Button
             type="button"
             variant="outline"
+            disabled={decided}
             onClick={() => ask("reject")}
             className="flex-1 text-destructive hover:border-destructive hover:bg-status-rejected-bg hover:text-destructive min-[481px]:flex-none"
           >
@@ -106,6 +108,7 @@ export function DecisionForm({
         {request.can.approve && (
           <Button
             type="button"
+            disabled={decided}
             onClick={() => ask("approve")}
             className="flex-1 min-[481px]:flex-none"
           >
@@ -121,6 +124,8 @@ export function DecisionForm({
         justification={justification.trim()}
         onClose={() => setPending(null)}
         onInvalid={handleInvalid}
+        onRestoreFocus={() => ref.current?.focus()}
+        onDecided={() => setDecided(true)}
         onRefresh={onRefresh}
       />
     </form>

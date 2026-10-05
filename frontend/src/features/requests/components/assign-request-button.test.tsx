@@ -49,6 +49,8 @@ describe("AssignRequestButton", () => {
     expect(assign).toHaveBeenCalledWith(10);
     expect(toastSuccess).toHaveBeenCalledWith("Análise assumida");
     expect(toastError).not.toHaveBeenCalled();
+    // Stays busy until the screen swaps the button out.
+    expect(screen.getByRole("button", { name: "Assumindo…" })).toBeDisabled();
   });
 
   it("is disabled with 'Assumindo…' while sending", async () => {

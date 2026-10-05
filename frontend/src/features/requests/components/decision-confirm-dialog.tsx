@@ -1,7 +1,7 @@
 "use client";
 
 import { CircleCheck, CircleX, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 
 import {
@@ -45,6 +45,8 @@ export function DecisionConfirmDialog({
   justification,
   onClose,
   onInvalid,
+  onRestoreFocus,
+  onDecided,
   onRefresh,
 }: {
   requestId: number;
@@ -52,9 +54,14 @@ export function DecisionConfirmDialog({
   justification: string;
   onClose: () => void;
   onInvalid: (message: string) => void;
+  // Called after the dialog closes on a 422, to focus the field.
+  onRestoreFocus: () => void;
+  // Called on success, so the form stays locked until the screen reloads.
+  onDecided: () => void;
   onRefresh: () => void;
 }) {
   const [deciding, setDeciding] = useState(false);
+  const focusField = useRef(false);
   // Keeps the copy while the dialog fades out after `decision` goes back to null.
   const [last, setLast] = useState<DecisionKind>("approve");
   if (decision && decision !== last) setLast(decision);
@@ -66,9 +73,12 @@ export function DecisionConfirmDialog({
     try {
       await decideInternalRequest(requestId, decision, justification);
       toast.success(copy.success);
+      onDecided();
       onClose();
       onRefresh();
     } catch (error) {
+      // On success the button stays busy until the screen swaps the form out.
+      setDeciding(false);
       onClose();
       // Expired session: the API client is already sending the user to the login.
       if (
@@ -78,6 +88,7 @@ export function DecisionConfirmDialog({
         return;
       }
       if (error instanceof ApiError && error.status === 422) {
+        focusField.current = true;
         onInvalid(error.errors.justification?.[0] ?? error.message);
         return;
       }
@@ -90,8 +101,6 @@ export function DecisionConfirmDialog({
       if (error instanceof ApiError && [403, 404, 409].includes(error.status)) {
         onRefresh();
       }
-    } finally {
-      setDeciding(false);
     }
   }
 
@@ -100,7 +109,15 @@ export function DecisionConfirmDialog({
       open={decision !== null}
       onOpenChange={(next) => !next && !deciding && onClose()}
     >
-      <AlertDialogContent className="gap-[18px]">
+      <AlertDialogContent
+        className="gap-[18px]"
+        onCloseAutoFocus={(event) => {
+          if (!focusField.current) return;
+          focusField.current = false;
+          event.preventDefault();
+          onRestoreFocus();
+        }}
+      >
         <AlertDialogHeader className="place-items-start gap-1.5 text-left">
           <AlertDialogTitle>{copy.title}</AlertDialogTitle>
           <AlertDialogDescription className="text-left text-[15px]">

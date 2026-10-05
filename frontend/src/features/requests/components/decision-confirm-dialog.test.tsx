@@ -16,6 +16,8 @@ const toastError = vi.fn();
 const onClose = vi.fn();
 const onInvalid = vi.fn();
 const onRefresh = vi.fn();
+const onRestoreFocus = vi.fn();
+const onDecided = vi.fn();
 
 vi.mock("sonner", () => ({
   toast: {
@@ -38,6 +40,8 @@ function renderDialog(decision: DecisionKind | null = "approve") {
       justification="Dentro do orçamento"
       onClose={onClose}
       onInvalid={onInvalid}
+      onRestoreFocus={onRestoreFocus}
+      onDecided={onDecided}
       onRefresh={onRefresh}
     />,
   );
@@ -45,9 +49,16 @@ function renderDialog(decision: DecisionKind | null = "approve") {
 
 describe("DecisionConfirmDialog", () => {
   beforeEach(() => {
-    [decide, toastSuccess, toastError, onClose, onInvalid, onRefresh].forEach(
-      (m) => m.mockReset(),
-    );
+    [
+      decide,
+      toastSuccess,
+      toastError,
+      onClose,
+      onInvalid,
+      onRefresh,
+      onRestoreFocus,
+      onDecided,
+    ].forEach((m) => m.mockReset());
   });
 
   it("renders nothing while there is no pending decision", () => {
@@ -117,6 +128,17 @@ describe("DecisionConfirmDialog", () => {
     ).toBeDisabled();
     expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("stays busy after a success, while the screen reloads", async () => {
+    decide.mockResolvedValue(makeRequest({ status: "approved" }));
+    renderDialog("approve");
+
+    await userEvent.click(screen.getByRole("button", { name: "Aprovar" }));
+
+    await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
+    expect(onDecided).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: "Aprovando…" })).toBeDisabled();
   });
 
   it("shows 'Rejeitando…' while rejecting", async () => {

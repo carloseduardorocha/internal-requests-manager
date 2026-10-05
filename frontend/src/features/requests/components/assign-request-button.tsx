@@ -26,6 +26,8 @@ export function AssignRequestButton({
       toast.success("Análise assumida");
       onRefresh();
     } catch (error) {
+      // On success the button stays busy until the screen swaps it out.
+      setAssigning(false);
       // Expired session: the API client is already sending the user to the login.
       if (
         error instanceof ApiError &&
@@ -42,8 +44,6 @@ export function AssignRequestButton({
       if (error instanceof ApiError && [403, 404, 409].includes(error.status)) {
         onRefresh();
       }
-    } finally {
-      setAssigning(false);
     }
   }
 

@@ -183,7 +183,32 @@ describe("DecisionForm", () => {
       "true",
     );
     expect(screen.getByLabelText("Justificativa")).toHaveValue("Texto");
+    await waitFor(() =>
+      expect(screen.getByLabelText("Justificativa")).toHaveFocus(),
+    );
     expect(onRefresh).not.toHaveBeenCalled();
+  });
+
+  it("locks the form after a successful decision, while the screen reloads", async () => {
+    decide.mockResolvedValue(makeRequest({ status: "approved" }));
+    renderForm();
+
+    await userEvent.type(screen.getByLabelText("Justificativa"), "Texto");
+    await userEvent.click(screen.getByRole("button", { name: "Aprovar" }));
+    const dialog = await screen.findByRole("alertdialog");
+    await userEvent.click(
+      Array.from(dialog.querySelectorAll("button")).find(
+        (b) => b.textContent === "Aprovar",
+      )!,
+    );
+
+    await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+    );
+    expect(screen.getByRole("button", { name: "Aprovar" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Rejeitar" })).toBeDisabled();
+    expect(screen.getByLabelText("Justificativa")).toHaveAttribute("readonly");
   });
 
   it("shows only the buttons the API allows", () => {
