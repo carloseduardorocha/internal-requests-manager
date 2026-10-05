@@ -18,6 +18,6 @@ class NotifyTeam
             return;
         }
 
-        NotificationFacade::route('discord', $url)->notify($notification);
+        NotificationFacade::route('discord', 'team')->notify($notification);
     }
 }

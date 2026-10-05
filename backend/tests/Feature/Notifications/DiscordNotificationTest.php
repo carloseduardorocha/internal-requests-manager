@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Notifications\InternalRequestCreated;
 use App\Notifications\InternalRequestDecided;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\ChannelManager;
@@ -59,7 +60,7 @@ class DiscordNotificationTest extends TestCase
             function ($notification, $channels, AnonymousNotifiable $notifiable) use ($id) {
                 return $notification->internalRequest->id === $id
                     && $channels === ['discord']
-                    && $notifiable->routes['discord'] === self::WEBHOOK;
+                    && $notifiable->routes['discord'] === 'team';
             },
         );
         Notification::assertSentOnDemandTimes(InternalRequestCreated::class, 1);
@@ -78,7 +79,7 @@ class DiscordNotificationTest extends TestCase
             Notification::assertSentOnDemand(
                 InternalRequestDecided::class,
                 fn ($notification, $channels, $notifiable) => $notification->internalRequest->id === $request->id
-                    && $notifiable->routes['discord'] === self::WEBHOOK,
+                    && $notifiable->routes['discord'] === 'team',
             );
             Notification::assertSentOnDemandTimes(InternalRequestDecided::class, 1);
             Notification::assertSentOnDemandTimes(InternalRequestCreated::class, 0);
@@ -304,5 +305,57 @@ class DiscordNotificationTest extends TestCase
         $this->assertSame([1, 2], $logs->pluck('attempt')->map(fn ($a) => (int) $a)->all());
         $this->assertSame(0, DB::table('failed_jobs')->count());
         $this->assertSame(0, DB::table('jobs')->count());
+    }
+
+    public function test_webhook_url_never_reaches_the_queue_payload(): void
+    {
+        config(['queue.default' => 'database']);
+        Http::fake();
+
+        $this->actingAs(User::factory()->create())->postJson('/api/internal-requests', $this->payload())->assertCreated();
+
+        $payload = (string) DB::table('jobs')->value('payload');
+        $this->assertNotSame('', $payload);
+        $this->assertStringNotContainsString('discord.test', $payload);
+        $this->assertStringNotContainsString('/token', $payload);
+    }
+
+    public function test_connection_error_does_not_leak_the_webhook_url(): void
+    {
+        config(['queue.default' => 'database']);
+        Http::fake(fn () => throw new ConnectionException('cURL error 28: Operation timed out for '.self::WEBHOOK));
+
+        $this->actingAs(User::factory()->create())->postJson('/api/internal-requests', $this->payload())->assertCreated();
+
+        for ($i = 1; $i <= 4; $i++) {
+            $this->artisan('queue:work', ['--once' => true, '--sleep' => 0])->assertSuccessful();
+            $this->travel(16)->minutes();
+        }
+
+        $errors = DB::table('notification_logs')->pluck('error');
+        $this->assertCount(4, $errors);
+        foreach ($errors as $error) {
+            $this->assertStringContainsString('Discord webhook connection failed', $error);
+            $this->assertStringNotContainsString('token', $error);
+        }
+
+        $failed = DB::table('failed_jobs')->first();
+        $this->assertNotNull($failed);
+        $this->assertStringNotContainsString('token', $failed->exception);
+        $this->assertStringNotContainsString('discord.test', $failed->exception);
+        $this->assertStringNotContainsString('token', $failed->payload);
+    }
+
+    public function test_http_error_status_does_not_leak_the_webhook_url(): void
+    {
+        config(['queue.default' => 'database']);
+        Http::fake(['*' => Http::response('bad', 500)]);
+
+        $this->actingAs(User::factory()->create())->postJson('/api/internal-requests', $this->payload())->assertCreated();
+        $this->artisan('queue:work', ['--once' => true, '--sleep' => 0])->assertSuccessful();
+
+        $error = (string) DB::table('notification_logs')->value('error');
+        $this->assertStringContainsString('status 500', $error);
+        $this->assertStringNotContainsString('token', $error);
     }
 }
