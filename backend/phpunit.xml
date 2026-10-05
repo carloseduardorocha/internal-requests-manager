@@ -31,6 +31,7 @@
         <server name="SANCTUM_STATEFUL_DOMAINS" value="localhost:3000" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+        <server name="DISCORD_WEBHOOK_URL" value="" force="true"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
