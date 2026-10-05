@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\InternalRequestStatus;
 use App\Models\InternalRequest;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -38,6 +39,9 @@ class InternalRequestResource extends JsonResource
             'can' => [
                 'update' => $this->isOpen() && $user->can('update', $this->resource),
                 'delete' => $this->isOpen() && $user->can('delete', $this->resource),
+                'assign' => $this->status->canTransitionTo(InternalRequestStatus::InReview) && $user->can('assign', $this->resource),
+                'approve' => $this->status->canTransitionTo(InternalRequestStatus::Approved) && $user->can('decide', $this->resource),
+                'reject' => $this->status->canTransitionTo(InternalRequestStatus::Rejected) && $user->can('decide', $this->resource),
             ],
         ];
     }

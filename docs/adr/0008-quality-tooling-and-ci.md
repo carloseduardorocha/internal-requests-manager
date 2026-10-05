@@ -10,7 +10,7 @@ O projeto é tratado como produto real: estilo, tipos e testes precisam ser veri
 ## Decisão
 
 - Back-end: Pint (estilo), Larastan no nível 6 (análise estática) e PHPUnit.
-- Os testes do back-end rodam no MySQL, no banco `testing`, e não em SQLite. O motivo é que a collation do `LIKE` (busca) e a atualização condicional (concorrência na análise) se comportam diferente entre bancos.
+- Os testes do back-end rodam no MySQL, no banco `testing`, e não em SQLite. O motivo é que a collation do `LIKE` (busca) e o travamento de linha (concorrência na análise) se comportam diferente entre bancos.
 - Front-end: ESLint, Prettier, `typecheck` (TypeScript) e Vitest com Testing Library.
 - CI no GitHub Actions: um workflow por aplicação (`backend.yml` e `frontend.yml`), filtrado por caminho, em pull request e em push na `main`.
 - Os comandos estão no [README](../../README.md#comandos).
