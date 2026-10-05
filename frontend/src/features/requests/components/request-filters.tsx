@@ -88,7 +88,10 @@ export function RequestFilters({
   // Follow changes that did not come from typing (clear, back button).
   if (filters.search !== seenSearch) {
     setSeenSearch(filters.search);
-    if (filters.search !== text.trim() && filters.search !== sentSearch) {
+    if (filters.search === sentSearch) {
+      // The URL caught up with the debounce: later changes are not ours.
+      setSentSearch(null);
+    } else if (filters.search !== text.trim()) {
       setText(filters.search);
     }
   }

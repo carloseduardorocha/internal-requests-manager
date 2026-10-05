@@ -272,4 +272,23 @@ describe("RequestFilters", () => {
 
     expect(screen.getByLabelText("Pesquisar")).toHaveValue("other");
   });
+
+  it("follows a later navigation back to a value it had already sent", () => {
+    const view = setup();
+    const withSearch = (search: string) => (
+      <RequestFilters filters={{ ...defaults, search }} meta={null} />
+    );
+
+    type("note");
+    advance(300);
+    expect(replace).toHaveBeenCalledTimes(1);
+
+    view.rerender(withSearch("note"));
+    view.rerender(withSearch("other"));
+    view.rerender(withSearch("note"));
+    advance(300);
+
+    expect(screen.getByLabelText("Pesquisar")).toHaveValue("note");
+    expect(replace).toHaveBeenCalledTimes(1);
+  });
 });
