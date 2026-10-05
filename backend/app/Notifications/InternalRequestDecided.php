@@ -29,12 +29,21 @@ class InternalRequestDecided extends InternalRequestNotification
         $request = $this->internalRequest;
         $approved = $request->status === InternalRequestStatus::Approved;
 
-        return (new MailMessage)
+        $mail = (new MailMessage)
             ->subject(__($approved ? 'notifications.mail.approved.subject' : 'notifications.mail.rejected.subject', ['id' => $request->id]))
             ->greeting(__('notifications.mail.greeting', ['name' => $request->requester->name]))
             ->line(MailText::line($approved ? 'notifications.mail.approved.intro' : 'notifications.mail.rejected.intro', ['title' => $request->title]))
             ->line(__('notifications.mail.decided.decided_by', ['name' => $request->decidedBy->name]))
-            ->line(MailText::line('notifications.mail.decided.justification', ['justification' => $request->decision_justification]))
+            ->line(__('notifications.mail.decided.justification'));
+
+        // One line per justification line, so the breaks survive in both the HTML and the text part.
+        foreach (preg_split('/\R/', (string) $request->decision_justification) ?: [] as $line) {
+            if (trim($line) !== '') {
+                $mail->line(MailText::text($line));
+            }
+        }
+
+        return $mail
             ->action(
                 __('notifications.mail.action'),
                 rtrim((string) config('app.frontend_url'), '/').'/requests/'.$request->id,

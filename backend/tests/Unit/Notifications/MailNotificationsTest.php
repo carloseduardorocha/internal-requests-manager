@@ -8,6 +8,7 @@ use App\Notifications\InternalRequestAssumed;
 use App\Notifications\InternalRequestDecided;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Mail\Markdown;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Messages\MailMessage;
 use Tests\TestCase;
@@ -102,13 +103,28 @@ class MailNotificationsTest extends TestCase
 
         $html = (string) (new InternalRequestDecided($request))->toMail($request->requester)->render();
 
-        $this->assertStringContainsString('[link](https://x)<br>', html_entity_decode($html));
+        $this->assertStringContainsString('[link](https://x)</p>', html_entity_decode($html));
         $this->assertStringContainsString('`código` e &lt;b&gt;negrito&lt;/b&gt;', $html);
         $this->assertStringContainsString('# Título [x](https://evil.test)', html_entity_decode($html));
         $this->assertStringNotContainsString('href="https://x"', $html);
         $this->assertStringNotContainsString('href="https://evil.test"', $html);
         $this->assertStringNotContainsString('<code>', $html);
         $this->assertStringNotContainsString('<b>', $html);
+    }
+
+    public function test_decided_mail_text_part_keeps_justification_lines_without_markup(): void
+    {
+        $request = InternalRequest::factory()->approved()->create([
+            'decision_justification' => "Primeira linha.\nSegunda linha.",
+        ]);
+
+        $text = (string) app(Markdown::class)->renderText(
+            'notifications::email',
+            (new InternalRequestDecided($request))->toMail($request->requester)->data(),
+        );
+
+        $this->assertStringContainsString("Primeira linha.\n\nSegunda linha.", $text);
+        $this->assertStringNotContainsString('<br', $text);
     }
 
     private function text(MailMessage $mail): string

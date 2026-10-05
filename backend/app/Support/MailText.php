@@ -10,17 +10,23 @@ class MailText
      * Make user-provided text show up literally in a markdown mail line.
      *
      * Every punctuation character becomes a numeric entity, which the markdown parser
-     * treats as plain text (no links, headings or code), and line breaks become <br>.
+     * treats as plain text (no links, headings or code).
      */
     public static function literal(?string $text): string
     {
-        $encoded = preg_replace_callback(
+        return (string) preg_replace_callback(
             '/[^\p{L}\p{N}\s]/u',
             fn (array $match): string => '&#'.mb_ord($match[0]).';',
             (string) $text,
         );
+    }
 
-        return nl2br((string) $encoded, false);
+    /**
+     * Show a user-provided line literally, as a whole mail line.
+     */
+    public static function text(string $text): HtmlString
+    {
+        return new HtmlString(self::literal($text));
     }
 
     /**

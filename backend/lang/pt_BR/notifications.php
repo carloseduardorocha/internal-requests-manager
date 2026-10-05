@@ -39,7 +39,7 @@ return [
         ],
         'decided' => [
             'decided_by' => 'Decidido por: :name.',
-            'justification' => 'Justificativa: :justification',
+            'justification' => 'Justificativa:',
         ],
     ],
 ];
