@@ -21,7 +21,8 @@ const NOT_ALLOWED_MESSAGE = "Você não pode editar esta solicitação.";
 function EditRequestContent({ id }: { id: string }) {
   const router = useRouter();
   const { loading, error, notFound, data, reload } = useInternalRequest(id);
-  const blocked = data !== null && !data.can.update;
+  const blockedStatus = data && !data.can.update ? data.status : null;
+  const blocked = blockedStatus !== null;
 
   // The API decides (`can.update` covers role, owner and Open status).
   useEffect(() => {
@@ -29,12 +30,10 @@ function EditRequestContent({ id }: { id: string }) {
     toast.error("Não foi possível editar", {
       id: "request-not-editable",
       description:
-        data?.status === "open" ? NOT_ALLOWED_MESSAGE : NOT_OPEN_MESSAGE,
+        blockedStatus === "open" ? NOT_ALLOWED_MESSAGE : NOT_OPEN_MESSAGE,
     });
     router.replace(`/requests/${id}`);
-    // Only the block itself matters: `data` is the same object while blocked.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blocked, id, router]);
+  }, [blockedStatus, blocked, id, router]);
 
   if (loading || blocked) {
     return (
