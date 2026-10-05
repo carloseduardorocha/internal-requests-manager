@@ -67,6 +67,23 @@ describe("LoginForm", () => {
     expect(login).not.toHaveBeenCalled();
   });
 
+  it("links each invalid field to its error through aria-invalid and aria-describedby", async () => {
+    const ui = userEvent.setup();
+    render(<LoginForm />);
+
+    await ui.click(screen.getByRole("button", { name: "Entrar" }));
+
+    const email = screen.getByLabelText("E-mail");
+    expect(email).toHaveAttribute("aria-invalid", "true");
+    expect(email).toHaveAttribute("aria-describedby", "email-error");
+    expect(email).toHaveAccessibleDescription("Informe um e-mail válido.");
+
+    const password = screen.getByLabelText("Senha");
+    expect(password).toHaveAttribute("aria-invalid", "true");
+    expect(password).toHaveAttribute("aria-describedby", "password-error");
+    expect(password).toHaveAccessibleDescription("Informe a senha.");
+  });
+
   it("shows an error for an invalid e-mail without calling the API", async () => {
     const ui = userEvent.setup();
     render(<LoginForm />);
