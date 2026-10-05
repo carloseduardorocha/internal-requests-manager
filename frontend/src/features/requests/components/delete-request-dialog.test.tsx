@@ -11,7 +11,7 @@ const replace = vi.fn();
 const push = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
-const onConflict = vi.fn();
+const onRefresh = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace, push }),
@@ -35,7 +35,7 @@ async function openDialog() {
   render(
     <DeleteRequestDialog
       request={{ id: 10, title: "Notebook novo" }}
-      onConflict={onConflict}
+      onRefresh={onRefresh}
     />,
   );
   await ui.click(screen.getByRole("button", { name: "Excluir" }));
@@ -50,7 +50,7 @@ describe("DeleteRequestDialog", () => {
     push.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
-    onConflict.mockReset();
+    onRefresh.mockReset();
   });
 
   it("asks for confirmation and does not call the API on open", async () => {
@@ -87,7 +87,7 @@ describe("DeleteRequestDialog", () => {
     expect(remove).toHaveBeenCalledWith(10);
     expect(toastSuccess).toHaveBeenCalledWith("Solicitação excluída");
     expect(push).not.toHaveBeenCalled();
-    expect(onConflict).not.toHaveBeenCalled();
+    expect(onRefresh).not.toHaveBeenCalled();
   });
 
   it("on 409 shows the API message, reloads the screen and does not leave it", async () => {
@@ -101,7 +101,7 @@ describe("DeleteRequestDialog", () => {
 
     await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
 
-    await waitFor(() => expect(onConflict).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(onRefresh).toHaveBeenCalledTimes(1));
     expect(toastError).toHaveBeenCalledWith(
       "Não foi possível excluir",
       expect.objectContaining({
@@ -120,7 +120,7 @@ describe("DeleteRequestDialog", () => {
     await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
 
     await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1));
-    expect(onConflict).not.toHaveBeenCalled();
+    expect(onRefresh).not.toHaveBeenCalled();
     expect(replace).not.toHaveBeenCalled();
   });
 
@@ -134,7 +134,7 @@ describe("DeleteRequestDialog", () => {
     expect(toastError.mock.calls[0][1]).toEqual({
       description: "Não foi possível concluir a ação. Tente novamente.",
     });
-    expect(onConflict).not.toHaveBeenCalled();
+    expect(onRefresh).not.toHaveBeenCalled();
   });
 
   it.each([401, 419])(
@@ -147,7 +147,7 @@ describe("DeleteRequestDialog", () => {
 
       await waitFor(() => expect(remove).toHaveBeenCalled());
       expect(toastError).not.toHaveBeenCalled();
-      expect(onConflict).not.toHaveBeenCalled();
+      expect(onRefresh).not.toHaveBeenCalled();
     },
   );
 

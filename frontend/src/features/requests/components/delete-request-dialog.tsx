@@ -25,10 +25,10 @@ import { ApiError } from "@/lib/api";
 // the API message and asks the screen to reload.
 export function DeleteRequestDialog({
   request,
-  onConflict,
+  onRefresh,
 }: {
   request: Pick<InternalRequest, "id" | "title">;
-  onConflict: () => void;
+  onRefresh: () => void;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -56,7 +56,7 @@ export function DeleteRequestDialog({
             ? error.message
             : "Não foi possível concluir a ação. Tente novamente.",
       });
-      if (error instanceof ApiError && error.status === 409) onConflict();
+      if (error instanceof ApiError && error.status === 409) onRefresh();
     }
   }
 

@@ -3,6 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/button";
+import { AssignRequestButton } from "@/features/requests/components/assign-request-button";
+import { DecisionForm } from "@/features/requests/components/decision-form";
 import { DeleteRequestDialog } from "@/features/requests/components/delete-request-dialog";
 import { PriorityBadge } from "@/features/requests/components/priority-badge";
 import { StatusBadge } from "@/features/requests/components/status-badge";
@@ -42,15 +44,35 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   );
 }
 
-function DecisionSection({ request }: { request: InternalRequest }) {
-  const { decision, status } = request;
+function DecisionSection({
+  request,
+  onRefresh,
+}: {
+  request: InternalRequest;
+  onRefresh: () => void;
+}) {
+  const { decision, status, can } = request;
 
   if (!decision) {
     return (
       <Section title="Decisão" className="border-l-4 border-l-border-strong">
-        <p className="text-muted-foreground italic">
-          Aguardando {status === "open" ? "análise" : "decisão"}.
-        </p>
+        {can.approve || can.reject ? (
+          <DecisionForm request={request} onRefresh={onRefresh} />
+        ) : (
+          <p className="text-muted-foreground italic">
+            {status === "open" || !request.assigned_to ? (
+              "Aguardando um analista assumir."
+            ) : (
+              <>
+                Em análise com{" "}
+                <b className="text-foreground not-italic">
+                  {request.assigned_to.name}
+                </b>
+                . Aguardando a decisão.
+              </>
+            )}
+          </p>
+        )}
       </Section>
     );
   }
@@ -73,14 +95,14 @@ function DecisionSection({ request }: { request: InternalRequest }) {
   );
 }
 
-// The actions come from the API (`can`): it already considers the role, the
-// owner and the Open status.
+// The actions come from the API (`can`): it already considers the role, who
+// took the request and the status.
 export function RequestDetail({
   request,
-  onConflict,
+  onRefresh,
 }: {
   request: InternalRequest;
-  onConflict: () => void;
+  onRefresh: () => void;
 }) {
   const { can } = request;
 
@@ -99,8 +121,14 @@ export function RequestDetail({
         >
           {request.title}
         </h1>
-        {(can.update || can.delete) && (
+        {(can.assign || can.update || can.delete) && (
           <div className="flex flex-wrap gap-2">
+            {can.assign && (
+              <AssignRequestButton
+                requestId={request.id}
+                onRefresh={onRefresh}
+              />
+            )}
             {can.update && (
               <Button asChild variant="outline" className="max-[480px]:flex-1">
                 <Link href={`/requests/${request.id}/edit`}>
@@ -110,7 +138,7 @@ export function RequestDetail({
               </Button>
             )}
             {can.delete && (
-              <DeleteRequestDialog request={request} onConflict={onConflict} />
+              <DeleteRequestDialog request={request} onRefresh={onRefresh} />
             )}
           </div>
         )}
@@ -123,7 +151,7 @@ export function RequestDetail({
               {request.description}
             </p>
           </Section>
-          <DecisionSection request={request} />
+          <DecisionSection request={request} onRefresh={onRefresh} />
           <Section title="Histórico">
             <StatusTimeline history={request.history ?? []} />
           </Section>

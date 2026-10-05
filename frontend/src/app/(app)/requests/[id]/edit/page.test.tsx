@@ -53,7 +53,13 @@ describe("EditRequestPage", () => {
       makeRequest({
         id: 10,
         title: "Notebook novo",
-        can: { update: true, delete: true },
+        can: {
+          update: true,
+          delete: true,
+          assign: false,
+          approve: false,
+          reject: false,
+        },
       }),
     );
     render(<EditRequestPage />);
@@ -76,7 +82,13 @@ describe("EditRequestPage", () => {
     get.mockResolvedValue(
       makeRequest({
         status: "in_review",
-        can: { update: false, delete: false },
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: false,
+          reject: false,
+        },
       }),
     );
     render(<EditRequestPage />);
@@ -125,7 +137,16 @@ describe("EditRequestPage", () => {
 
   it("explains a block on an Open request as a permission problem", async () => {
     get.mockResolvedValue(
-      makeRequest({ status: "open", can: { update: false, delete: false } }),
+      makeRequest({
+        status: "open",
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: false,
+          reject: false,
+        },
+      }),
     );
     render(<EditRequestPage />);
 
