@@ -10,14 +10,15 @@ class MailText
      * Make user-provided text show up literally in a markdown mail line.
      *
      * Every punctuation character becomes a numeric entity, which the markdown parser
-     * treats as plain text (no links, headings or code).
+     * treats as plain text (no links, headings or code). Surrounding whitespace is
+     * trimmed, since HtmlString lines skip the trim and indentation would open a code block.
      */
     public static function literal(?string $text): string
     {
         return (string) preg_replace_callback(
             '/[^\p{L}\p{N}\s]/u',
             fn (array $match): string => '&#'.mb_ord($match[0]).';',
-            (string) $text,
+            trim((string) $text),
         );
     }
 

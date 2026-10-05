@@ -97,8 +97,8 @@ class MailNotificationsTest extends TestCase
     public function test_decided_mail_shows_user_text_literally_and_keeps_line_breaks(): void
     {
         $request = InternalRequest::factory()->approved()->create([
-            'title' => '# Título [x](https://evil.test)',
-            'decision_justification' => "[link](https://x)\n`código` e <b>negrito</b>",
+            'title' => '    # Título [x](https://evil.test)',
+            'decision_justification' => "[link](https://x)\n`código` e <b>negrito</b>\n    indentada quatro\n\tcom tab",
         ]);
 
         $html = (string) (new InternalRequestDecided($request))->toMail($request->requester)->render();
@@ -110,6 +110,9 @@ class MailNotificationsTest extends TestCase
         $this->assertStringNotContainsString('href="https://evil.test"', $html);
         $this->assertStringNotContainsString('<code>', $html);
         $this->assertStringNotContainsString('<b>', $html);
+        $this->assertStringNotContainsString('<pre>', $html);
+        $this->assertStringContainsString('indentada quatro', $html);
+        $this->assertStringContainsString('com tab', $html);
     }
 
     public function test_decided_mail_text_part_keeps_justification_lines_without_markup(): void
