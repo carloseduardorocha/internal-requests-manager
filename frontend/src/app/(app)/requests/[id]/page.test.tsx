@@ -192,4 +192,20 @@ describe("RequestDetailPage", () => {
       expect(screen.getByRole("heading", { level: 1 })).toHaveFocus(),
     );
   });
+
+  it("moves the focus to the 'não encontrada' title when the reload after a 409 answers 404", async () => {
+    get.mockResolvedValueOnce(makeRequest());
+    get.mockRejectedValueOnce(new ApiError(404, "Não encontrado"));
+    remove.mockRejectedValue(new ApiError(409, "Não está mais Aberto."));
+    const ui = userEvent.setup();
+    render(<RequestDetailPage />);
+
+    await ui.click(await screen.findByRole("button", { name: "Excluir" }));
+    const dialog = await screen.findByRole("alertdialog");
+    await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
+
+    await waitFor(() =>
+      expect(screen.getByText("Solicitação não encontrada")).toHaveFocus(),
+    );
+  });
 });

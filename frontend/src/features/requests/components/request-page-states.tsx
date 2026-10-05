@@ -28,6 +28,7 @@ export function RequestNotFound() {
       <StateMessage
         icon={Search}
         title="Solicitação não encontrada"
+        titleId="request-title"
         text="Ela pode ter sido excluída, ou o endereço está errado."
       >
         <Button asChild variant="outline">

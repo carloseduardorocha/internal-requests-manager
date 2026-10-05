@@ -21,12 +21,15 @@ export function StateMessage({
   title,
   text,
   tone = "neutral",
+  titleId,
   children,
 }: {
   icon: LucideIcon;
   title: string;
   text: string;
   tone?: "neutral" | "error";
+  // Makes the title a focus target (for a screen that reloads into this state).
+  titleId?: string;
   children?: ReactNode;
 }) {
   return (
@@ -35,7 +38,13 @@ export function StateMessage({
         aria-hidden="true"
         className={`size-9 ${tone === "error" ? "text-destructive" : ""}`}
       />
-      <b className="text-base text-foreground">{title}</b>
+      <b
+        id={titleId}
+        tabIndex={titleId ? -1 : undefined}
+        className="text-base text-foreground outline-hidden"
+      >
+        {title}
+      </b>
       <p className="max-w-[360px]">{text}</p>
       {children}
     </div>
