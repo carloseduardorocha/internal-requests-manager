@@ -9,7 +9,7 @@ import {
 import { statusLabels } from "@/features/requests/labels";
 import type { InternalRequestStatus } from "@/features/requests/types";
 
-const styles: Record<
+export const statusStyles: Record<
   InternalRequestStatus,
   { icon: LucideIcon; colors: string }
 > = {
@@ -33,7 +33,7 @@ const styles: Record<
 
 // Icon, text and color together: the status is never only a color.
 export function StatusBadge({ status }: { status: InternalRequestStatus }) {
-  const { icon: Icon, colors } = styles[status];
+  const { icon: Icon, colors } = statusStyles[status];
 
   return (
     <span
