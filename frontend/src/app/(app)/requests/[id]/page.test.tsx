@@ -12,9 +12,10 @@ import { ApiError } from "@/lib/api";
 import RequestDetailPage from "./page";
 
 const replace = vi.fn();
+let routeId = "10";
 
 vi.mock("next/navigation", () => ({
-  useParams: () => ({ id: "10" }),
+  useParams: () => ({ id: routeId }),
   useRouter: () => ({ replace, push: vi.fn() }),
 }));
 
@@ -35,6 +36,8 @@ describe("RequestDetailPage", () => {
     get.mockReset();
     remove.mockReset();
     replace.mockReset();
+    routeId = "10";
+    sessionStorage.clear();
   });
 
   it("shows the skeleton while loading", () => {
@@ -140,5 +143,53 @@ describe("RequestDetailPage", () => {
       ).not.toBeInTheDocument(),
     );
     expect(replace).not.toHaveBeenCalled();
+  });
+
+  it.each(["abc", "12x", "-1", "1.5"])(
+    "shows 'não encontrada' without calling the API for the id %s",
+    async (id) => {
+      routeId = id;
+      render(<RequestDetailPage />);
+
+      expect(
+        await screen.findByText("Solicitação não encontrada"),
+      ).toBeInTheDocument();
+      expect(get).not.toHaveBeenCalled();
+    },
+  );
+
+  it("goes back to the list with the filters it had", async () => {
+    sessionStorage.setItem("requests:list-query", "status=open&page=2");
+    get.mockResolvedValue(makeRequest());
+    render(<RequestDetailPage />);
+
+    await screen.findByRole("heading", { level: 1 });
+    expect(
+      screen.getByRole("link", { name: "Voltar para a lista" }),
+    ).toHaveAttribute("href", "/requests?status=open&page=2");
+  });
+
+  it("keeps the detail on screen and moves the focus to the title after a 409", async () => {
+    get.mockResolvedValueOnce(makeRequest());
+    get.mockResolvedValueOnce(
+      makeRequest({
+        status: "in_review",
+        can: { update: false, delete: false },
+      }),
+    );
+    remove.mockRejectedValue(new ApiError(409, "Não está mais Aberto."));
+    const ui = userEvent.setup();
+    const { container } = render(<RequestDetailPage />);
+
+    await ui.click(await screen.findByRole("button", { name: "Excluir" }));
+    const dialog = await screen.findByRole("alertdialog");
+    await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
+
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
+    // No skeleton in between: the title is always there.
+    expect(container.querySelector('[aria-busy="true"]')).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { level: 1 })).toHaveFocus(),
+    );
   });
 });

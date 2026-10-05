@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { listInternalRequests } from "@/features/requests/api";
 import { makeMeta, makeRequest } from "@/features/requests/test-fixtures";
@@ -312,6 +312,20 @@ describe("RequestsPage", () => {
       await renderLoaded();
 
       expect(replace).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("remembered query", () => {
+    afterEach(() => sessionStorage.clear());
+
+    it("saves the sanitized query so the back links can restore it", async () => {
+      query = "status=open&page=2&status2=x&sort=bogus";
+      respondWith();
+      await renderLoaded();
+
+      expect(sessionStorage.getItem("requests:list-query")).toBe(
+        "status=open&page=2",
+      );
     });
   });
 });

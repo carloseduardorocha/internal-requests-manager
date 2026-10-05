@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { deleteInternalRequest } from "@/features/requests/api";
+import { listHref } from "@/features/requests/list-href";
 import type { InternalRequest } from "@/features/requests/types";
 import { ApiError } from "@/lib/api";
 
@@ -38,10 +39,17 @@ export function DeleteRequestDialog({
     try {
       await deleteInternalRequest(request.id);
       toast.success("Solicitação excluída");
-      router.replace("/requests");
+      router.replace(listHref());
     } catch (error) {
       setDeleting(false);
       setOpen(false);
+      // Expired session: the API client is already sending the user to the login.
+      if (
+        error instanceof ApiError &&
+        (error.status === 401 || error.status === 419)
+      ) {
+        return;
+      }
       toast.error("Não foi possível excluir", {
         description:
           error instanceof ApiError

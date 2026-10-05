@@ -106,3 +106,9 @@ describe("hasActiveFilters", () => {
     expect(hasActiveFilters({ ...defaults, ...patch })).toBe(true);
   });
 });
+
+describe("parseFilters search length", () => {
+  it("cuts the search at 255 characters, the API limit", () => {
+    expect(parse(`search=${"a".repeat(300)}`).search).toBe("a".repeat(255));
+  });
+});

@@ -136,4 +136,31 @@ describe("DeleteRequestDialog", () => {
     });
     expect(onConflict).not.toHaveBeenCalled();
   });
+
+  it.each([401, 419])(
+    "on %s (expired session) shows no toast: the API client already redirects",
+    async (status) => {
+      remove.mockRejectedValue(new ApiError(status, "Sessão expirada"));
+      const { ui, dialog } = await openDialog();
+
+      await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
+
+      await waitFor(() => expect(remove).toHaveBeenCalled());
+      expect(toastError).not.toHaveBeenCalled();
+      expect(onConflict).not.toHaveBeenCalled();
+    },
+  );
+
+  it("goes back to the list with the filters it had after deleting", async () => {
+    sessionStorage.setItem("requests:list-query", "status=open");
+    remove.mockResolvedValue(undefined);
+    const { ui, dialog } = await openDialog();
+
+    await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
+
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith("/requests?status=open"),
+    );
+    sessionStorage.clear();
+  });
 });

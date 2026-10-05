@@ -22,6 +22,7 @@ import {
   parseFilters,
   toSearchParams,
 } from "@/features/requests/filters";
+import { saveListQuery } from "@/features/requests/list-href";
 import { useInternalRequests } from "@/features/requests/hooks/use-internal-requests";
 
 function RequestsContent() {
@@ -29,11 +30,15 @@ function RequestsContent() {
   const router = useRouter();
   const pathname = usePathname();
   const filters = parseFilters(useSearchParams());
+  const query = toSearchParams(filters).toString();
   const { loading, error, data, meta, reload } = useInternalRequests(filters);
 
   const canCreate = canAccess(user.role, "/requests/new");
   const active = hasActiveFilters(filters);
   const lastPage = meta?.last_page ?? 1;
+
+  // Remember the filters for the "back to the list" links.
+  useEffect(() => saveListQuery(query), [query]);
 
   // Paging is navigation (back goes to the previous page); typing is not.
   function goTo(page: number) {

@@ -5,7 +5,7 @@ import { RequestForm } from "@/features/requests/components/request-form";
 export default function NewRequestPage() {
   return (
     <>
-      <BackLink href="/requests">Voltar para a lista</BackLink>
+      <BackLink toList>Voltar para a lista</BackLink>
       <div>
         <h1 className="font-heading text-[26px] font-extrabold">
           Nova solicitação

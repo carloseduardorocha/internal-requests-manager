@@ -92,7 +92,11 @@ export function RequestDetail({
           <StatusBadge status={request.status} />
           <PriorityBadge priority={request.priority} />
         </div>
-        <h1 className="font-heading text-2xl leading-9 font-extrabold [overflow-wrap:anywhere]">
+        <h1
+          id="request-title"
+          tabIndex={-1}
+          className="font-heading text-2xl leading-9 font-extrabold [overflow-wrap:anywhere] outline-hidden"
+        >
           {request.title}
         </h1>
         {(can.update || can.delete) && (

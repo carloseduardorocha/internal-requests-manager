@@ -6,6 +6,9 @@ import {
 } from "@/features/requests/labels";
 import type { InternalRequestFilters } from "@/features/requests/types";
 
+// The API validates `search` with max:255.
+export const SEARCH_MAX = 255;
+
 // Anything that is not a valid value falls back to the default, so a URL
 // edited by hand never reaches the API as a 422.
 function pick<T extends string>(
@@ -25,7 +28,7 @@ export function parseFilters(
   searchParams: Pick<URLSearchParams, "get">,
 ): InternalRequestFilters {
   return {
-    search: searchParams.get("search")?.trim() ?? "",
+    search: (searchParams.get("search")?.trim() ?? "").slice(0, SEARCH_MAX),
     status: pick(searchParams.get("status"), statuses) ?? "",
     priority: pick(searchParams.get("priority"), priorities) ?? "",
     sort: pick(searchParams.get("sort"), sorts) ?? DEFAULT_SORT,

@@ -9,10 +9,11 @@ import { ApiError } from "@/lib/api";
 import EditRequestPage from "./page";
 
 const replace = vi.fn();
+let routeId = "10";
 const toastError = vi.fn();
 
 vi.mock("next/navigation", () => ({
-  useParams: () => ({ id: "10" }),
+  useParams: () => ({ id: routeId }),
   useRouter: () => ({ replace, push: vi.fn() }),
 }));
 
@@ -36,6 +37,7 @@ describe("EditRequestPage", () => {
     get.mockReset();
     replace.mockReset();
     toastError.mockReset();
+    routeId = "10";
   });
 
   it("shows the skeleton while loading", () => {
@@ -120,4 +122,32 @@ describe("EditRequestPage", () => {
     expect(await screen.findByLabelText("Título")).toBeInTheDocument();
     expect(get).toHaveBeenCalledTimes(2);
   });
+
+  it("explains a block on an Open request as a permission problem", async () => {
+    get.mockResolvedValue(
+      makeRequest({ status: "open", can: { update: false, delete: false } }),
+    );
+    render(<EditRequestPage />);
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/requests/10"));
+    expect(toastError).toHaveBeenCalledWith(
+      "Não foi possível editar",
+      expect.objectContaining({
+        description: "Você não pode editar esta solicitação.",
+      }),
+    );
+  });
+
+  it.each(["abc", "12x"])(
+    "shows 'não encontrada' without calling the API for the id %s",
+    (id) => {
+      routeId = id;
+      render(<EditRequestPage />);
+
+      expect(
+        screen.getByText("Solicitação não encontrada"),
+      ).toBeInTheDocument();
+      expect(get).not.toHaveBeenCalled();
+    },
+  );
 });

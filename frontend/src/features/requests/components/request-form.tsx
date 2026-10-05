@@ -3,7 +3,7 @@
 import { Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
 } from "@/features/requests/api";
 import { PriorityBadge } from "@/features/requests/components/priority-badge";
 import { prioritiesAscending } from "@/features/requests/labels";
+import { listHref, useListHref } from "@/features/requests/list-href";
 import type {
   InternalRequest,
   InternalRequestPriority,
@@ -38,6 +39,11 @@ function FieldError({ id, message }: { id: string; message?: string }) {
   );
 }
 
+// Same count as Laravel's mb_strlen: one per code point (an emoji is 1).
+function countChars(value: string): number {
+  return [...value].length;
+}
+
 function validate(
   title: string,
   description: string,
@@ -46,12 +52,12 @@ function validate(
   const errors: FieldErrors = {};
 
   if (title === "") errors.title = "O campo título é obrigatório.";
-  else if (title.length > TITLE_MAX)
+  else if (countChars(title) > TITLE_MAX)
     errors.title = `O título deve ter no máximo ${TITLE_MAX} caracteres.`;
 
   if (description === "")
     errors.description = "O campo descrição é obrigatório.";
-  else if (description.length > DESCRIPTION_MAX)
+  else if (countChars(description) > DESCRIPTION_MAX)
     errors.description = "A descrição deve ter no máximo 10.000 caracteres.";
 
   if (priority === "") errors.priority = "O campo prioridade é obrigatório.";
@@ -62,6 +68,7 @@ function validate(
 // Creates a request, or edits one when `request` is given.
 export function RequestForm({ request }: { request?: InternalRequest }) {
   const router = useRouter();
+  const listPath = useListHref();
   const [title, setTitle] = useState(request?.title ?? "");
   const [description, setDescription] = useState(request?.description ?? "");
   const [priority, setPriority] = useState<InternalRequestPriority | "">(
@@ -69,12 +76,22 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
   );
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
+  const titleRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+  const firstPriorityRef = useRef<HTMLInputElement>(null);
 
   const editing = request !== undefined;
-  const cancelHref = editing ? `/requests/${request.id}` : "/requests";
+  const cancelHref = editing ? `/requests/${request.id}` : listPath;
 
   function clearError(field: Field) {
     setErrors((current) => ({ ...current, [field]: undefined }));
+  }
+
+  // Title, then description, then the first priority radio.
+  function focusFirstError(found: FieldErrors) {
+    if (found.title) titleRef.current?.focus();
+    else if (found.description) descriptionRef.current?.focus();
+    else if (found.priority) firstPriorityRef.current?.focus();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -86,7 +103,10 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
     const found = validate(trimmedTitle, trimmedDescription, priority);
 
     setErrors(found);
-    if (Object.keys(found).length > 0 || priority === "") return;
+    if (Object.keys(found).length > 0 || priority === "") {
+      focusFirstError(found);
+      return;
+    }
 
     const payload = {
       title: trimmedTitle,
@@ -106,11 +126,21 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
       setSubmitting(false);
 
       if (error instanceof ApiError && error.status === 422) {
-        setErrors({
+        const apiErrors = {
           title: error.errors.title?.[0],
           description: error.errors.description?.[0],
           priority: error.errors.priority?.[0],
-        });
+        };
+        setErrors(apiErrors);
+        focusFirstError(apiErrors);
+        return;
+      }
+
+      // Expired session: the API client is already sending the user to the login.
+      if (
+        error instanceof ApiError &&
+        (error.status === 401 || error.status === 419)
+      ) {
         return;
       }
 
@@ -124,7 +154,7 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
       // No longer Open (409) or gone (404): leave the form.
       if (editing && error instanceof ApiError) {
         if (error.status === 409) router.replace(cancelHref);
-        if (error.status === 404) router.replace("/requests");
+        if (error.status === 404) router.replace(listHref());
       }
     }
   }
@@ -138,13 +168,14 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
               Título
             </Label>
             <span
-              className={`text-xs ${title.length > TITLE_MAX ? "text-destructive" : "text-muted-foreground"}`}
+              className={`text-xs ${countChars(title) > TITLE_MAX ? "text-destructive" : "text-muted-foreground"}`}
             >
-              {title.length}/{TITLE_MAX}
+              {countChars(title)}/{TITLE_MAX}
             </span>
           </div>
           <Input
             id="title"
+            ref={titleRef}
             value={title}
             placeholder="Ex.: Notebook para a nova analista"
             onChange={(event) => {
@@ -163,6 +194,7 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
           </Label>
           <Textarea
             id="description"
+            ref={descriptionRef}
             value={description}
             placeholder="Explique o que você precisa e por quê."
             onChange={(event) => {
@@ -185,7 +217,7 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
             <legend className="mb-1.5 p-0 text-[13px] font-bold">
               Prioridade
             </legend>
-            {prioritiesAscending.map((option) => (
+            {prioritiesAscending.map((option, index) => (
               <label
                 key={option}
                 className={`relative flex min-h-12 cursor-pointer items-center justify-center gap-1.5 rounded-lg border bg-background font-bold has-checked:border-primary has-checked:bg-accent has-checked:shadow-[inset_0_0_0_1px_var(--primary)] has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring has-focus-visible:outline-solid ${errors.priority ? "border-destructive" : "border-border-strong"}`}
@@ -193,6 +225,7 @@ export function RequestForm({ request }: { request?: InternalRequest }) {
                 <input
                   type="radio"
                   name="priority"
+                  ref={index === 0 ? firstPriorityRef : undefined}
                   value={option}
                   checked={priority === option}
                   onChange={() => {

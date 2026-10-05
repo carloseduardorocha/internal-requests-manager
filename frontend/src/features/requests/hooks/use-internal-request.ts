@@ -8,6 +8,7 @@ import { ApiError } from "@/lib/api";
 
 type Result = {
   key: string;
+  id: string;
   data: InternalRequest | null;
   notFound: boolean;
 };
@@ -24,12 +25,12 @@ export function useInternalRequest(id: string) {
 
     getInternalRequest(id)
       .then((data) => {
-        if (active) setResult({ key, data, notFound: false });
+        if (active) setResult({ key, id, data, notFound: false });
       })
       .catch((error: unknown) => {
         if (!active) return;
         const notFound = error instanceof ApiError && error.status === 404;
-        setResult({ key, data: null, notFound });
+        setResult({ key, id, data: null, notFound });
       });
 
     return () => {
@@ -46,7 +47,9 @@ export function useInternalRequest(id: string) {
     loading: !ready,
     error: ready && result.data === null,
     notFound: ready && result.notFound,
-    data: ready ? result.data : null,
+    // While reloading the same request, the previous data stays: the screen
+    // keeps its place (and the focus) instead of going back to a skeleton.
+    data: result !== null && result.id === id ? result.data : null,
     reload,
   };
 }

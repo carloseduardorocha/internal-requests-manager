@@ -12,12 +12,13 @@ import {
   RequestNotFound,
 } from "@/features/requests/components/request-page-states";
 import { useInternalRequest } from "@/features/requests/hooks/use-internal-request";
+import { isValidRequestId } from "@/features/requests/request-id";
 
 const NOT_OPEN_MESSAGE =
   "Este pedido não está mais Aberto e não pode ser alterado.";
+const NOT_ALLOWED_MESSAGE = "Você não pode editar esta solicitação.";
 
-export default function EditRequestPage() {
-  const { id } = useParams<{ id: string }>();
+function EditRequestContent({ id }: { id: string }) {
   const router = useRouter();
   const { loading, error, notFound, data, reload } = useInternalRequest(id);
   const blocked = data !== null && !data.can.update;
@@ -27,9 +28,12 @@ export default function EditRequestPage() {
     if (!blocked) return;
     toast.error("Não foi possível editar", {
       id: "request-not-editable",
-      description: NOT_OPEN_MESSAGE,
+      description:
+        data?.status === "open" ? NOT_ALLOWED_MESSAGE : NOT_OPEN_MESSAGE,
     });
     router.replace(`/requests/${id}`);
+    // Only the block itself matters: `data` is the same object while blocked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blocked, id, router]);
 
   if (loading || blocked) {
@@ -44,7 +48,7 @@ export default function EditRequestPage() {
   if (notFound) {
     return (
       <>
-        <BackLink href="/requests">Voltar para a lista</BackLink>
+        <BackLink toList>Voltar para a lista</BackLink>
         <RequestNotFound />
       </>
     );
@@ -75,4 +79,19 @@ export default function EditRequestPage() {
       <RequestForm request={data} />
     </>
   );
+}
+
+export default function EditRequestPage() {
+  const { id } = useParams<{ id: string }>();
+
+  if (!isValidRequestId(id)) {
+    return (
+      <>
+        <BackLink toList>Voltar para a lista</BackLink>
+        <RequestNotFound />
+      </>
+    );
+  }
+
+  return <EditRequestContent id={id} />;
 }

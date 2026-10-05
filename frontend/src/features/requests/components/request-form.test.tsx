@@ -444,3 +444,101 @@ describe("RequestForm edit", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 });
+
+describe("RequestForm focus, counting and session", () => {
+  beforeEach(() => {
+    create.mockReset();
+    update.mockReset();
+    replace.mockReset();
+    toastError.mockReset();
+    sessionStorage.clear();
+  });
+
+  it("focuses the title first, then the description, then the first priority", async () => {
+    const ui = userEvent.setup();
+    render(<RequestForm />);
+
+    await ui.click(submitButton());
+    expect(screen.getByLabelText("Título")).toHaveFocus();
+
+    await ui.type(screen.getByLabelText("Título"), "Notebook");
+    await ui.click(submitButton());
+    expect(screen.getByLabelText("Descrição")).toHaveFocus();
+
+    await ui.type(screen.getByLabelText("Descrição"), "Preciso");
+    await ui.click(submitButton());
+    expect(screen.getByRole("radio", { name: "Baixa" })).toHaveFocus();
+  });
+
+  it("focuses the first field with an API 422 error", async () => {
+    create.mockRejectedValue(
+      new ApiError(422, "x", { description: ["Descrição inválida."] }),
+    );
+    const ui = userEvent.setup();
+    render(<RequestForm />);
+    await fillValid(ui);
+
+    await ui.click(submitButton());
+
+    await screen.findByText("Descrição inválida.");
+    expect(screen.getByLabelText("Descrição")).toHaveFocus();
+  });
+
+  it("counts characters by code point, like the backend: an emoji is 1", async () => {
+    create.mockResolvedValue(makeRequest({ id: 5 }));
+    const ui = userEvent.setup();
+    render(<RequestForm />);
+    await fillValid(ui);
+    fireEvent.change(screen.getByLabelText("Título"), {
+      target: { value: "😀".repeat(255) },
+    });
+
+    expect(screen.getByText("255/255")).toBeInTheDocument();
+    await ui.click(submitButton());
+
+    await waitFor(() => expect(create).toHaveBeenCalled());
+    expect(screen.queryByText(/no máximo 255/)).not.toBeInTheDocument();
+  });
+
+  it("still flags 256 emojis", async () => {
+    const ui = userEvent.setup();
+    render(<RequestForm />);
+    await fillValid(ui);
+    fireEvent.change(screen.getByLabelText("Título"), {
+      target: { value: "😀".repeat(256) },
+    });
+
+    await ui.click(submitButton());
+
+    expect(
+      await screen.findByText("O título deve ter no máximo 255 caracteres."),
+    ).toBeInTheDocument();
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it.each([401, 419])(
+    "on %s (expired session) shows no toast and stays enabled",
+    async (status) => {
+      create.mockRejectedValue(new ApiError(status, "Sessão expirada"));
+      const ui = userEvent.setup();
+      render(<RequestForm />);
+      await fillValid(ui);
+
+      await ui.click(submitButton());
+
+      await waitFor(() => expect(create).toHaveBeenCalled());
+      expect(toastError).not.toHaveBeenCalled();
+      expect(replace).not.toHaveBeenCalled();
+    },
+  );
+
+  it("cancels back to the list with the filters it had", () => {
+    sessionStorage.setItem("requests:list-query", "priority=high");
+    render(<RequestForm />);
+
+    expect(screen.getByRole("link", { name: "Cancelar" })).toHaveAttribute(
+      "href",
+      "/requests?priority=high",
+    );
+  });
+});

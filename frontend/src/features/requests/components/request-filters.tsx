@@ -6,7 +6,11 @@ import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { hasActiveFilters, toSearchParams } from "@/features/requests/filters";
+import {
+  SEARCH_MAX,
+  hasActiveFilters,
+  toSearchParams,
+} from "@/features/requests/filters";
 import {
   priorities,
   priorityLabels,
@@ -77,11 +81,16 @@ export function RequestFilters({
   const pathname = usePathname();
   const [text, setText] = useState(filters.search);
   const [seenSearch, setSeenSearch] = useState(filters.search);
+  // Last value the debounce put in the URL: when the navigation catches up
+  // with it, the box already holds (or has moved past) that text.
+  const [sentSearch, setSentSearch] = useState<string | null>(null);
 
   // Follow changes that did not come from typing (clear, back button).
   if (filters.search !== seenSearch) {
     setSeenSearch(filters.search);
-    if (filters.search !== text.trim()) setText(filters.search);
+    if (filters.search !== text.trim() && filters.search !== sentSearch) {
+      setText(filters.search);
+    }
   }
 
   function apply(patch: Partial<InternalRequestFilters>) {
@@ -95,6 +104,7 @@ export function RequestFilters({
     if (trimmed === filters.search) return;
 
     const timer = setTimeout(() => {
+      setSentSearch(trimmed);
       const query = toSearchParams({
         ...filters,
         search: trimmed,
@@ -108,6 +118,7 @@ export function RequestFilters({
 
   function handleClear() {
     setText("");
+    setSentSearch(null);
     router.replace(pathname);
   }
 
@@ -134,6 +145,7 @@ export function RequestFilters({
             type="search"
             placeholder="Pesquisar no título ou na descrição"
             value={text}
+            maxLength={SEARCH_MAX}
             onChange={(event) => setText(event.target.value)}
             className="pl-10"
           />

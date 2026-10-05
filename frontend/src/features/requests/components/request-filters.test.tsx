@@ -235,4 +235,41 @@ describe("RequestFilters", () => {
     expect(screen.queryByText(/solicitaç(ão|ões) encontrada/)).toBeNull();
     expect(screen.queryByText(/Mostrando/)).toBeNull();
   });
+
+  it("limits the search box to 255 characters", () => {
+    setup();
+
+    expect(screen.getByLabelText("Pesquisar")).toHaveAttribute(
+      "maxlength",
+      "255",
+    );
+  });
+
+  it("keeps what was typed while the navigation of an earlier search catches up", () => {
+    const view = setup();
+
+    type("note");
+    advance(300);
+    expect(replace).toHaveBeenCalledWith("/requests?search=note");
+
+    // The user keeps typing before the URL answers.
+    type("noteb");
+    view.rerender(
+      <RequestFilters filters={{ ...defaults, search: "note" }} meta={null} />,
+    );
+
+    expect(screen.getByLabelText("Pesquisar")).toHaveValue("noteb");
+  });
+
+  it("still follows a search that did not come from typing (back button)", () => {
+    const view = setup();
+
+    type("note");
+    advance(300);
+    view.rerender(
+      <RequestFilters filters={{ ...defaults, search: "other" }} meta={null} />,
+    );
+
+    expect(screen.getByLabelText("Pesquisar")).toHaveValue("other");
+  });
 });
