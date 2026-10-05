@@ -21,3 +21,4 @@ Alternativa descartada: Redis ou um broker dedicado, serviço a mais sem necessi
 
 - Positivas: nenhuma peça nova de infraestrutura; a fila usa o MySQL que já existe; trocar de driver depois exige só configuração.
 - Custos: o banco passa a servir também de fila; é preciso manter o `worker` rodando; o desempenho é limitado frente a um broker dedicado.
+- Limitação: o número da tentativa em `notification_logs` é contado pelos logs anteriores do mesmo pedido, canal e evento. Se o worker morrer no meio de um envio, essa tentativa não gera log.
