@@ -21,7 +21,7 @@ A primeira subida demora, por causa do `composer install` e do `npm ci`.
 
 - Usuários do seed para uso local (senha `password`): `solicitante@empresa.com` (solicitante), `analista@empresa.com` (analista) e `admin@empresa.com` (administrador). Só são criados nos ambientes `local` e `testing`; as áreas são criadas sempre. O seed também cria pedidos abertos de exemplo para a solicitante.
 - Parar: `docker compose down`. Zerar o banco: `docker compose down -v`.
-- O worker não recarrega o código: após mudar jobs, rode `docker compose restart worker`.
+- O worker não recarrega o código (após mudar jobs, rode `docker compose restart worker`) e a API não recarrega o `backend/.env` (após mudá-lo, rode `docker compose restart api`).
 
 ### Várias branches ao mesmo tempo
 
@@ -35,7 +35,7 @@ cp .env.example .env   # troque as portas, por exemplo 8001, 3001, 3307, 8026 e 
 docker compose up -d --build
 ```
 
-- As URLs da tabela acima passam a usar as portas do `.env` da worktree.
+- As URLs da tabela acima passam a usar as portas do `.env` da worktree. Elas valem também para a API (CORS e sessão), sem editar o `backend/.env`.
 - O cookie de sessão vale para `localhost` em qualquer porta: para usar dois front-ends logados ao mesmo tempo, abra o segundo em outro perfil ou numa janela anônima.
 - Para remover: `docker compose down -v` dentro da worktree e depois `git worktree remove .claude/worktrees/<branch>`.
 
