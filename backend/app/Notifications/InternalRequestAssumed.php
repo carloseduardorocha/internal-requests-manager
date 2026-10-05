@@ -32,7 +32,7 @@ class InternalRequestAssumed extends InternalRequestNotification
             ->line(__('notifications.mail.assumed.assigned_to', ['name' => $request->assignedTo->name]))
             ->action(
                 __('notifications.mail.action'),
-                rtrim((string) config('app.frontend_url'), '/').'/requests/'.$request->id,
+                $this->requestUrl(),
             );
     }
 }

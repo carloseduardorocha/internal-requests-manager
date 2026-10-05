@@ -46,7 +46,7 @@ class InternalRequestDecided extends InternalRequestNotification
         return $mail
             ->action(
                 __('notifications.mail.action'),
-                rtrim((string) config('app.frontend_url'), '/').'/requests/'.$request->id,
+                $this->requestUrl(),
             );
     }
 
