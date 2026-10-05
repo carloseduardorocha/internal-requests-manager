@@ -2,11 +2,11 @@
 
 namespace Tests\Feature\Notifications;
 
+use App\Models\Area;
 use App\Models\InternalRequest;
 use App\Models\NotificationLog;
 use App\Models\User;
 use App\Notifications\InternalRequestAssumed;
-use App\Notifications\InternalRequestCreated;
 use App\Notifications\InternalRequestDecided;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Notifications\AnonymousNotifiable;
@@ -67,11 +67,25 @@ class MailNotificationsTest extends TestCase
             'title' => 'Novo notebook',
             'description' => 'Preciso de um notebook novo para o trabalho.',
             'priority' => 'medium',
-            'area_id' => InternalRequest::factory()->create()->area_id,
+            'area_id' => Area::factory()->create()->id,
         ])->assertCreated();
 
-        Notification::assertNotSentTo($requester, InternalRequestCreated::class);
         Notification::assertNothingSentTo($requester);
+    }
+
+    public function test_invalid_transitions_answer_409_and_send_nothing(): void
+    {
+        Notification::fake();
+        $analyst = User::factory()->analyst()->create();
+        $inReview = InternalRequest::factory()->inReview($analyst)->create();
+        $open = InternalRequest::factory()->create();
+
+        $this->actingAs($analyst)->postJson("/api/internal-requests/{$inReview->id}/assign")->assertStatus(409);
+        $this->actingAs(User::factory()->admin()->create())
+            ->postJson("/api/internal-requests/{$open->id}/approve", ['justification' => 'Dentro do orçamento.'])
+            ->assertStatus(409);
+
+        Notification::assertNothingSent();
     }
 
     public function test_assumed_mail_reaches_the_requester_address_and_is_logged(): void
