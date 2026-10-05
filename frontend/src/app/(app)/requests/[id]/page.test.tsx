@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  assignInternalRequest,
+  decideInternalRequest,
   deleteInternalRequest,
   getInternalRequest,
 } from "@/features/requests/api";
@@ -26,8 +28,11 @@ vi.mock("sonner", () => ({
 vi.mock("@/features/requests/api", () => ({
   getInternalRequest: vi.fn(),
   deleteInternalRequest: vi.fn(),
+  assignInternalRequest: vi.fn(),
+  decideInternalRequest: vi.fn(),
 }));
 
+const assign = vi.mocked(assignInternalRequest);
 const get = vi.mocked(getInternalRequest);
 const remove = vi.mocked(deleteInternalRequest);
 
@@ -35,6 +40,7 @@ describe("RequestDetailPage", () => {
   beforeEach(() => {
     get.mockReset();
     remove.mockReset();
+    assign.mockReset();
     replace.mockReset();
     routeId = "10";
     sessionStorage.clear();
@@ -224,6 +230,141 @@ describe("RequestDetailPage", () => {
 
     await waitFor(() =>
       expect(screen.getByText("Solicitação não encontrada")).toHaveFocus(),
+    );
+  });
+
+  it("after assigning, reloads without a skeleton and focuses the justification field", async () => {
+    get.mockResolvedValueOnce(
+      makeRequest({
+        can: {
+          update: false,
+          delete: false,
+          assign: true,
+          approve: false,
+          reject: false,
+        },
+      }),
+    );
+    get.mockResolvedValueOnce(
+      makeRequest({
+        status: "in_review",
+        assigned_to: { id: 5, name: "Bruno Lima" },
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: true,
+          reject: true,
+        },
+      }),
+    );
+    assign.mockResolvedValue(makeRequest({ status: "in_review" }));
+    const ui = userEvent.setup();
+    const { container } = render(<RequestDetailPage />);
+
+    await ui.click(
+      await screen.findByRole("button", { name: "Assumir análise" }),
+    );
+
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
+    expect(container.querySelector('[aria-busy="true"]')).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByLabelText("Justificativa")).toHaveFocus(),
+    );
+    expect(
+      screen.queryByRole("button", { name: "Assumir análise" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("after a 409 on assign, reloads and focuses the title when there is no justification field", async () => {
+    get.mockResolvedValueOnce(
+      makeRequest({
+        can: {
+          update: false,
+          delete: false,
+          assign: true,
+          approve: false,
+          reject: false,
+        },
+      }),
+    );
+    get.mockResolvedValueOnce(
+      makeRequest({
+        status: "in_review",
+        assigned_to: { id: 6, name: "Carla Dias" },
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: false,
+          reject: false,
+        },
+      }),
+    );
+    assign.mockRejectedValue(new ApiError(409, "Já foi assumido."));
+    const ui = userEvent.setup();
+    render(<RequestDetailPage />);
+
+    await ui.click(
+      await screen.findByRole("button", { name: "Assumir análise" }),
+    );
+
+    await waitFor(() => expect(get).toHaveBeenCalledTimes(2));
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { level: 1 })).toHaveFocus(),
+    );
+    expect(screen.getByText(/Em análise com/)).toBeInTheDocument();
+  });
+
+  it("after a decision, reloads and shows the decision, with the focus on the title", async () => {
+    get.mockResolvedValueOnce(
+      makeRequest({
+        status: "in_review",
+        assigned_to: { id: 5, name: "Bruno Lima" },
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: true,
+          reject: true,
+        },
+      }),
+    );
+    get.mockResolvedValueOnce(
+      makeRequest({
+        status: "approved",
+        assigned_to: { id: 5, name: "Bruno Lima" },
+        decision: {
+          decided_by: { id: 5, name: "Bruno Lima" },
+          decided_at: "2026-10-03T15:00:00.000000Z",
+          justification: "Dentro do orçamento",
+        },
+        can: {
+          update: false,
+          delete: false,
+          assign: false,
+          approve: false,
+          reject: false,
+        },
+      }),
+    );
+    vi.mocked(decideInternalRequest).mockResolvedValue(makeRequest());
+    const ui = userEvent.setup();
+    render(<RequestDetailPage />);
+
+    await ui.type(
+      await screen.findByLabelText("Justificativa"),
+      "Dentro do orçamento",
+    );
+    await ui.click(screen.getByRole("button", { name: "Aprovar" }));
+    const dialog = await screen.findByRole("alertdialog");
+    await ui.click(within(dialog).getByRole("button", { name: "Aprovar" }));
+
+    expect(await screen.findByText("Dentro do orçamento")).toBeInTheDocument();
+    expect(screen.getAllByText("Aprovada").length).toBeGreaterThan(0);
+    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { level: 1 })).toHaveFocus(),
     );
   });
 });

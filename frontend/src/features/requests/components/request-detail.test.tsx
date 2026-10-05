@@ -11,6 +11,8 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/features/requests/api", () => ({
   deleteInternalRequest: vi.fn(),
+  assignInternalRequest: vi.fn(),
+  decideInternalRequest: vi.fn(),
 }));
 
 function renderDetail(overrides = {}) {
@@ -189,5 +191,123 @@ describe("RequestDetail content", () => {
 
     const section = screen.getByText("Histórico").closest("section")!;
     expect(within(section).queryByRole("listitem")).not.toBeInTheDocument();
+  });
+});
+
+const noCan = {
+  update: false,
+  delete: false,
+  assign: false,
+  approve: false,
+  reject: false,
+};
+const bruno = { id: 5, name: "Bruno Lima" };
+
+describe("RequestDetail review actions", () => {
+  it("shows 'Assumir análise' only with can.assign", () => {
+    const { unmount } = renderDetail({ can: { ...noCan, assign: true } });
+    expect(
+      screen.getByRole("button", { name: "Assumir análise" }),
+    ).toBeInTheDocument();
+    unmount();
+
+    renderDetail({ can: noCan });
+    expect(
+      screen.queryByRole("button", { name: "Assumir análise" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("shows 'Assumir', 'Editar' and 'Excluir' side by side for an admin on an open request", () => {
+    renderDetail({
+      can: { ...noCan, update: true, delete: true, assign: true },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Assumir análise" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Editar" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Excluir" })).toBeInTheDocument();
+  });
+
+  it("shows the decision form with both buttons when the API allows approve and reject", () => {
+    renderDetail({
+      status: "in_review",
+      assigned_to: bruno,
+      can: { ...noCan, approve: true, reject: true },
+    });
+
+    expect(screen.getByLabelText("Justificativa")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Aprovar" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Rejeitar" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Aguardando a decisão/)).not.toBeInTheDocument();
+  });
+
+  it("follows each decision flag on its own", () => {
+    renderDetail({
+      status: "in_review",
+      assigned_to: bruno,
+      can: { ...noCan, approve: true },
+    });
+
+    expect(screen.getByRole("button", { name: "Aprovar" })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Rejeitar" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides the form and tells who acts next on an open request", () => {
+    renderDetail({ can: noCan });
+
+    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Aprovar" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Rejeitar" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Aguardando um analista assumir."),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the form and names the analyst on a request in review", () => {
+    renderDetail({
+      status: "in_review",
+      assigned_to: bruno,
+      assigned_at: "2026-10-03T14:00:00.000000Z",
+      can: noCan,
+    });
+
+    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    const section = screen.getByText("Decisão").closest("section")!;
+    expect(
+      within(section).getByText(
+        (_, el) =>
+          el?.tagName === "P" &&
+          el.textContent === "Em análise com Bruno Lima. Aguardando a decisão.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(section).getByText("Bruno Lima").tagName).toBe("B");
+  });
+
+  it("shows only the decision once it exists, even if flags were true", () => {
+    renderDetail({
+      status: "approved",
+      assigned_to: bruno,
+      decision: {
+        decided_by: bruno,
+        decided_at: "2026-10-03T15:00:00.000000Z",
+        justification: "Dentro do orçamento",
+      },
+      can: { ...noCan, approve: true, reject: true },
+    });
+
+    expect(screen.getByText("Dentro do orçamento")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Justificativa")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Aprovar" }),
+    ).not.toBeInTheDocument();
   });
 });
