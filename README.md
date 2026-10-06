@@ -67,7 +67,7 @@ Para enviar de verdade pelo Gmail, basta mudar a configuração, sem tocar no c�
    O remetente precisa ser a própria conta, porque o Gmail reescreve um remetente diferente. A senha de app é um segredo.
 3. Aplique a mudança como indicado acima.
 
-**Atenção:** os destinatários são os e-mails dos usuários do seed, e `empresa.com` é um domínio real, de terceiros. Com o Gmail ligado, os e-mails de teste saem de verdade para esse domínio. Para só ler o conteúdo dos e-mails, use o Mailpit.
+**Atenção:** os destinatários são os e-mails dos usuários do seed. Por padrão, eles usam `empresa.com`, que é um domínio real, de terceiros. Antes de ligar o Gmail, configure a `SEED_USERS_EMAIL` (veja [Usuários de demonstração](#usuários-de-demonstração)) para os e-mails de teste chegarem na sua caixa.
 
 Se o SMTP estiver errado ou fora do ar, assumir e decidir continuam funcionando, e os envios falham no `worker`, com novas tentativas e registro de cada uma.
 
@@ -83,6 +83,15 @@ Todos usam a senha `password`.
 
 - Os usuários só são criados nos ambientes `local` e `testing`. As áreas são criadas sempre.
 - O seed cria 10 pedidos da Ana: 6 abertos, 2 em análise com o Bruno, 1 aprovado e 1 rejeitado.
+
+Para receber os e-mails de teste na sua caixa, preencha a `SEED_USERS_EMAIL` com o seu endereço, num dos arquivos de [Notificações](#notificações). Por exemplo, `SEED_USERS_EMAIL=voce@gmail.com` cria `voce+solicitante@gmail.com`, `voce+analista@gmail.com` e `voce+admin@gmail.com`, todos com a senha `password`, e esses passam a ser os logins. O `+` funciona no Gmail e na maioria dos provedores, mas não em todos.
+
+O seed procura os usuários pelo e-mail. Por isso, depois de ligar, trocar ou desligar a variável, recrie o banco. Sem isso, a próxima subida cria mais 3 usuários e duplica os pedidos de exemplo:
+
+```bash
+docker compose up -d api worker   # só se usou o arquivo compartilhado
+docker compose exec -u "$(id -u):$(id -g)" api php artisan migrate:fresh --seed
+```
 
 ## Roteiro rápido
 
