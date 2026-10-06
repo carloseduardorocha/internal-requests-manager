@@ -16,10 +16,10 @@ Executa o plano aprovado por `/plan-issue`. Esta sessão orquestra: ela delega o
 5. **Revise:** chame o agente `reviewer` com o número da issue. Envie os achados **bloqueantes** e **importantes** ao `implementer`, rode os testes de novo e, se a correção tiver sido grande, revise outra vez. Sugestões ficam a critério do usuário.
 6. **Documente:** chame o agente `documenter` com o número da issue e o plano. Commit: `docs: ...`.
 7. **Feche a checagem:** confira cada critério de aceite da issue e mostre ao usuário um resumo com os commits, o resultado dos testes, os achados do review (corrigidos e pendentes) e a checagem dos critérios.
-8. **Abra o PR só quando o usuário pedir:** faça o push e rode `gh pr create` com `Refs #<número>` e o resumo do passo 7 no corpo. Use `Refs`, e não `Closes`, para o merge não fechar a issue sozinho. Depois mova a issue para **Code Review**: `.claude/scripts/board-status.sh <número> "Code Review"`. Em issues só de `docs/`, que não têm PR, mova para **Code Review** depois do push.
+8. **Abra o PR só quando o usuário pedir:** faça o push e rode `gh pr create` com `Closes #<número>` e o resumo do passo 7 no corpo. O `Closes` vincula o PR à issue (seção Development e board), e o merge fecha a issue sozinho. Depois mova a issue para **Code Review**: `.claude/scripts/board-status.sh <número> "Code Review"`. Em issues só de `docs/`, que não têm PR, mova para **Code Review** depois do push.
 9. **Retrospectiva** (veja abaixo).
 
-A issue só é fechada quando o usuário avisar, depois do merge.
+O merge do PR fecha a issue. Issues só de `docs/`, que não têm PR, são fechadas quando o usuário avisar.
 
 ## Commits
 
