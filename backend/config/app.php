@@ -56,6 +56,9 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
+    // Local seed only: base address for the seed users (see UserSeeder::email).
+    'seed_users_email' => env('SEED_USERS_EMAIL'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

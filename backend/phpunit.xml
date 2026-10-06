@@ -32,6 +32,7 @@
         <server name="MAIL_MAILER" value="array" force="true"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <server name="DISCORD_WEBHOOK_URL" value="" force="true"/>
+        <server name="SEED_USERS_EMAIL" value="" force="true"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
