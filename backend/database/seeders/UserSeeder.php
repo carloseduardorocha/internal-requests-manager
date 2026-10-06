@@ -15,9 +15,9 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $users = [
-            ['solicitante@empresa.com', 'Ana Souza', Role::Requester, 'Financeiro'],
-            ['analista@empresa.com', 'Bruno Lima', Role::Analyst, 'Operações'],
-            ['admin@empresa.com', 'Carla Mendes', Role::Admin, 'Tecnologia'],
+            [self::email('solicitante'), 'Ana Souza', Role::Requester, 'Financeiro'],
+            [self::email('analista'), 'Bruno Lima', Role::Analyst, 'Operações'],
+            [self::email('admin'), 'Carla Mendes', Role::Admin, 'Tecnologia'],
         ];
 
         foreach ($users as [$email, $name, $role, $area]) {
@@ -28,5 +28,22 @@ class UserSeeder extends Seeder
                 'area_id' => Area::where('name', $area)->firstOrFail()->id,
             ]);
         }
+    }
+
+    /**
+     * Seed user address: `<name>@empresa.com`, or `<local>+<name>@<domain>` when SEED_USERS_EMAIL is set,
+     * so notification e-mails reach whoever is testing.
+     */
+    public static function email(string $name): string
+    {
+        $base = config('app.seed_users_email');
+
+        if (! is_string($base) || ! str_contains($base, '@')) {
+            return "{$name}@empresa.com";
+        }
+
+        [$local, $domain] = explode('@', $base, 2);
+
+        return "{$local}+{$name}@{$domain}";
     }
 }

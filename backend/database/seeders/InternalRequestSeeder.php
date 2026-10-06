@@ -16,8 +16,8 @@ class InternalRequestSeeder extends Seeder
      */
     public function run(): void
     {
-        $requester = User::where('email', 'solicitante@empresa.com')->firstOrFail();
-        $analyst = User::where('email', 'analista@empresa.com')->firstOrFail();
+        $requester = User::where('email', UserSeeder::email('solicitante'))->firstOrFail();
+        $analyst = User::where('email', UserSeeder::email('analista'))->firstOrFail();
 
         $open = [
             ['Notebook novo para o time', 'Substituir o equipamento atual, que trava com frequência.', InternalRequestPriority::High, 6],
