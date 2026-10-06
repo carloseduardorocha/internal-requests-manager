@@ -31,17 +31,14 @@ A primeira subida demora alguns minutos, por causa do `composer install` e do `n
 
 As notificações saem por uma fila no banco, processada pelo serviço `worker` ([ADR 0005](docs/adr/0005-database-queue-and-retries.md)). Por isso, a ação de quem usa nunca espera o envio. Se um envio falhar, o sistema tenta de novo até 3 vezes, com espera de 1, 5 e 15 minutos, num total de 4 tentativas. Cada tentativa fica em `notification_logs`, e o job que esgota as tentativas vai para `failed_jobs`.
 
-Os segredos das notificações podem ficar em dois lugares. Os dois ficam fora do Git, e o primeiro tem prioridade:
-
-- **`~/.config/internal-requests-manager/backend.env` (preferido):** um arquivo opcional fora do repositório, que vale para todas as worktrees. Crie a pasta com `mkdir -p ~/.config/internal-requests-manager`. Depois de mudá-lo, rode `docker compose up -d api worker` em cada stack no ar. O `restart` não basta, porque não relê esse arquivo.
-- **`backend/.env`:** vale só para a stack daquela pasta. Depois de mudá-lo, rode `docker compose restart api worker`.
+Os segredos das notificações ficam no `backend/.env`, que está fora do Git. Depois de mudá-lo, rode `docker compose restart api worker`. As worktrees recebem uma cópia dele (veja [Várias branches ao mesmo tempo](#várias-branches-ao-mesmo-tempo)).
 
 #### Discord
 
 O canal da equipe recebe uma mensagem quando um pedido é criado e quando é decidido. A mensagem traz o número, o título, a prioridade, o solicitante e a área, e um link para o pedido. Na decisão, entram também o resultado, quem decidiu e a justificativa.
 
 1. No Discord, vá em **Configurações do canal → Integrações → Webhooks → Novo webhook** e copie a URL.
-2. Preencha `DISCORD_WEBHOOK_URL=<a URL copiada>` num dos arquivos acima e aplique como ali indicado.
+2. Preencha `DISCORD_WEBHOOK_URL=<a URL copiada>` no `backend/.env` e rode `docker compose restart api worker`.
 
 Com `DISCORD_WEBHOOK_URL` vazia (o padrão), nada vai ao Discord: nenhum job e nenhum registro. O resto do produto funciona normalmente. A URL é um segredo, porque quem a tem consegue postar no canal. Ela não vai para o Git e não é gravada nos jobs nem nos logs.
 
@@ -54,7 +51,7 @@ No desenvolvimento, não é preciso configurar nada. O `backend/.env.example` j�
 Para enviar de verdade pelo Gmail, basta mudar a configuração, sem tocar no código ([ADR 0007](docs/adr/0007-discord-webhook-and-smtp.md)):
 
 1. Na conta Google, ligue a verificação em duas etapas e crie uma **senha de app**.
-2. Ajuste estas variáveis num dos arquivos acima. O `backend/.env.example` tem um bloco comentado com elas, menos o `MAIL_FROM_ADDRESS`, que fica fora do bloco.
+2. Ajuste estas variáveis no `backend/.env`. O `backend/.env.example` tem um bloco comentado com elas, menos o `MAIL_FROM_ADDRESS`, que fica fora do bloco.
 
    ```dotenv
    MAIL_HOST=smtp.gmail.com
@@ -84,12 +81,11 @@ Todos usam a senha `password`.
 - Os usuários só são criados nos ambientes `local` e `testing`. As áreas são criadas sempre.
 - O seed cria 10 pedidos da Ana: 6 abertos, 2 em análise com o Bruno, 1 aprovado e 1 rejeitado.
 
-Para receber os e-mails de teste na sua caixa, preencha a `SEED_USERS_EMAIL` com o seu endereço, num dos arquivos de [Notificações](#notificações). Por exemplo, `SEED_USERS_EMAIL=voce@gmail.com` cria `voce+solicitante@gmail.com`, `voce+analista@gmail.com` e `voce+admin@gmail.com`, todos com a senha `password`, e esses passam a ser os logins. O `+` funciona no Gmail e na maioria dos provedores, mas não em todos.
+Para receber os e-mails de teste na sua caixa, preencha a `SEED_USERS_EMAIL` com o seu endereço, no `backend/.env`. Por exemplo, `SEED_USERS_EMAIL=voce@gmail.com` cria `voce+solicitante@gmail.com`, `voce+analista@gmail.com` e `voce+admin@gmail.com`, todos com a senha `password`, e esses passam a ser os logins. O `+` funciona no Gmail e na maioria dos provedores, mas não em todos.
 
 O seed procura os usuários pelo e-mail. Por isso, depois de ligar, trocar ou desligar a variável, recrie o banco. Sem isso, a próxima subida cria mais 3 usuários e duplica os pedidos de exemplo:
 
 ```bash
-docker compose up -d api worker   # só se usou o arquivo compartilhado
 docker compose exec -u "$(id -u):$(id -g)" api php artisan migrate:fresh --seed
 ```
 
@@ -208,11 +204,14 @@ git fetch
 git worktree add .claude/worktrees/<branch> -b <branch> origin/main
 cd .claude/worktrees/<branch>
 cp .env.example .env   # troque as portas, por exemplo 8001, 3001, 3307, 8026 e 1026
+cp ../../../backend/.env backend/.env     # seus segredos e configurações locais
+cp ../../../frontend/.env frontend/.env
 docker compose up -d --build
 ```
 
 - As URLs da tabela de [Como rodar](#como-rodar) passam a usar as portas do `.env` da worktree. Essas portas valem também para a API (CORS, sessão e links das notificações), sem editar o `backend/.env`.
 - O cookie de sessão vale para `localhost` em qualquer porta. Para usar dois front-ends logados ao mesmo tempo, abra o segundo em outro perfil do navegador ou numa janela anônima.
+- Os `.env` de `backend/` e `frontend/` vêm do checkout principal. Ao criar a worktree, confira se o seu `backend/.env` tem todas as variáveis do `backend/.env.example` (o mesmo vale para o front) e complete o que faltar. O `.env` da raiz não é copiado, porque as portas mudam em cada worktree.
 - Para remover, rode `docker compose down -v` dentro da worktree e depois `git worktree remove .claude/worktrees/<branch>`.
 
 ## Uso de IA

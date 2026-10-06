@@ -25,7 +25,7 @@ Antes de propor escopo, leia a PRD. Não duplique informação entre documentos:
 - Conventional Commits em inglês, sempre pela skill `/git-commit`.
 - Raiz do repositório e `docs/`: commit e merge direto na `main`. A documentação que acompanha uma issue de `backend/` ou `frontend/` (ADRs, `docs/api.md`, `docs/database.md`) vai no PR dela.
 - `backend/` e `frontend/`: sempre em branch própria e PR, fechando exatamente uma issue.
-- Planejar, implementar e testar sempre numa worktree própria em `.claude/worktrees/<branch>` (a da `main` para raiz e `docs/`), nunca no checkout principal. Como criar e subir a stack está no README.
+- Planejar, implementar e testar sempre numa worktree própria em `.claude/worktrees/<branch>` (a da `main` para raiz e `docs/`), nunca no checkout principal. Como criar e subir a stack está no README. Ao terminar, remova a worktree e a stack dela, inclusive a da `main`, para nenhuma branch ficar presa.
 - Push junto com o commit aprovado: autorizar o commit autoriza o push.
 - Sem atribuição de IA em commits, PRs, issues e comentários: nada de `Co-Authored-By`, "Generated with Claude Code" ou equivalentes.
 

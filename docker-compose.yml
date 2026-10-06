@@ -1,7 +1,5 @@
 # Local development environment (the online deployment is a later phase).
 # Host ports come from the root .env (see .env.example), so several worktrees can run at once.
-# Secrets shared by every worktree (e.g. DISCORD_WEBHOOK_URL) live outside the repo, in the optional
-# ~/.config/internal-requests-manager/backend.env, and override backend/.env.
 services:
   mysql:
     image: mysql:8.4
@@ -29,9 +27,6 @@ services:
 
   api:
     build: ./backend
-    env_file:
-      - path: ${HOME}/.config/internal-requests-manager/backend.env
-        required: false
     environment:
       PHP_CLI_SERVER_WORKERS: 4
       APP_URL: http://localhost:${API_PORT:-8000}
@@ -57,9 +52,6 @@ services:
     build: ./backend
     command: ["php", "artisan", "queue:work"]
     restart: unless-stopped
-    env_file:
-      - path: ${HOME}/.config/internal-requests-manager/backend.env
-        required: false
     environment:
       RUN_MIGRATIONS: "false"
       APP_URL: http://localhost:${API_PORT:-8000}

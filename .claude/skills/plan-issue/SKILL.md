@@ -21,6 +21,7 @@ Não altere código nem documentação nesta etapa.
    git fetch
    git worktree add .claude/worktrees/<branch> -b <branch> origin/main
    ```
+   Copie para ela o `backend/.env` e o `frontend/.env` do checkout principal e avise o usuário se faltar alguma variável do `.env.example` correspondente (passos no README, em "Várias branches ao mesmo tempo").
 3. **Leia as fontes de verdade** listadas no AGENTS.md que tocam a issue: o fluxo da PRD, os ADRs, `docs/api.md`, `docs/database.md` e o código que já existe. Para o que já foi entregue, leia também os planos e os PRs das issues fechadas relacionadas (`gh issue list --state closed`, `gh pr list --state merged`): é ali que estão as decisões anteriores e os seus motivos. Antes de escrever no plano que um teste, um código ou um documento (PRD, ADR) já cobre ou diz algo, abra o arquivo e confira.
 4. **Confira as dependências.** Se a issue depende de outra que ainda não foi feita (por exemplo, telas antes da API ou qualquer coisa antes do setup), siga "Sessões em paralelo" no AGENTS.md para combinar os contratos com a sessão dela, e então avise o usuário do que foi combinado.
 5. **Tire as dúvidas**, uma por vez, cada uma com uma opção recomendada e o motivo. Não invente escopo: o que não está na PRD ou na issue é pergunta, não decisão.
