@@ -37,6 +37,13 @@ return [
             'subject' => 'Seu pedido #:id foi rejeitado',
             'intro' => 'Seu pedido ":title" foi rejeitado.',
         ],
+        'password_reset' => [
+            'subject' => 'Redefinição de senha',
+            'intro' => 'Recebemos um pedido para redefinir a senha da sua conta.',
+            'action' => 'Criar nova senha',
+            'expires' => 'Este link vale por :minutes minutos e só pode ser usado uma vez.',
+            'ignore' => 'Se você não fez esse pedido, ignore este e-mail: sua senha continua a mesma.',
+        ],
         'decided' => [
             'decided_by' => 'Decidido por: :name.',
             'justification' => 'Justificativa:',
