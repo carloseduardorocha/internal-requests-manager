@@ -6,7 +6,7 @@ Fluxos e regras: [PRD](prd.md). Autenticação e valores de sessão: [ADR 0004](
 
 - Base `/api`, JSON, sem versão.
 - Autenticação por sessão (Sanctum SPA). Antes do login, o cliente chama `GET /sanctum/csrf-cookie`; em todas as chamadas envia credenciais (`credentials: include`) e o token CSRF.
-- Todos os endpoints exigem sessão, exceto o CSRF e o login; por isso qualquer um pode responder `401` (e `419` nas escritas).
+- Todos os endpoints exigem sessão, exceto o CSRF, o login e a recuperação de senha (`forgot-password` e `reset-password`); por isso qualquer um pode responder `401` (e `419` nas escritas).
 - Respostas de recurso vêm dentro de `data`; a paginação padrão do Laravel acrescenta `links` e `meta`, com os limites na query da listagem.
 - Ordem das checagens: visibilidade (`404`: pedido inexistente, excluído ou de outra pessoa, para o solicitante) → perfil ou dono (`403`) → validação (`422`) → status (`409`).
 - Mensagens em português (`APP_LOCALE=pt_BR`, [ADR 0001](adr/0001-layered-laravel-backend.md)).
@@ -31,7 +31,7 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante) |
 | 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação |
 | 422 | Validação falhou, filtro inválido na listagem ou credencial inválida no login |
-| 429 | Login bloqueado por tentativas; traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
+| 429 | Login bloqueado por tentativas, ou mais de 6 pedidos por minuto por IP em `forgot-password` (sem revelar a conta); traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
 
 ## 1. Acesso
 
@@ -41,6 +41,12 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | `POST /api/login` | Público | `{email, password, remember}` | `200` usuário | `419`, `422` (mensagem genérica), `429` |
 | `POST /api/logout` | Autenticado | n/d | `204` | n/d |
 | `GET /api/me` | Autenticado | n/d | `200` usuário | n/d |
+| `POST /api/forgot-password` | Público | `{email}` | `204` | `419`, `422` (formato do e-mail), `429` |
+| `POST /api/reset-password` | Público | `{token, email, password, password_confirmation, logout_other_devices?}` | `204` | `419`, `422` |
+
+`forgot-password` responde `204` exista ou não a conta, com o mesmo corpo e o mesmo tempo, porque o envio vai para a fila ([ADR 0011](adr/0011-password-reset-native-broker.md)). O link do e-mail abre no front em `/reset-password?token&email`.
+
+`reset-password` não inicia sessão: a pessoa volta ao login. Token inválido, expirado ou já usado e e-mail sem conta respondem igual, `422` em `errors.token`. A senha tem no mínimo 8 caracteres e confirmação. Com `logout_other_devices = true` (padrão `false`), as outras sessões da pessoa são encerradas.
 
 ```json
 { "data": { "id": 1, "name": "Ana Souza", "email": "ana@empresa.com", "role": "requester", "area": { "id": 2, "name": "Financeiro" } } }
