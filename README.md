@@ -46,6 +46,8 @@ Com `DISCORD_WEBHOOK_URL` vazia (o padrão), nada vai ao Discord: nenhum job e n
 
 O solicitante recebe um e-mail quando o pedido dele é assumido e quando é decidido. O e-mail traz o título, o novo status, quem assumiu ou decidiu, a justificativa (na decisão) e o botão "Ver pedido".
 
+O convite de conta (fluxo 6 da PRD) também é um e-mail, enviado pela mesma fila, e aparece no Mailpit. O link vale por `INVITATION_EXPIRE_DAYS` dias (padrão 7, no `backend/.env`).
+
 No desenvolvimento, não é preciso configurar nada. O `backend/.env.example` já aponta para o Mailpit, que recebe os e-mails sem entregá-los a ninguém. Para vê-los, abra http://localhost:8025.
 
 Para enviar de verdade pelo Gmail, basta mudar a configuração, sem tocar no código ([ADR 0007](docs/adr/0007-discord-webhook-and-smtp.md)):
@@ -114,6 +116,7 @@ Front-end em Next.js e API em Laravel, separados, com MySQL e um `worker` para a
 | [0007](docs/adr/0007-discord-webhook-and-smtp.md) | Discord por webhook e e-mail por SMTP |
 | [0008](docs/adr/0008-quality-tooling-and-ci.md) | Lint, análise estática, testes no MySQL e CI por aplicação |
 | [0009](docs/adr/0009-shadcn-ui-component-library.md) | shadcn/ui como base dos componentes |
+| [0010](docs/adr/0010-invitation-token.md) | Token do convite: aleatório, guardado como hash e de uso único |
 
 Mais detalhes:
 - [Diagramas](docs/architecture/): os containers e o fluxo das notificações.
