@@ -21,6 +21,11 @@ return [
         'approved' => 'Aprovado',
         'rejected' => 'Rejeitado',
     ],
+    'role' => [
+        'requester' => 'Solicitante',
+        'analyst' => 'Analista',
+        'admin' => 'Administrador',
+    ],
     'mail' => [
         'greeting' => 'Olá, :name!',
         'action' => 'Ver pedido',
@@ -36,6 +41,13 @@ return [
         'rejected' => [
             'subject' => 'Seu pedido #:id foi rejeitado',
             'intro' => 'Seu pedido ":title" foi rejeitado.',
+        ],
+        'invitation' => [
+            'subject' => 'Você foi convidado para o Internal Requests Manager',
+            'intro' => 'Você foi convidado para acessar o sistema de solicitações internas.',
+            'profile' => 'Seu perfil: :role. Sua área: :area.',
+            'action' => 'Criar conta',
+            'expires' => 'Este convite vale até :date.',
         ],
         'decided' => [
             'decided_by' => 'Decidido por: :name.',
