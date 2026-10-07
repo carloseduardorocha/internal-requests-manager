@@ -117,6 +117,7 @@ Front-end em Next.js e API em Laravel, separados, com MySQL e um `worker` para a
 | [0008](docs/adr/0008-quality-tooling-and-ci.md) | Lint, análise estática, testes no MySQL e CI por aplicação |
 | [0009](docs/adr/0009-shadcn-ui-component-library.md) | shadcn/ui como base dos componentes |
 | [0010](docs/adr/0010-invitation-token.md) | Token do convite: aleatório, guardado como hash e de uso único |
+| [0011](docs/adr/0011-password-reset-native-broker.md) | Recuperação de senha com o broker nativo do Laravel |
 
 Mais detalhes:
 - [Diagramas](docs/architecture/): os containers e o fluxo das notificações.
