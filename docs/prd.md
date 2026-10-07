@@ -1,6 +1,6 @@
 # Gestão de Solicitações Internas
 
-**PRD · Versão 2.1 · 03/10/2026**
+**PRD · Versão 2.2 · 06/10/2026**
 
 ## Visão geral
 
@@ -33,7 +33,7 @@ Cada pessoa tem um perfil e pertence a uma área da empresa.
 ### 1. Acesso
 
 - A pessoa entra com e-mail e senha e vê o sistema de acordo com o seu perfil.
-- Não existe cadastro aberto. Até a Fase 3, as contas são criadas pela equipe de suporte.
+- Não existe cadastro aberto. As contas são criadas por convite do administrador (fluxo 6). Até a Fase 3, são criadas pela equipe de suporte.
 - A mensagem de erro no login não diz se o problema foi o e-mail ou a senha.
 - Depois de várias tentativas erradas seguidas, o acesso fica bloqueado por alguns minutos.
 - A sessão termina quando a pessoa fecha o navegador ou depois de um período sem uso, a menos que ela marque "Mantenha-me conectado" ao entrar; nesse caso, continua conectada por até 30 dias. Ela pode sair a qualquer momento.
@@ -88,6 +88,28 @@ Pedidos excluídos não entram na contagem.
 - **E-mail:** o solicitante é avisado quando o pedido é assumido e quando é decidido.
 - Uma notificação nunca atrasa nem impede o uso do sistema. Se o envio falhar, o sistema tenta de novo sozinho e registra cada tentativa.
 
+### 6. Convite e recuperação de senha (Fase 3)
+
+**Convidar** (administrador)
+O administrador informa nome, e-mail, perfil e área, e o sistema envia o convite por e-mail com o botão "Criar conta".
+
+- Não é possível convidar um e-mail que já tem conta.
+- Convidar de novo o mesmo e-mail envia um link novo, e o anterior deixa de valer.
+
+**Criar a conta**
+O botão do convite abre a tela de cadastro com nome, e-mail, perfil e área já preenchidos. A pessoa cria e confirma a senha e já entra no sistema.
+
+- Só a senha é preenchida por ela. Os outros dados vêm do convite.
+- O link vale por 7 dias e só pode ser usado uma vez. Se expirou, a pessoa pede um novo convite ao administrador.
+
+**Recuperar a senha**
+Na tela de login, "Esqueci minha senha" leva a uma tela onde a pessoa informa o e-mail e recebe um link para criar uma nova senha. Ela informa e confirma a nova senha e volta para o login.
+
+- A resposta é a mesma exista ou não uma conta com aquele e-mail.
+- O link vale por 60 minutos e só pode ser usado uma vez.
+
+A senha, no cadastro e na recuperação, tem no mínimo 8 caracteres.
+
 ## Fases
 
 **Fase 1: operação básica**
@@ -98,7 +120,8 @@ Notificações por Discord e por e-mail.
 
 **Fase 3: expansão**
 
-- **Cadastro por convite:** o administrador informa nome, e-mail, perfil e área, e a pessoa recebe um link com prazo de validade para criar a senha. Junto, entram a recuperação de senha e a gestão de usuários.
+- **Convite e recuperação de senha** (fluxo 6).
+- **Gestão de usuários.**
 - **Disponibilização online:** até aqui, o sistema roda localmente.
 - **Sugestão de prioridade ou resumo do pedido por IA**, sempre como sugestão e com a decisão final de uma pessoa.
 - **Login com Google ou SSO da empresa.**
