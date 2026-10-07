@@ -16,11 +16,15 @@ class ResetPassword
      *
      * @throws ValidationException
      */
-    public function handle(string $email, string $token, string $password, bool $logoutOtherDevices): void
-    {
+    public function handle(
+        string $email,
+        #[\SensitiveParameter] string $token,
+        #[\SensitiveParameter] string $password,
+        bool $logoutOtherDevices,
+    ): void {
         $status = Password::reset(
             ['email' => $email, 'token' => $token, 'password' => $password],
-            function (User $user, string $password) use ($logoutOtherDevices): void {
+            function (User $user, #[\SensitiveParameter] string $password) use ($logoutOtherDevices): void {
                 $user->forceFill(['password' => $password]);
 
                 if ($logoutOtherDevices) {
