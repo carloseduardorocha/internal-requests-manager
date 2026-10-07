@@ -7,6 +7,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InternalRequestController;
 use App\Http\Controllers\InternalRequestReviewController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
@@ -15,12 +16,17 @@ Route::post('reset-password', [PasswordResetController::class, 'reset']);
 Route::get('invitations/{token}', [InvitationController::class, 'show']);
 Route::post('invitations/{token}/accept', [InvitationController::class, 'accept']);
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
     Route::get('me', [AuthController::class, 'me']);
 
     Route::get('areas', AreaController::class);
     Route::post('invitations', [InvitationController::class, 'store']);
+
+    Route::get('users', [UserController::class, 'index']);
+    Route::patch('users/{user}', [UserController::class, 'update']);
+    Route::post('users/{user}/deactivate', [UserController::class, 'deactivate']);
+    Route::post('users/{user}/reactivate', [UserController::class, 'reactivate']);
 
     Route::get('dashboard', DashboardController::class);
 

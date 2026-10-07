@@ -4,6 +4,7 @@ namespace App\Http\Requests\Invitations;
 
 use App\Enums\Role;
 use App\Models\Invitation;
+use App\Models\User;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
@@ -48,7 +49,9 @@ class StoreInvitationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'email.unique' => __('invitations.email_taken'),
+            'email.unique' => User::where('email', $this->input('email'))->whereNotNull('deactivated_at')->exists()
+                ? __('invitations.email_deactivated')
+                : __('invitations.email_taken'),
         ];
     }
 }

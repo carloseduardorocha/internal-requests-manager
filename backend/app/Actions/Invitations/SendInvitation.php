@@ -22,8 +22,12 @@ class SendInvitation
             // Locks the existing row, so a re-invite racing an accept cannot reopen a used invitation.
             Invitation::where('email', $email)->lockForUpdate()->first();
 
-            if (User::where('email', $email)->exists()) {
-                throw ValidationException::withMessages(['email' => __('invitations.email_taken')]);
+            $existing = User::where('email', $email)->first();
+
+            if ($existing !== null) {
+                throw ValidationException::withMessages([
+                    'email' => $existing->isActive() ? __('invitations.email_taken') : __('invitations.email_deactivated'),
+                ]);
             }
 
             $token = Str::random(64);
