@@ -44,7 +44,7 @@ Com `DISCORD_WEBHOOK_URL` vazia (o padrão), nada vai ao Discord: nenhum job e n
 
 #### E-mail
 
-O solicitante recebe um e-mail quando o pedido dele é assumido e quando é decidido. O e-mail traz o título, o novo status, quem assumiu ou decidiu, a justificativa (na decisão) e o botão "Ver pedido".
+O solicitante recebe um e-mail quando o pedido dele é assumido e quando é decidido. O e-mail traz o título, o novo status, quem assumiu ou decidiu, a justificativa (na decisão) e o botão "Ver pedido". O link de recuperação de senha também sai por aqui, pelo mesmo `worker`.
 
 No desenvolvimento, não é preciso configurar nada. O `backend/.env.example` já aponta para o Mailpit, que recebe os e-mails sem entregá-los a ninguém. Para vê-los, abra http://localhost:8025.
 

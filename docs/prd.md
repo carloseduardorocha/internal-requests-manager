@@ -1,6 +1,6 @@
 # Gestão de Solicitações Internas
 
-**PRD · Versão 2.3 · 06/10/2026**
+**PRD · Versão 2.4 · 06/10/2026**
 
 ## Visão geral
 
@@ -103,7 +103,7 @@ O botão do convite abre a tela de cadastro com nome, e-mail, perfil e área já
 - O link vale por 7 dias e só pode ser usado uma vez. Se expirou, a pessoa pede um novo convite ao administrador.
 
 **Recuperar a senha**
-Na tela de login, "Esqueci minha senha" leva a uma tela onde a pessoa informa o e-mail e recebe um link para criar uma nova senha. Ela informa e confirma a nova senha e volta para o login.
+Na tela de login, "Esqueci minha senha" leva a uma tela onde a pessoa informa o e-mail e recebe um link para criar uma nova senha. Ela informa e confirma a nova senha, pode escolher desconectar dos outros dispositivos onde está conectada, e volta para o login.
 
 - A resposta é a mesma exista ou não uma conta com aquele e-mail.
 - O link vale por 60 minutos e só pode ser usado uma vez.
