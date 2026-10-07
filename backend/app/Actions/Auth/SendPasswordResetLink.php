@@ -2,16 +2,15 @@
 
 namespace App\Actions\Auth;
 
-use Illuminate\Support\Facades\Password;
+use App\Jobs\SendPasswordResetLink as SendPasswordResetLinkJob;
 
 class SendPasswordResetLink
 {
     /**
-     * Sends the link when the account exists. The broker status is ignored on purpose,
-     * so the response never reveals whether the e-mail has an account.
+     * Queues the link for any e-mail, with or without an account, so the response is always the same and equally fast.
      */
     public function handle(string $email): void
     {
-        Password::sendResetLink(['email' => $email]);
+        SendPasswordResetLinkJob::dispatch($email);
     }
 }

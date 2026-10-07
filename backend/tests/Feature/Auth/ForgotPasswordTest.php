@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Jobs\SendPasswordResetLink;
 use App\Models\User;
 use App\Notifications\ResetPasswordNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -98,9 +99,25 @@ class ForgotPasswordTest extends TestCase
         Queue::fake();
         User::factory()->create(['email' => 'ana@empresa.com']);
 
-        $this->postJson('/api/forgot-password', ['email' => 'ana@empresa.com'])->assertNoContent();
+        $known = $this->postJson('/api/forgot-password', ['email' => 'ana@empresa.com']);
+        $unknown = $this->postJson('/api/forgot-password', ['email' => 'nobody@empresa.com']);
 
-        Queue::assertPushed(SendQueuedNotifications::class, 1);
+        $known->assertNoContent();
+        $unknown->assertNoContent();
+        $this->assertSame($known->getContent(), $unknown->getContent());
+        Queue::assertPushed(SendPasswordResetLink::class, 2);
+        Queue::assertPushed(SendPasswordResetLink::class, fn ($job) => $job->email === 'ana@empresa.com');
+        Queue::assertPushed(SendPasswordResetLink::class, fn ($job) => $job->email === 'nobody@empresa.com');
+        Queue::assertNotPushed(SendQueuedNotifications::class);
+    }
+
+    public function test_the_queued_job_sends_the_reset_notification_through_the_broker(): void
+    {
+        Queue::fake();
+        User::factory()->create(['email' => 'ana@empresa.com']);
+
+        (new SendPasswordResetLink('ana@empresa.com'))->handle();
+
         Queue::assertPushed(
             SendQueuedNotifications::class,
             fn ($job) => $job->notification instanceof ResetPasswordNotification,
