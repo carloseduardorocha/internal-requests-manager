@@ -4,6 +4,7 @@ namespace Tests\Feature\Invitations;
 
 use App\Models\Area;
 use App\Models\Invitation;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -50,6 +51,7 @@ class ShowInvitationTest extends TestCase
 
     public function test_link_is_valid_for_seven_days(): void
     {
+        $this->freezeSecond();
         [, $token] = Invitation::factory()->createWithToken(['expires_at' => now()->addDays(7)]);
 
         $this->travel(7)->days();
@@ -60,6 +62,14 @@ class ShowInvitationTest extends TestCase
         $this->getJson("/api/invitations/{$token}")
             ->assertNotFound()
             ->assertJsonPath('message', self::MESSAGE);
+    }
+
+    public function test_an_email_that_got_an_account_meanwhile_returns_404(): void
+    {
+        [, $token] = Invitation::factory()->createWithToken(['email' => 'maria@empresa.com']);
+        User::factory()->create(['email' => 'maria@empresa.com']);
+
+        $this->getJson("/api/invitations/{$token}")->assertNotFound()->assertJsonPath('message', self::MESSAGE);
     }
 
     public function test_expired_and_accepted_invitations_return_404(): void

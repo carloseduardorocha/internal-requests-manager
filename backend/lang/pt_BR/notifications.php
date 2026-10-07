@@ -43,7 +43,7 @@ return [
             'intro' => 'Seu pedido ":title" foi rejeitado.',
         ],
         'invitation' => [
-            'subject' => 'Você foi convidado para o Internal Requests Manager',
+            'subject' => 'Convite para a Gestão de Solicitações Internas',
             'intro' => 'Você foi convidado para acessar o sistema de solicitações internas.',
             'profile' => 'Seu perfil: :role. Sua área: :area.',
             'action' => 'Criar conta',

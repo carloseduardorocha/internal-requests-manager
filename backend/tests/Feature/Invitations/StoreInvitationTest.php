@@ -93,6 +93,19 @@ class StoreInvitationTest extends TestCase
         $this->assertTrue($expiresAt->between(now()->addDays(7)->subMinute(), now()->addDays(7)->addMinute()));
     }
 
+    public function test_expiry_uses_the_configured_days_value(): void
+    {
+        Notification::fake();
+        $this->freezeSecond();
+        config(['auth.invitations.expire_days' => 3]);
+
+        $this->actingAs(User::factory()->admin()->create())
+            ->postJson('/api/invitations', $this->payload())
+            ->assertCreated();
+
+        $this->assertTrue(Invitation::firstOrFail()->expires_at->equalTo(now()->addDays(3)));
+    }
+
     public function test_notification_is_queued_and_encrypted(): void
     {
         $this->assertTrue(is_subclass_of(InvitationSent::class, ShouldQueue::class));
@@ -124,6 +137,26 @@ class StoreInvitationTest extends TestCase
 
         $this->assertDatabaseCount('invitations', 0);
         Notification::assertSentOnDemandTimes(InvitationSent::class, 0);
+    }
+
+    public function test_non_admin_gets_403_before_validation_and_cannot_probe_accounts(): void
+    {
+        User::factory()->create(['email' => 'maria@empresa.com']);
+
+        foreach ([User::factory()->create(), User::factory()->analyst()->create()] as $user) {
+            $this->actingAs($user)->postJson('/api/invitations', ['email' => 'maria@empresa.com'])->assertForbidden();
+            $this->actingAs($user)->postJson('/api/invitations', [])->assertForbidden();
+        }
+    }
+
+    public function test_validation_messages_use_the_field_labels(): void
+    {
+        $this->actingAs(User::factory()->admin()->create())
+            ->postJson('/api/invitations', [])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.role.0', 'É obrigatória a indicação de um valor para o campo perfil.')
+            ->assertJsonPath('errors.area_id.0', 'É obrigatória a indicação de um valor para o campo área.')
+            ->assertJsonPath('errors.name.0', 'É obrigatória a indicação de um valor para o campo nome.');
     }
 
     public function test_guest_gets_401(): void

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Session\ArraySessionHandler;
 use Illuminate\Session\Store;
 use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Tests\TestCase;
 
@@ -51,6 +52,22 @@ class AcceptInvitationActionTest extends TestCase
 
         $this->expectException(NotFoundHttpException::class);
         $action->handle($this->requestWithSession(), $token, 'segredo123');
+    }
+
+    public function test_the_invitation_is_read_with_a_row_lock_inside_the_transaction(): void
+    {
+        [, $token] = Invitation::factory()->createWithToken();
+        $locked = [];
+        DB::listen(function ($query) use (&$locked) {
+            if (str_contains($query->sql, 'from `invitations`') || str_contains($query->sql, 'from "invitations"')) {
+                $locked[] = str_contains(strtolower($query->sql), 'for update');
+            }
+        });
+
+        app(AcceptInvitation::class)->handle($this->requestWithSession(), $token, 'segredo123');
+
+        $this->assertNotEmpty($locked);
+        $this->assertNotContains(false, $locked, 'The invitation must be read with lockForUpdate().');
     }
 
     public function test_it_requires_a_session(): void

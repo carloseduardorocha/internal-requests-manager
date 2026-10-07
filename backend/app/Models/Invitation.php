@@ -45,13 +45,15 @@ class Invitation extends Model
     }
 
     /**
-     * Not accepted yet and not expired.
+     * The single rule of a usable invitation: not accepted, not expired and the e-mail still has no account.
      *
      * @param  Builder<Invitation>  $query
      */
     public function scopePending(Builder $query): void
     {
-        $query->whereNull('accepted_at')->where('expires_at', '>', now());
+        $query->whereNull('accepted_at')
+            ->where('expires_at', '>', now())
+            ->whereNotExists(fn ($users) => $users->from('users')->whereColumn('users.email', 'invitations.email'));
     }
 
     public static function hashToken(string $token): string

@@ -2,8 +2,8 @@
 
 namespace App\Notifications;
 
-use App\Models\Invitation;
 use App\Notifications\Concerns\EscapesUserText;
+use Carbon\CarbonInterface;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,8 +19,16 @@ class InvitationSent extends Notification implements ShouldBeEncrypted, ShouldQu
 
     public int $tries = 4;
 
-    public function __construct(public Invitation $invitation, private string $token)
-    {
+    /**
+     * Only scalar values: the invitation row can be overwritten by a later re-invite before the job runs.
+     */
+    public function __construct(
+        private string $name,
+        private string $role,
+        private string $areaName,
+        private CarbonInterface $expiresAt,
+        private string $token,
+    ) {
         $this->afterCommit();
     }
 
@@ -44,19 +52,17 @@ class InvitationSent extends Notification implements ShouldBeEncrypted, ShouldQu
 
     public function toMail(object $notifiable): MailMessage
     {
-        $invitation = $this->invitation;
-
         return (new MailMessage)
             ->subject(__('notifications.mail.invitation.subject'))
-            ->greeting($this->line('notifications.mail.greeting', ['name' => $invitation->name]))
+            ->greeting($this->line('notifications.mail.greeting', ['name' => $this->name]))
             ->line(__('notifications.mail.invitation.intro'))
             ->line($this->line('notifications.mail.invitation.profile', [
-                'role' => __('notifications.role.'.$invitation->role->value),
-                'area' => $invitation->area->name,
+                'role' => __('notifications.role.'.$this->role),
+                'area' => $this->areaName,
             ]))
             ->action(__('notifications.mail.invitation.action'), $this->acceptUrl())
             ->line(__('notifications.mail.invitation.expires', [
-                'date' => $invitation->expires_at->timezone(config('app.timezone'))->format('d/m/Y'),
+                'date' => $this->expiresAt->timezone(config('app.timezone'))->format('d/m/Y'),
             ]));
     }
 

@@ -4,10 +4,12 @@ namespace App\Actions\Invitations;
 
 use App\Enums\Role;
 use App\Models\Invitation;
+use App\Models\User;
 use App\Notifications\InvitationSent;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class SendInvitation
 {
@@ -17,6 +19,13 @@ class SendInvitation
     public function handle(string $name, string $email, Role $role, int $areaId): Invitation
     {
         return DB::transaction(function () use ($name, $email, $role, $areaId): Invitation {
+            // Locks the existing row, so a re-invite racing an accept cannot reopen a used invitation.
+            Invitation::where('email', $email)->lockForUpdate()->first();
+
+            if (User::where('email', $email)->exists()) {
+                throw ValidationException::withMessages(['email' => __('invitations.email_taken')]);
+            }
+
             $token = Str::random(64);
 
             $invitation = Invitation::updateOrCreate(
@@ -32,7 +41,13 @@ class SendInvitation
             );
             $invitation->load('area');
 
-            Notification::route('mail', $email)->notify(new InvitationSent($invitation, $token));
+            Notification::route('mail', $email)->notify(new InvitationSent(
+                $invitation->name,
+                $role->value,
+                $invitation->area->name,
+                $invitation->expires_at,
+                $token,
+            ));
 
             return $invitation;
         });

@@ -70,6 +70,7 @@ class AcceptInvitationTest extends TestCase
 
     public function test_expired_link_cannot_be_accepted(): void
     {
+        $this->freezeSecond();
         [, $token] = Invitation::factory()->createWithToken(['expires_at' => now()->addDays(7)]);
 
         $this->travel(7)->days();
@@ -83,6 +84,7 @@ class AcceptInvitationTest extends TestCase
 
     public function test_link_within_the_seven_days_can_be_accepted(): void
     {
+        $this->freezeSecond();
         [, $token] = Invitation::factory()->createWithToken(['expires_at' => now()->addDays(7)]);
 
         $this->travel(7)->days();

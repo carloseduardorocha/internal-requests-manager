@@ -27,14 +27,12 @@ class AcceptInvitation
 
         $user = DB::transaction(function () use ($token, $password): User {
             $invitation = Invitation::query()
+                ->pending()
                 ->where('token', Invitation::hashToken($token))
                 ->lockForUpdate()
                 ->first();
 
-            if ($invitation === null
-                || $invitation->accepted_at !== null
-                || $invitation->expires_at->isPast()
-                || User::where('email', $invitation->email)->exists()) {
+            if ($invitation === null) {
                 throw new NotFoundHttpException(__('invitations.invalid'));
             }
 

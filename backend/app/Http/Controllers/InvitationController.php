@@ -11,14 +11,11 @@ use App\Http\Resources\InvitationResource;
 use App\Http\Resources\UserResource;
 use App\Models\Invitation;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Gate;
 
 class InvitationController extends Controller
 {
     public function store(StoreInvitationRequest $request, SendInvitation $sendInvitation): JsonResponse
     {
-        Gate::authorize('create', Invitation::class);
-
         $invitation = $sendInvitation->handle(
             $request->string('name')->toString(),
             $request->string('email')->toString(),
