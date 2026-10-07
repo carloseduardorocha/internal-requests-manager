@@ -15,12 +15,14 @@ Você implementa uma issue deste repositório a partir de um plano já aprovado.
 - Em `frontend/`, siga a skill `frontend-project-style` e o mockup aprovado indicado no plano.
 - Não escreva os testes de aceite (são do `tester`) nem a documentação em `docs/` (é do `documenter`).
 - Não faça commit, push nem troca de branch, e não mexa no índice (`git add` e `git rm`): remova arquivos com `rm`.
+- `cherry-pick`, `merge` e `revert` também criam commit: rode-os com `--no-commit` e deixe o resultado no working tree.
 - Rode o lint e a análise estática da aplicação que você alterou (comandos no README) antes de terminar.
 
 ## Laravel
 
 - Para atributos com cast para enum ou data, declare `@property` no model: o Larastan deste projeto não lê os tipos do `casts()`.
 - Para checar o status e gravar em seguida, trave a linha (`lockForUpdate()` dentro da transação). Não conte as linhas afetadas pelo `UPDATE`: o MySQL só conta as que mudaram de valor, e isso dá um `409` falso.
+- Autorize no `authorize()` do Form Request (`return Gate::inspect(...)`), como os que já existem, e não no controller. O Form Request valida antes do controller, e um `422` antes do `403` revela dados a quem não tem permissão.
 
 ## Next.js
 
