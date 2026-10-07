@@ -6,7 +6,7 @@ Fluxos e regras: [PRD](prd.md). Autenticação e valores de sessão: [ADR 0004](
 
 - Base `/api`, JSON, sem versão.
 - Autenticação por sessão (Sanctum SPA). Antes do login, o cliente chama `GET /sanctum/csrf-cookie`; em todas as chamadas envia credenciais (`credentials: include`) e o token CSRF.
-- Todos os endpoints exigem sessão, exceto o CSRF, o login e a recuperação de senha (`forgot-password` e `reset-password`); por isso qualquer um pode responder `401` (e `419` nas escritas).
+- Todos os endpoints exigem sessão, exceto o CSRF, o login, a recuperação de senha (`forgot-password` e `reset-password`) e as duas rotas públicas do convite (`GET` e `accept`, seção 6); por isso qualquer um pode responder `401` (e `419` nas escritas).
 - Respostas de recurso vêm dentro de `data`; a paginação padrão do Laravel acrescenta `links` e `meta`, com os limites na query da listagem.
 - Ordem das checagens: visibilidade (`404`: pedido inexistente, excluído ou de outra pessoa, para o solicitante) → perfil ou dono (`403`) → validação (`422`) → status (`409`).
 - Mensagens em português (`APP_LOCALE=pt_BR`, [ADR 0001](adr/0001-layered-laravel-backend.md)).
@@ -28,9 +28,9 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | 401 | Sem sessão |
 | 419 | Token CSRF inválido ou sessão expirada (inclui o login por cliente fora do SPA, que não tem sessão); o cliente renova o CSRF e volta ao login |
 | 403 | Perfil ou dono sem permissão |
-| 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante) |
+| 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante); convite inválido, expirado ou usado |
 | 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação |
-| 422 | Validação falhou, filtro inválido na listagem ou credencial inválida no login |
+| 422 | Validação falhou, e-mail que já tem conta no convite, filtro inválido na listagem ou credencial inválida no login |
 | 429 | Login bloqueado por tentativas, ou mais de 6 pedidos por minuto por IP em `forgot-password` (sem revelar a conta); traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
 
 ## 1. Acesso
@@ -134,3 +134,22 @@ A resposta não vem dentro de `data`. Todas as chaves de status e prioridade apa
 ## 5. Notificações
 
 Sem endpoint: são disparadas pelas ações dos fluxos 2 e 3. Veja o [diagrama](architecture/notifications.md).
+
+## 6. Convite
+
+| Endpoint | Quem | Payload | Sucesso | Erros |
+|---|---|---|---|---|
+| `GET /api/areas` | Administrador | n/d | `200` lista de áreas, por nome | `403` |
+| `POST /api/invitations` | Administrador | `{name, email, role, area_id}` | `201` convite | `403`, `422` |
+| `GET /api/invitations/{token}` | Público | n/d | `200` convite | `404` |
+| `POST /api/invitations/{token}/accept` | Público | `{password, password_confirmation}` | `201` usuário, já com sessão aberta | `404`, `419`, `422` |
+
+`POST /api/invitations` envia o e-mail pela fila. Convidar de novo o mesmo e-mail substitui o convite anterior, e o link antigo deixa de valer. O e-mail que já tem conta responde `422`. O `id` só aparece nessa resposta; o token nunca é devolvido.
+
+```json
+{ "data": { "id": 3, "name": "Carla Dias", "email": "carla@empresa.com", "role": "analyst", "area": { "id": 2, "name": "Financeiro" }, "expires_at": "2026-10-13T12:00:00Z" } }
+```
+
+`GET` devolve o mesmo formato, sem `id`, para a tela de cadastro preencher os dados. `accept` cria a conta com os dados do convite, grava a senha e abre a sessão; a resposta é o usuário, no formato de `GET /api/me` (seção 1). Como o login, exige a sessão do SPA (`419` sem ela).
+
+Convite inexistente, expirado ou já usado responde `404` com a mesma mensagem nos dois endpoints, sem distinguir o motivo: "Este convite expirou ou já foi usado. Peça um novo convite ao administrador." Regras e prazo: [PRD](prd.md), fluxo 6. Token: [ADR 0010](adr/0010-invitation-token.md).

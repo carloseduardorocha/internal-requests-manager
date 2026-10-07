@@ -6,6 +6,7 @@ MySQL 8 ([ADR 0003](adr/0003-mysql-database.md)). As regras de negócio estão n
 erDiagram
     areas ||--o{ users : "pertence"
     areas ||--o{ internal_requests : "área na criação"
+    areas ||--o{ invitations : "área do convite"
     users ||--o{ internal_requests : "requester_id"
     users |o--o{ internal_requests : "assigned_to"
     users |o--o{ internal_requests : "decided_by"
@@ -22,6 +23,15 @@ erDiagram
         bigint id PK
         varchar role
         bigint area_id FK
+    }
+    invitations {
+        bigint id PK
+        varchar email UK
+        varchar role
+        bigint area_id FK
+        char token UK
+        timestamp expires_at
+        timestamp accepted_at
     }
     internal_requests {
         bigint id PK
@@ -74,6 +84,20 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 | `role` | varchar | não | `requester`, `analyst` ou `admin` |
 | `area_id` | bigint | não | Área atual da pessoa (FK `areas`) |
 | `remember_token` | varchar | sim | Usado por "Mantenha-me conectado" |
+| `created_at`, `updated_at` | timestamp | sim | Controle do Laravel |
+
+### `invitations`
+
+| Coluna | Tipo | Nulo | Descrição |
+|---|---|---|---|
+| `id` | bigint | não | Chave primária |
+| `name` | varchar | não | Nome da pessoa convidada |
+| `email` | varchar | não | E-mail do convite, único |
+| `role` | varchar | não | `requester`, `analyst` ou `admin` |
+| `area_id` | bigint | não | Área da pessoa (FK `areas`) |
+| `token` | char(64) | não | Hash SHA-256 do token do link, único |
+| `expires_at` | timestamp | não | Fim da validade |
+| `accepted_at` | timestamp | sim | Quando a conta foi criada |
 | `created_at`, `updated_at` | timestamp | sim | Controle do Laravel |
 
 ### `internal_requests`
@@ -144,3 +168,6 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 | Tentativas de notificação (fluxo 5) | Uma linha em `notification_logs` por tentativa, com sucesso ou falha |
 | Link de recuperação vale 60 minutos e uma vez (fluxo 6) | `password_reset_tokens`: token com hash, uma linha por e-mail, apagada no uso e quando um novo é gerado; a validade é checada pela data de criação ([ADR 0011](adr/0011-password-reset-native-broker.md)) |
 | Sessão e bloqueio de login (fluxo 1) | `sessions` e `remember_token`; o bloqueio usa o cache ([ADR 0004](adr/0004-sanctum-spa-authentication.md)) |
+| Um convite por e-mail; convidar de novo invalida o link anterior (fluxo 6) | `invitations.email` único: o novo convite trava e sobrescreve a linha, com novo `token` e `expires_at`, e zera `accepted_at`; se o e-mail já estiver em `users`, é recusado |
+| Link vale por 7 dias e só uma vez | `expires_at` e `accepted_at`; aceitar trava a linha (`SELECT ... FOR UPDATE`) dentro de uma transação, checa os dois e que o e-mail ainda não está em `users`, e cria o usuário |
+| Link do convite não é recuperável a partir do banco | `token` guarda só o hash SHA-256; o valor do link existe apenas no e-mail ([ADR 0010](adr/0010-invitation-token.md)) |

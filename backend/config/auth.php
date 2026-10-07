@@ -130,4 +130,17 @@ return [
         'decay_minutes' => (int) env('LOGIN_DECAY_MINUTES', 15),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Invitations
+    |--------------------------------------------------------------------------
+    |
+    | Days an invitation link stays valid after it is sent.
+    |
+    */
+
+    'invitations' => [
+        'expire_days' => (int) env('INVITATION_EXPIRE_DAYS', 7),
+    ],
+
 ];
