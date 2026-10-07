@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AreaController;
 use App\Http\Controllers\Auth\AuthController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\InternalRequestController;
 use App\Http\Controllers\InternalRequestReviewController;
@@ -9,6 +10,8 @@ use App\Http\Controllers\InvitationController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login']);
+Route::post('forgot-password', [PasswordResetController::class, 'forgot'])->middleware('throttle:6,1');
+Route::post('reset-password', [PasswordResetController::class, 'reset']);
 Route::get('invitations/{token}', [InvitationController::class, 'show']);
 Route::post('invitations/{token}/accept', [InvitationController::class, 'accept']);
 

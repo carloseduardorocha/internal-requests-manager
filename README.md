@@ -44,7 +44,7 @@ Com `DISCORD_WEBHOOK_URL` vazia (o padrão), nada vai ao Discord: nenhum job e n
 
 #### E-mail
 
-O solicitante recebe um e-mail quando o pedido dele é assumido e quando é decidido. O e-mail traz o título, o novo status, quem assumiu ou decidiu, a justificativa (na decisão) e o botão "Ver pedido".
+O solicitante recebe um e-mail quando o pedido dele é assumido e quando é decidido. O e-mail traz o título, o novo status, quem assumiu ou decidiu, a justificativa (na decisão) e o botão "Ver pedido". O link de recuperação de senha também sai por aqui, pelo mesmo `worker`.
 
 O convite de conta (fluxo 6 da PRD) também é um e-mail, enviado pela mesma fila, e aparece no Mailpit. O link vale por `INVITATION_EXPIRE_DAYS` dias (padrão 7, no `backend/.env`).
 

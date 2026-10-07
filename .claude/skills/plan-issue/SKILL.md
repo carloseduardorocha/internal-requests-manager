@@ -46,6 +46,7 @@ O plano é a única fonte para quem implementa, testa e revisa. Ele precisa ser 
 ### Decisões
 - Decisão tomada e o motivo. Marque com **(ADR)** as que viram ADR.
 - Em integrações com segredo (token, URL de webhook, senha): onde ele é lido e como fica fora do payload da fila, das mensagens de exceção e dos logs.
+- Em fluxos que não podem revelar se uma conta existe: como o corpo, o status e o tempo de resposta ficam iguais nos dois casos.
 
 ### Implementação
 - Arquivos a criar ou alterar, com o papel de cada um (rotas, controllers, models, migrations, policies, telas, componentes).

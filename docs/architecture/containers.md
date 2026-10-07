@@ -19,5 +19,5 @@ flowchart LR
     A <-->|dados| D
     W <-->|fila e logs| D
     W -->|notifica a equipe| DC
-    W -->|e-mail ao solicitante| M
+    W -->|e-mails: solicitante e recuperação de senha| M
 ```

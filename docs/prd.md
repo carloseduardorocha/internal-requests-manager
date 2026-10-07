@@ -1,6 +1,6 @@
 # Gestão de Solicitações Internas
 
-**PRD · Versão 2.2 · 06/10/2026**
+**PRD · Versão 2.4 · 06/10/2026**
 
 ## Visão geral
 
@@ -103,12 +103,30 @@ O botão do convite abre a tela de cadastro com nome, e-mail, perfil e área já
 - O link vale por 7 dias e só pode ser usado uma vez. Se expirou, a pessoa pede um novo convite ao administrador.
 
 **Recuperar a senha**
-Na tela de login, "Esqueci minha senha" leva a uma tela onde a pessoa informa o e-mail e recebe um link para criar uma nova senha. Ela informa e confirma a nova senha e volta para o login.
+Na tela de login, "Esqueci minha senha" leva a uma tela onde a pessoa informa o e-mail e recebe um link para criar uma nova senha. Ela informa e confirma a nova senha, pode escolher desconectar dos outros dispositivos onde está conectada, e volta para o login.
 
 - A resposta é a mesma exista ou não uma conta com aquele e-mail.
 - O link vale por 60 minutos e só pode ser usado uma vez.
 
 A senha, no cadastro e na recuperação, tem no mínimo 8 caracteres.
+
+### 7. Gestão de usuários (Fase 3)
+
+Disponível só para o administrador, no menu "Usuários", de onde também parte o convite (fluxo 6).
+
+**Listar**
+Lista das contas com nome, e-mail, perfil, área e situação (ativa ou desativada), com pesquisa por nome ou e-mail e filtros por perfil, área e situação.
+
+**Editar**
+O administrador altera nome, perfil e área. O e-mail não muda, porque é o login da pessoa.
+
+- A mudança de área não altera os pedidos já criados, que guardam a área do dia em que foram abertos (fluxo 2).
+
+**Desativar e reativar**
+A pessoa desativada não consegue mais entrar, e a sessão dela termina na hora. A conta não é excluída: os pedidos e o histórico continuam com o nome dela, e o administrador decide o que tiver ficado em análise com ela. Reativar devolve o acesso com a mesma senha.
+
+- O administrador não muda o próprio perfil nem desativa a própria conta.
+- Um e-mail de conta desativada não pode ser convidado de novo; basta reativar a conta.
 
 ## Fases
 
@@ -121,7 +139,7 @@ Notificações por Discord e por e-mail.
 **Fase 3: expansão**
 
 - **Convite e recuperação de senha** (fluxo 6).
-- **Gestão de usuários.**
+- **Gestão de usuários** (fluxo 7).
 - **Disponibilização online:** até aqui, o sistema roda localmente.
 - **Sugestão de prioridade ou resumo do pedido por IA**, sempre como sugestão e com a decisão final de uma pessoa.
 - **Login com Google ou SSO da empresa.**

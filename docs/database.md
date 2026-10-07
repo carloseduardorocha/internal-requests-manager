@@ -148,7 +148,7 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 
 ### Tabelas do Laravel
 
-`sessions`, `jobs`, `failed_jobs` e `cache`: sessão, fila ([ADR 0005](adr/0005-database-queue-and-retries.md)) e cache do framework. `password_reset_tokens`: tokens da recuperação de senha (Fase 3).
+`sessions`, `jobs`, `failed_jobs` e `cache`: sessão, fila ([ADR 0005](adr/0005-database-queue-and-retries.md)) e cache do framework. `password_reset_tokens`: tokens da recuperação de senha (fluxo 6).
 
 ## Onde cada regra é gravada
 
@@ -166,6 +166,7 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 | Painel por status e prioridade (fluxo 4) | Contagem por `status` e `priority`, usando os índices |
 | Pesquisa por texto | `LIKE` em `title` e `description` |
 | Tentativas de notificação (fluxo 5) | Uma linha em `notification_logs` por tentativa, com sucesso ou falha |
+| Link de recuperação vale 60 minutos e uma vez (fluxo 6) | `password_reset_tokens`: token com hash, uma linha por e-mail, apagada no uso e quando um novo é gerado; a validade é checada pela data de criação ([ADR 0011](adr/0011-password-reset-native-broker.md)) |
 | Sessão e bloqueio de login (fluxo 1) | `sessions` e `remember_token`; o bloqueio usa o cache ([ADR 0004](adr/0004-sanctum-spa-authentication.md)) |
 | Um convite por e-mail; convidar de novo invalida o link anterior (fluxo 6) | `invitations.email` único: o novo convite trava e sobrescreve a linha, com novo `token` e `expires_at`, e zera `accepted_at`; se o e-mail já estiver em `users`, é recusado |
 | Link vale por 7 dias e só uma vez | `expires_at` e `accepted_at`; aceitar trava a linha (`SELECT ... FOR UPDATE`) dentro de uma transação, checa os dois e que o e-mail ainda não está em `users`, e cria o usuário |
