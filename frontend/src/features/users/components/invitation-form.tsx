@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Loader2, RefreshCw } from "lucide-react";
+import { Loader2, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,11 +13,13 @@ import {
 import { toast } from "sonner";
 
 import { FieldError } from "@/components/field-error";
+import { SelectField } from "@/components/select-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EMAIL_PATTERN } from "@/features/auth/validation";
 import { createInvitation, listAreas } from "@/features/users/api";
+import { failureMessage } from "@/features/users/api-error";
 import { roleDescriptions, roleLabels, roles } from "@/features/users/labels";
 import { ApiError } from "@/lib/api";
 import type { Area, Role } from "@/lib/types";
@@ -59,7 +61,6 @@ export function InvitationForm() {
   const nameRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const firstRoleRef = useRef<HTMLInputElement>(null);
-  const areaRef = useRef<HTMLSelectElement>(null);
 
   const loadAreas = useCallback(() => {
     setAreas({ status: "loading" });
@@ -83,7 +84,7 @@ export function InvitationForm() {
     if (found.name) nameRef.current?.focus();
     else if (found.email) emailRef.current?.focus();
     else if (found.role) firstRoleRef.current?.focus();
-    else if (found.area) areaRef.current?.focus();
+    else if (found.area) document.getElementById("area")?.focus();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -130,20 +131,12 @@ export function InvitationForm() {
         return;
       }
 
-      // Expired session: the API client is already sending the user to the login.
-      if (
-        error instanceof ApiError &&
-        (error.status === 401 || error.status === 419)
-      ) {
-        return;
+      const message = failureMessage(error);
+      if (message !== null) {
+        toast.error("Não foi possível enviar o convite", {
+          description: message,
+        });
       }
-
-      toast.error("Não foi possível enviar o convite", {
-        description:
-          error instanceof ApiError
-            ? error.message
-            : "Não foi possível concluir a ação. Tente novamente.",
-      });
     }
   }
 
@@ -226,51 +219,44 @@ export function InvitationForm() {
         </div>
 
         <div className="grid min-w-0 gap-1.5">
-          <Label htmlFor="area" className="text-[13px] font-bold">
-            Área
-          </Label>
           {areas.status === "error" ? (
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="text-sm text-destructive">
-                Não foi possível carregar as áreas.
-              </span>
-              <Button type="button" variant="outline" onClick={loadAreas}>
-                <RefreshCw aria-hidden="true" />
-                Tentar de novo
-              </Button>
+            <div className="grid gap-1.5">
+              <span className="text-[13px] font-bold">Área</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm text-destructive">
+                  Não foi possível carregar as áreas.
+                </span>
+                <Button type="button" variant="outline" onClick={loadAreas}>
+                  <RefreshCw aria-hidden="true" />
+                  Tentar de novo
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="relative">
-              <select
-                id="area"
-                ref={areaRef}
-                value={areaId}
-                disabled={areas.status === "loading"}
-                onChange={(event) => {
-                  setAreaId(event.target.value);
-                  clearError("area");
-                }}
-                aria-invalid={errors.area ? true : undefined}
-                aria-describedby={errors.area ? "area-error" : undefined}
-                className="min-h-12 w-full cursor-pointer appearance-none rounded-lg border border-border-strong bg-background px-3 pr-10 text-foreground outline-hidden focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring focus-visible:outline-solid disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive"
-              >
-                <option value="">
-                  {areas.status === "loading"
-                    ? "Carregando…"
-                    : "Selecione a área"}
-                </option>
-                {areas.status === "ready" &&
-                  areas.areas.map((area) => (
-                    <option key={area.id} value={area.id}>
-                      {area.name}
-                    </option>
-                  ))}
-              </select>
-              <ChevronDown
-                aria-hidden="true"
-                className="pointer-events-none absolute top-4 right-3.5 size-4 text-muted-foreground"
-              />
-            </div>
+            <SelectField
+              id="area"
+              label="Área"
+              value={areaId}
+              disabled={areas.status === "loading"}
+              onChange={(event) => {
+                setAreaId(event.target.value);
+                clearError("area");
+              }}
+              invalid={Boolean(errors.area)}
+              describedBy={errors.area ? "area-error" : undefined}
+            >
+              <option value="">
+                {areas.status === "loading"
+                  ? "Carregando…"
+                  : "Selecione a área"}
+              </option>
+              {areas.status === "ready" &&
+                areas.areas.map((area) => (
+                  <option key={area.id} value={area.id}>
+                    {area.name}
+                  </option>
+                ))}
+            </SelectField>
           )}
           <FieldError id="area-error" message={errors.area} />
         </div>
