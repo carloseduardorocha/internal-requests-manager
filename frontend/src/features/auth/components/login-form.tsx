@@ -1,8 +1,8 @@
 "use client";
 
-import { Clock, Eye, EyeOff, Loader2, Lock, TriangleAlert } from "lucide-react";
+import { CircleCheck, Clock, Loader2, Lock, TriangleAlert } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 
 import { FieldError } from "@/components/field-error";
 import { Button } from "@/components/ui/button";
@@ -10,41 +10,19 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { login } from "@/features/auth/api";
+import { AuthLink } from "@/features/auth/components/auth-link";
+import { AuthAlert } from "@/features/auth/components/auth-alert";
+import { AuthCard } from "@/features/auth/components/auth-card";
+import { PasswordInput } from "@/features/auth/components/password-input";
 import { homeFor } from "@/features/auth/routes";
+import { EMAIL_PATTERN } from "@/features/auth/validation";
 import { ApiError } from "@/lib/api";
-
-const EMAIL_PATTERN = /^\S+@\S+\.\S+$/;
 
 type FieldErrors = { email?: string; password?: string };
 type Failure =
   | { kind: "credentials" }
   | { kind: "blocked"; message: string; seconds: number | null }
   | { kind: "generic"; message: string };
-
-function Alert({
-  tone,
-  icon,
-  children,
-}: {
-  tone: "info" | "error";
-  icon: ReactNode;
-  children: ReactNode;
-}) {
-  const colors =
-    tone === "info"
-      ? "bg-status-open-bg text-status-open-fg"
-      : "bg-status-rejected-bg text-status-rejected-fg";
-
-  return (
-    <div
-      role={tone === "error" ? "alert" : "status"}
-      className={`mb-4 flex items-start gap-2.5 rounded-lg px-3.5 py-3 text-sm ${colors}`}
-    >
-      <span className="mt-0.5 [&>svg]:size-[18px]">{icon}</span>
-      <div>{children}</div>
-    </div>
-  );
-}
 
 function blockedText(failure: Extract<Failure, { kind: "blocked" }>): string {
   if (failure.seconds === null) return failure.message;
@@ -54,12 +32,17 @@ function blockedText(failure: Extract<Failure, { kind: "blocked" }>): string {
   }.`;
 }
 
-export function LoginForm({ expired = false }: { expired?: boolean }) {
+export function LoginForm({
+  expired = false,
+  reset = false,
+}: {
+  expired?: boolean;
+  reset?: boolean;
+}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [failure, setFailure] = useState<Failure | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -116,38 +99,45 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
   }
 
   return (
-    <section
-      aria-labelledby="login-title"
-      className="rounded-lg border border-border bg-card px-5 py-6 shadow-sm min-[481px]:px-7 min-[481px]:py-8"
-    >
-      <h1 id="login-title" className="font-heading text-2xl font-extrabold">
+    <AuthCard aria-labelledby="login-title">
+      <h1
+        id="login-title"
+        className="font-heading text-2xl leading-normal font-extrabold"
+      >
         Entrar
       </h1>
       <p className="mt-1 mb-5 text-muted-foreground">
         Use o e-mail e a senha da sua conta.
       </p>
 
-      {expired && !failure && (
-        <Alert tone="info" icon={<Clock aria-hidden="true" />}>
+      {reset && !failure && (
+        <AuthAlert tone="success" icon={<CircleCheck aria-hidden="true" />}>
+          <b>Senha redefinida.</b>
+          <br />
+          Entre com a nova senha.
+        </AuthAlert>
+      )}
+      {expired && !reset && !failure && (
+        <AuthAlert tone="info" icon={<Clock aria-hidden="true" />}>
           Sua sessão expirou. Entre de novo para continuar.
-        </Alert>
+        </AuthAlert>
       )}
       {failure?.kind === "credentials" && (
-        <Alert tone="error" icon={<TriangleAlert aria-hidden="true" />}>
+        <AuthAlert tone="error" icon={<TriangleAlert aria-hidden="true" />}>
           E-mail ou senha incorretos.
-        </Alert>
+        </AuthAlert>
       )}
       {failure?.kind === "generic" && (
-        <Alert tone="error" icon={<TriangleAlert aria-hidden="true" />}>
+        <AuthAlert tone="error" icon={<TriangleAlert aria-hidden="true" />}>
           {failure.message}
-        </Alert>
+        </AuthAlert>
       )}
       {blocked && (
-        <Alert tone="error" icon={<Lock aria-hidden="true" />}>
+        <AuthAlert tone="error" icon={<Lock aria-hidden="true" />}>
           <b>Acesso bloqueado temporariamente.</b>
           <br />
           {blockedText(blocked)}
-        </Alert>
+        </AuthAlert>
       )}
 
       <form noValidate onSubmit={handleSubmit} className="grid gap-4">
@@ -169,35 +159,22 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="password" className="text-[13px] font-bold">
-            Senha
-          </Label>
-          <div className="relative">
-            <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              aria-invalid={fieldErrors.password ? true : undefined}
-              aria-describedby={
-                fieldErrors.password ? "password-error" : undefined
-              }
-              className="pr-13"
-            />
-            <button
-              type="button"
-              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-              onClick={() => setShowPassword((current) => !current)}
-              className="absolute top-0.5 right-0.5 grid size-11 place-items-center rounded-lg text-muted-foreground outline-hidden hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
-            >
-              {showPassword ? (
-                <EyeOff aria-hidden="true" className="size-5" />
-              ) : (
-                <Eye aria-hidden="true" className="size-5" />
-              )}
-            </button>
+          <div className="flex items-baseline justify-between gap-3">
+            <Label htmlFor="password" className="text-[13px] font-bold">
+              Senha
+            </Label>
+            <AuthLink href="/forgot-password">Esqueci minha senha</AuthLink>
           </div>
+          <PasswordInput
+            id="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            aria-invalid={fieldErrors.password ? true : undefined}
+            aria-describedby={
+              fieldErrors.password ? "password-error" : undefined
+            }
+          />
           <FieldError id="password-error" message={fieldErrors.password} />
         </div>
 
@@ -227,8 +204,8 @@ export function LoginForm({ expired = false }: { expired?: boolean }) {
       </form>
 
       <p className="mt-5 text-center text-[13px] text-muted-foreground">
-        Não tem acesso ou esqueceu a senha? Fale com a equipe de suporte.
+        Não tem acesso? Fale com o administrador.
       </p>
-    </section>
+    </AuthCard>
   );
 }

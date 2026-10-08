@@ -1,14 +1,7 @@
-import type { Metadata } from "next";
-
 import { BrandLogo } from "@/components/brand-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { LoginForm } from "@/features/auth/components/login-form";
 
-export const metadata: Metadata = { title: "Entrar · Solicitações Internas" };
-
-export default async function LoginPage({ searchParams }: PageProps<"/login">) {
-  const { expired } = await searchParams;
-
+export default function PublicLayout({ children }: LayoutProps<"/">) {
   return (
     <div className="flex min-h-screen flex-col">
       <div className="flex justify-end px-4 py-3">
@@ -21,7 +14,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
             Solicitações Internas
           </span>
         </div>
-        <LoginForm expired={expired === "1"} />
+        {children}
       </main>
     </div>
   );
