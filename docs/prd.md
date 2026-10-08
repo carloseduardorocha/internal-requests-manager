@@ -1,6 +1,6 @@
 # Gestão de Solicitações Internas
 
-**PRD · Versão 2.4 · 06/10/2026**
+**PRD · Versão 3.0 · 08/10/2026**
 
 ## Visão geral
 
@@ -50,6 +50,14 @@ A pessoa informa título, descrição e prioridade (Baixa, Média ou Alta). O si
 
 **Consultar**
 Lista com pesquisa por texto (título e descrição), filtros por status e por prioridade e ordenação por data (por padrão, os mais recentes primeiro). O solicitante vê só os próprios pedidos. Analista e administrador veem todos.
+
+**Ações na lista** (Fase 3)
+Cada pedido tem um menu de ações com visualizar, editar e excluir, que mostra só o que a pessoa pode fazer naquele pedido.
+
+A pessoa também pode selecionar vários pedidos e excluir (solicitante e administrador) ou assumir (analista e administrador) todos de uma vez.
+
+- Cada pedido segue as regras da ação individual (fluxos 2 e 3).
+- A ação é feita nos pedidos em que vale. Os outros são ignorados, e o sistema mostra quantos foram feitos, quantos ficaram de fora e por quê.
 
 **Ver detalhes**
 Mostra todos os dados do pedido, quem está analisando, a decisão com a justificativa e o histórico de cada mudança de status.
@@ -125,6 +133,8 @@ O administrador altera nome, perfil e área. O e-mail não muda, porque é o log
 **Desativar e reativar**
 A pessoa desativada não consegue mais entrar, e a sessão dela termina na hora. A conta não é excluída: os pedidos e o histórico continuam com o nome dela, e o administrador decide o que tiver ficado em análise com ela. Reativar devolve o acesso com a mesma senha.
 
+O administrador também pode selecionar várias contas e desativar ou reativar todas de uma vez, com a mesma regra das ações em massa do fluxo 2.
+
 - O administrador não muda o próprio perfil nem desativa a própria conta.
 - Um e-mail de conta desativada não pode ser convidado de novo; basta reativar a conta.
 
@@ -140,6 +150,7 @@ Notificações por Discord e por e-mail.
 
 - **Convite e recuperação de senha** (fluxo 6).
 - **Gestão de usuários** (fluxo 7).
+- **Ações na lista:** menu de ações por item e ações em massa (fluxos 2 e 7).
 - **Disponibilização online:** até aqui, o sistema roda localmente.
 - **Sugestão de prioridade ou resumo do pedido por IA**, sempre como sugestão e com a decisão final de uma pessoa.
 - **Login com Google ou SSO da empresa.**
