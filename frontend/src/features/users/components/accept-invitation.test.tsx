@@ -240,4 +240,29 @@ describe("AcceptInvitation", () => {
     expect(screen.queryByLabelText("Senha")).not.toBeInTheDocument();
     expect(getInvitation).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ["a 500", new ApiError(500, "boom")],
+    ["a network failure", new TypeError("Failed to fetch")],
+  ])(
+    "shows a retryable alert, not the unavailable card, when the GET fails with %s",
+    async (_label, error) => {
+      getInvitation.mockRejectedValueOnce(error);
+      getInvitation.mockResolvedValueOnce(invitation);
+      const ui = userEvent.setup();
+      render(<AcceptInvitation token="tok123" />);
+
+      expect(
+        await screen.findByText("Não foi possível carregar o convite."),
+      ).toBeVisible();
+      expect(screen.queryByRole("heading", GONE)).not.toBeInTheDocument();
+
+      await ui.click(screen.getByRole("button", { name: "Tentar de novo" }));
+
+      expect(
+        await screen.findByRole("heading", { name: "Criar sua conta" }),
+      ).toBeVisible();
+      expect(getInvitation).toHaveBeenCalledTimes(2);
+    },
+  );
 });

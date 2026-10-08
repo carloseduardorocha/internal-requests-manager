@@ -201,6 +201,15 @@ describe("InvitationForm", () => {
     expect(listAreas).toHaveBeenCalledTimes(2);
   });
 
+  it("disables the submit button while the areas load", () => {
+    listAreas.mockReturnValue(new Promise(() => {}));
+    render(<InvitationForm />);
+
+    expect(
+      screen.getByRole("button", { name: "Enviar convite" }),
+    ).toBeDisabled();
+  });
+
   it("links Cancelar back to /users", async () => {
     await renderReady();
 

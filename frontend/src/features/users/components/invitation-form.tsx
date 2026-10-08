@@ -95,6 +95,8 @@ export function InvitationForm() {
     const found = validate(trimmedName, trimmedEmail, role, areaId);
 
     setErrors(found);
+    // `role === ""` only narrows the type of `role` for TypeScript: `validate`
+    // already reports it.
     if (Object.keys(found).length > 0 || role === "") {
       focusFirstError(found);
       return;
@@ -279,7 +281,7 @@ export function InvitationForm() {
           </Button>
           <Button
             type="submit"
-            disabled={submitting || areas.status === "error"}
+            disabled={submitting || areas.status !== "ready"}
           >
             {submitting && (
               <Loader2 aria-hidden="true" className="animate-spin" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, MailX, TriangleAlert } from "lucide-react";
+import { Loader2, MailX, RefreshCw, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
@@ -23,7 +23,8 @@ type FieldErrors = { password?: string; confirmation?: string };
 type Status =
   | { kind: "checking" }
   | { kind: "ready"; invitation: Invitation }
-  | { kind: "unavailable" };
+  | { kind: "unavailable" }
+  | { kind: "error" };
 
 function InvitationUnavailable({ message }: { message: string }) {
   return (
@@ -76,6 +77,8 @@ export function AcceptInvitation({ token }: { token: string }) {
   const [failed, setFailed] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const [attempt, setAttempt] = useState(0);
+
   useEffect(() => {
     if (token === "") return;
 
@@ -84,18 +87,49 @@ export function AcceptInvitation({ token }: { token: string }) {
       (invitation) => {
         if (active) setStatus({ kind: "ready", invitation });
       },
-      () => {
-        // The API answers one 404 for every dead link; any other failure
-        // leaves nothing the person can do here either.
-        if (active) setStatus({ kind: "unavailable" });
+      (error: unknown) => {
+        if (!active) return;
+        // Only the API's single 404 means the link is dead. Any other failure
+        // (500, network) says nothing about it, so the person can retry.
+        setStatus(
+          error instanceof ApiError && error.status === 404
+            ? { kind: "unavailable" }
+            : { kind: "error" },
+        );
       },
     );
     return () => {
       active = false;
     };
-  }, [token]);
+  }, [token, attempt]);
+
+  function retry() {
+    setStatus({ kind: "checking" });
+    setAttempt((current) => current + 1);
+  }
 
   if (status.kind === "checking") return <InvitationSkeleton />;
+  if (status.kind === "error") {
+    return (
+      <AuthCard aria-labelledby="load-error-title">
+        <h1 id="load-error-title" className="sr-only">
+          Erro ao carregar o convite
+        </h1>
+        <AuthAlert tone="error" icon={<TriangleAlert aria-hidden="true" />}>
+          Não foi possível carregar o convite.
+        </AuthAlert>
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-12 w-full rounded-lg px-6 text-[15px]"
+          onClick={retry}
+        >
+          <RefreshCw aria-hidden="true" />
+          Tentar de novo
+        </Button>
+      </AuthCard>
+    );
+  }
   if (status.kind === "unavailable") {
     return <InvitationUnavailable message={GONE_MESSAGE} />;
   }
