@@ -1,9 +1,9 @@
 "use client";
 
-import { ChevronDown, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
 
+import { SelectField } from "@/components/select-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,44 +23,7 @@ import type {
   InternalRequestFilters,
   PaginationMeta,
 } from "@/features/requests/types";
-
-const SEARCH_DELAY_MS = 300;
-
-function SelectField({
-  id,
-  label,
-  className = "",
-  children,
-  ...props
-}: {
-  id: string;
-  label: string;
-  className?: string;
-  children: ReactNode;
-  value: string;
-  onChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-}) {
-  return (
-    <div className={`grid min-w-0 gap-1.5 ${className}`}>
-      <Label htmlFor={id} className="text-[13px] font-bold">
-        {label}
-      </Label>
-      <div className="relative">
-        <select
-          id={id}
-          {...props}
-          className="min-h-12 w-full cursor-pointer appearance-none rounded-lg border border-border-strong bg-background pr-9 pl-3 text-foreground outline-hidden focus-visible:border-transparent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring focus-visible:outline-solid"
-        >
-          {children}
-        </select>
-        <ChevronDown
-          aria-hidden="true"
-          className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground"
-        />
-      </div>
-    </div>
-  );
-}
+import { useDebouncedSearch } from "@/hooks/use-debounced-search";
 
 function countText(meta: PaginationMeta): string {
   if (meta.total === 0) return "Nenhuma solicitação encontrada";
@@ -79,49 +42,22 @@ export function RequestFilters({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [text, setText] = useState(filters.search);
-  const [seenSearch, setSeenSearch] = useState(filters.search);
-  // Last value the debounce put in the URL: when the navigation catches up
-  // with it, the box already holds (or has moved past) that text.
-  const [sentSearch, setSentSearch] = useState<string | null>(null);
-
-  // Follow changes that did not come from typing (clear, back button).
-  if (filters.search !== seenSearch) {
-    setSeenSearch(filters.search);
-    if (filters.search === sentSearch) {
-      // The URL caught up with the debounce: later changes are not ours.
-      setSentSearch(null);
-    } else if (filters.search !== text.trim()) {
-      setText(filters.search);
-    }
-  }
-
-  function apply(patch: Partial<InternalRequestFilters>) {
-    const query = toSearchParams({ ...filters, ...patch, page: 1 }).toString();
+  function replaceWith(next: InternalRequestFilters) {
+    const query = toSearchParams(next).toString();
     router.replace(query ? `${pathname}?${query}` : pathname);
   }
 
-  const trimmed = text.trim();
+  function apply(patch: Partial<InternalRequestFilters>) {
+    replaceWith({ ...filters, ...patch, page: 1 });
+  }
 
-  useEffect(() => {
-    if (trimmed === filters.search) return;
-
-    const timer = setTimeout(() => {
-      setSentSearch(trimmed);
-      const query = toSearchParams({
-        ...filters,
-        search: trimmed,
-        page: 1,
-      }).toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
-    }, SEARCH_DELAY_MS);
-
-    return () => clearTimeout(timer);
-  }, [trimmed, filters, pathname, router]);
+  const { text, setText, trimmed, reset } = useDebouncedSearch(
+    filters.search,
+    (search) => replaceWith({ ...filters, search, page: 1 }),
+  );
 
   function handleClear() {
-    setText("");
-    setSentSearch(null);
+    reset();
     router.replace(pathname);
   }
 
