@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeMeta } from "@/features/requests/test-fixtures";
 import {
+  bulkDeactivateUsers,
+  bulkReactivateUsers,
   deactivateUser,
   listAreas,
   listUsers,
@@ -45,6 +47,8 @@ vi.mock("@/features/users/api", () => ({
   updateUser: vi.fn(),
   deactivateUser: vi.fn(),
   reactivateUser: vi.fn(),
+  bulkDeactivateUsers: vi.fn(),
+  bulkReactivateUsers: vi.fn(),
 }));
 
 const list = vi.mocked(listUsers);
@@ -52,6 +56,8 @@ const areasApi = vi.mocked(listAreas);
 const update = vi.mocked(updateUser);
 const deactivate = vi.mocked(deactivateUser);
 const reactivate = vi.mocked(reactivateUser);
+const bulkDeactivate = vi.mocked(bulkDeactivateUsers);
+const bulkReactivate = vi.mocked(bulkReactivateUsers);
 
 const areas = [makeArea({ id: 1, name: "TI" }), makeArea({ id: 2 })];
 
@@ -69,6 +75,11 @@ const me = makeUser({
   },
 });
 const carla = makeUser({ id: 7, name: "Carla Dias" });
+const bruno = makeUser({
+  id: 8,
+  name: "Bruno Lima",
+  email: "bruno@empresa.com",
+});
 const pedro = makeUser({
   id: 9,
   name: "Pedro Inativo",
@@ -119,6 +130,8 @@ describe("UsersPage", () => {
     update.mockReset();
     deactivate.mockReset();
     reactivate.mockReset();
+    bulkDeactivate.mockReset();
+    bulkReactivate.mockReset();
     replace.mockReset();
     push.mockReset();
     toastSuccess.mockReset();
@@ -449,6 +462,302 @@ describe("UsersPage", () => {
       await waitFor(() => expect(reactivate).toHaveBeenCalled());
       expect(screen.getByText("Maria Admin")).toBeInTheDocument();
       expect(screen.getByText("Carla Dias")).toBeInTheDocument();
+    });
+  });
+
+  describe("bulk actions", () => {
+    const selectAll = () =>
+      screen.getByRole("checkbox", { name: "Selecionar todas desta página" });
+    const box = (name: string) =>
+      screen.getByRole("checkbox", { name: `Selecionar ${name}` });
+    const checkedBoxes = () =>
+      screen
+        .getAllByRole("checkbox")
+        .filter((item) => item.getAttribute("aria-checked") === "true");
+    const bar = () => screen.queryByRole("region", { name: "Ações em massa" });
+
+    async function confirmDeactivation(ui: ReturnType<typeof userEvent.setup>) {
+      await ui.click(screen.getByRole("button", { name: "Desativar" }));
+      const dialog = await screen.findByRole("alertdialog");
+      await ui.click(within(dialog).getByRole("button", { name: "Desativar" }));
+    }
+
+    async function deactivateWithSkipped(
+      ui: ReturnType<typeof userEvent.setup>,
+    ) {
+      bulkDeactivate.mockResolvedValue({
+        done: [7],
+        skipped: [
+          { id: 8, reason: "already_deactivated", message: "Ficou de fora." },
+        ],
+      });
+      await ui.click(box("Carla Dias"));
+      await ui.click(box("Bruno Lima"));
+      await confirmDeactivation(ui);
+      await screen.findByText("1 de 2 contas desativadas");
+    }
+
+    it("selects every row of the page but the own account", async () => {
+      respondWith([me, carla, bruno, pedro]);
+      const ui = await renderLoaded();
+
+      await ui.click(selectAll());
+
+      expect(box("Carla Dias")).toBeChecked();
+      expect(box("Bruno Lima")).toBeChecked();
+      expect(box("Pedro Inativo")).toBeChecked();
+      expect(
+        screen.queryByRole("checkbox", { name: "Selecionar Maria Admin" }),
+      ).not.toBeInTheDocument();
+      expect(selectAll()).toBeChecked();
+      expect(screen.getByText("3 selecionadas")).toBeInTheDocument();
+    });
+
+    it("shows 'select all' as indeterminate with part of the page checked and unchecks everything on the next click", async () => {
+      respondWith([me, carla, bruno]);
+      const ui = await renderLoaded();
+
+      await ui.click(box("Carla Dias"));
+      expect(selectAll()).toBePartiallyChecked();
+
+      await ui.click(selectAll());
+      expect(box("Carla Dias")).toBeChecked();
+      expect(box("Bruno Lima")).toBeChecked();
+
+      await ui.click(selectAll());
+      expect(checkedBoxes()).toHaveLength(0);
+      expect(bar()).not.toBeInTheDocument();
+    });
+
+    it("deactivates after the confirmation, reloads, clears the selection and lists who was left out", async () => {
+      respondWith([me, carla, bruno]);
+      bulkDeactivate.mockResolvedValue({
+        done: [7],
+        skipped: [
+          {
+            id: 8,
+            reason: "already_deactivated",
+            message: "A conta já está desativada.",
+          },
+        ],
+      });
+      const ui = await renderLoaded();
+      await ui.click(box("Carla Dias"));
+      await ui.click(box("Bruno Lima"));
+      expect(list).toHaveBeenCalledTimes(1);
+
+      respondWith([
+        me,
+        {
+          ...carla,
+          status: "deactivated",
+          deactivated_at: "2026-10-07T10:00:00.000000Z",
+          can: { ...carla.can, deactivate: false, reactivate: true },
+        },
+        bruno,
+      ]);
+      await ui.click(screen.getByRole("button", { name: "Desativar" }));
+      const dialog = await screen.findByRole("alertdialog");
+      expect(
+        within(dialog).getByText("Desativar 2 contas?"),
+      ).toBeInTheDocument();
+      await ui.click(within(dialog).getByRole("button", { name: "Desativar" }));
+
+      await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+      expect(bulkDeactivate).toHaveBeenCalledWith([7, 8]);
+      await waitFor(() =>
+        expect(
+          within(row("Carla Dias")).getByText("Desativada"),
+        ).toBeInTheDocument(),
+      );
+      expect(checkedBoxes()).toHaveLength(0);
+      expect(bar()).not.toBeInTheDocument();
+
+      const summary = screen.getByRole("status");
+      expect(
+        within(summary).getByText("1 de 2 contas desativadas"),
+      ).toBeInTheDocument();
+      expect(within(summary).getByText("1 ficou de fora:")).toBeInTheDocument();
+      expect(within(summary).getByText("Bruno Lima")).toBeInTheDocument();
+      expect(
+        within(summary).getByText("A conta já está desativada."),
+      ).toBeInTheDocument();
+      expect(toastSuccess).not.toHaveBeenCalled();
+    });
+
+    it("reactivates without confirmation and titles the summary with 'reativadas'", async () => {
+      respondWith([me, carla, pedro]);
+      bulkReactivate.mockResolvedValue({
+        done: [9],
+        skipped: [
+          {
+            id: 7,
+            reason: "not_deactivated",
+            message: "A conta já está ativa.",
+          },
+        ],
+      });
+      const ui = await renderLoaded();
+      await ui.click(box("Carla Dias"));
+      await ui.click(box("Pedro Inativo"));
+
+      await ui.click(screen.getByRole("button", { name: "Reativar" }));
+
+      await waitFor(() => expect(bulkReactivate).toHaveBeenCalledWith([7, 9]));
+      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+      expect(
+        await screen.findByText("1 de 2 contas reativadas"),
+      ).toBeInTheDocument();
+      expect(screen.getByText("A conta já está ativa.")).toBeInTheDocument();
+    });
+
+    it("shows only the toast when nothing was left out", async () => {
+      respondWith([me, carla, bruno]);
+      bulkDeactivate.mockResolvedValue({ done: [7, 8], skipped: [] });
+      const ui = await renderLoaded();
+      await ui.click(selectAll());
+
+      await confirmDeactivation(ui);
+
+      await waitFor(() =>
+        expect(toastSuccess).toHaveBeenCalledWith("2 contas desativadas"),
+      );
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+      expect(list).toHaveBeenCalledTimes(2);
+      expect(checkedBoxes()).toHaveLength(0);
+    });
+
+    it("uses the singular in the toast for a single account", async () => {
+      respondWith([me, pedro]);
+      bulkReactivate.mockResolvedValue({ done: [9], skipped: [] });
+      const ui = await renderLoaded();
+      await ui.click(box("Pedro Inativo"));
+
+      await ui.click(screen.getByRole("button", { name: "Reativar" }));
+
+      await waitFor(() =>
+        expect(toastSuccess).toHaveBeenCalledWith("1 conta reativada"),
+      );
+    });
+
+    it("closes the summary with 'Fechar resumo'", async () => {
+      respondWith([me, carla, bruno]);
+      const ui = await renderLoaded();
+      await deactivateWithSkipped(ui);
+
+      await ui.click(screen.getByRole("button", { name: "Fechar resumo" }));
+
+      expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    });
+
+    it("hides the summary when the page changes", async () => {
+      const paged = makeMeta({ total: 30, last_page: 2, from: 1, to: 15 });
+      respondWith([me, carla, bruno], paged);
+      const ui = userEvent.setup();
+      const { rerender } = render(<UsersPage />);
+      await screen.findByText("Carla Dias");
+      await deactivateWithSkipped(ui);
+
+      query = "page=2";
+      rerender(<UsersPage />);
+
+      await waitFor(() =>
+        expect(screen.queryByRole("status")).not.toBeInTheDocument(),
+      );
+    });
+
+    it("clears the selection when the page changes", async () => {
+      respondWith(
+        [me, carla, bruno],
+        makeMeta({ total: 30, last_page: 2, from: 1, to: 15 }),
+      );
+      const ui = userEvent.setup();
+      const { rerender } = render(<UsersPage />);
+      await screen.findByText("Carla Dias");
+      await ui.click(box("Carla Dias"));
+      expect(box("Carla Dias")).toBeChecked();
+
+      query = "page=2";
+      rerender(<UsersPage />);
+
+      await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+      await screen.findByText("Carla Dias");
+      expect(checkedBoxes()).toHaveLength(0);
+      expect(bar()).not.toBeInTheDocument();
+    });
+
+    it("clears the selection when a filter changes", async () => {
+      respondWith([me, carla, bruno]);
+      const ui = userEvent.setup();
+      const { rerender } = render(<UsersPage />);
+      await screen.findByText("Carla Dias");
+      await ui.click(selectAll());
+      expect(checkedBoxes().length).toBeGreaterThan(0);
+
+      query = "role=analyst";
+      rerender(<UsersPage />);
+
+      await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+      await screen.findByText("Carla Dias");
+      expect(checkedBoxes()).toHaveLength(0);
+      expect(bar()).not.toBeInTheDocument();
+    });
+
+    it("keeps the selection and shows a toast on a generic error", async () => {
+      respondWith([me, carla, bruno]);
+      bulkDeactivate.mockRejectedValue(new ApiError(500, "Erro no servidor."));
+      const ui = await renderLoaded();
+      await ui.click(selectAll());
+
+      await confirmDeactivation(ui);
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith(
+          "Não foi possível desativar",
+          expect.objectContaining({ description: "Erro no servidor." }),
+        ),
+      );
+      expect(box("Carla Dias")).toBeChecked();
+      expect(box("Bruno Lima")).toBeChecked();
+      expect(list).toHaveBeenCalledTimes(1);
+    });
+
+    it("clears the selection and reloads the list on 403", async () => {
+      respondWith([me, carla, bruno]);
+      bulkDeactivate.mockRejectedValue(
+        new ApiError(403, "Você não tem permissão para fazer isso."),
+      );
+      const ui = await renderLoaded();
+      await ui.click(selectAll());
+
+      await confirmDeactivation(ui);
+
+      await waitFor(() =>
+        expect(toastError).toHaveBeenCalledWith(
+          "Não foi possível desativar",
+          expect.objectContaining({
+            description: "Você não tem permissão para fazer isso.",
+          }),
+        ),
+      );
+      await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(checkedBoxes()).toHaveLength(0));
+    });
+
+    it("shows no toast on 401", async () => {
+      respondWith([me, carla, bruno]);
+      bulkDeactivate.mockRejectedValue(new ApiError(401, "Não autenticado."));
+      const ui = await renderLoaded();
+      await ui.click(selectAll());
+
+      await confirmDeactivation(ui);
+
+      await waitFor(() => expect(bulkDeactivate).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+      );
+      expect(toastError).not.toHaveBeenCalled();
+      expect(toastSuccess).not.toHaveBeenCalled();
     });
   });
 });
