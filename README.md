@@ -135,7 +135,7 @@ Mais detalhes:
 **Limitações conhecidas**
 
 - Roda só localmente. Os containers são de desenvolvimento, com o código montado do disco e o servidor embutido do PHP, e não há imagens nem guia de produção.
-- Não há cadastro nem gestão de usuários. Além das [contas de demonstração](#usuários-de-demonstração), só dá para criar uma conta direto no banco.
+- O convite e a gestão de usuários (editar, desativar e reativar) existem só na API; ainda não há tela. Se dois administradores se desativarem ao mesmo tempo, ou um desativar o outro enquanto o outro tira o perfil de administrador do primeiro, o sistema pode ficar sem administrador ativo ([ADR 0004](docs/adr/0004-sanctum-spa-authentication.md)).
 - Não há tela para ver `notification_logs` nem `failed_jobs`. Para reenviar o que falhou, rode `docker compose exec -u "$(id -u):$(id -g)" api php artisan queue:retry all`.
 - O e-mail usa o layout padrão do Laravel, sem a identidade visual do produto, e não há preferência de notificação por usuário.
 - O Discord tem um canal só, o da equipe.

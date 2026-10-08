@@ -25,12 +25,12 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | 200 | Sucesso com corpo |
 | 201 | Recurso criado |
 | 204 | Sucesso sem corpo |
-| 401 | Sem sessão |
+| 401 | Sem sessão, ou conta desativada (a sessão restante é encerrada) |
 | 419 | Token CSRF inválido ou sessão expirada (inclui o login por cliente fora do SPA, que não tem sessão); o cliente renova o CSRF e volta ao login |
 | 403 | Perfil ou dono sem permissão |
 | 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante); convite inválido, expirado ou usado |
 | 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação |
-| 422 | Validação falhou, e-mail que já tem conta no convite, filtro inválido na listagem ou credencial inválida no login |
+| 422 | Validação falhou, e-mail que já tem conta (ativa ou desativada) no convite, regra de usuários descumprida (seção 7), filtro inválido na listagem ou credencial inválida no login |
 | 429 | Login bloqueado por tentativas, ou mais de 6 pedidos por minuto por IP em `forgot-password` (sem revelar a conta); traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
 
 ## 1. Acesso
@@ -45,6 +45,8 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | `POST /api/reset-password` | Público | `{token, email, password, password_confirmation, logout_other_devices?}` | `204` | `419`, `422` |
 
 `forgot-password` responde `204` exista ou não a conta, com o mesmo corpo e o mesmo tempo, porque o envio vai para a fila ([ADR 0011](adr/0011-password-reset-native-broker.md)). O link do e-mail abre no front em `/reset-password?token&email`.
+
+Conta desativada ([PRD](prd.md), fluxo 7): o login e o `reset-password` respondem como para credencial ou e-mail inválido, sem revelar o motivo, e o `forgot-password` não envia o e-mail. Se uma sessão sobreviver à desativação (por exemplo, uma requisição em andamento), qualquer rota autenticada responde `401` e encerra a sessão. Detalhes: [ADR 0004](adr/0004-sanctum-spa-authentication.md).
 
 `reset-password` não inicia sessão: a pessoa volta ao login. Token inválido, expirado ou já usado e e-mail sem conta respondem igual, `422` em `errors.token`. A senha tem no mínimo 8 caracteres e confirmação. Com `logout_other_devices = true` (padrão `false`), as outras sessões da pessoa são encerradas.
 
@@ -144,7 +146,7 @@ Sem endpoint: são disparadas pelas ações dos fluxos 2 e 3. Veja o [diagrama](
 | `GET /api/invitations/{token}` | Público | n/d | `200` convite | `404` |
 | `POST /api/invitations/{token}/accept` | Público | `{password, password_confirmation}` | `201` usuário, já com sessão aberta | `404`, `419`, `422` |
 
-`POST /api/invitations` envia o e-mail pela fila. Convidar de novo o mesmo e-mail substitui o convite anterior, e o link antigo deixa de valer. O e-mail que já tem conta responde `422`. O `id` só aparece nessa resposta; o token nunca é devolvido.
+`POST /api/invitations` envia o e-mail pela fila. Convidar de novo o mesmo e-mail substitui o convite anterior, e o link antigo deixa de valer. O e-mail que já tem conta responde `422` em `errors.email`; se a conta estiver desativada, a mensagem manda reativá-la em Usuários. O `id` só aparece nessa resposta; o token nunca é devolvido.
 
 ```json
 { "data": { "id": 3, "name": "Carla Dias", "email": "carla@empresa.com", "role": "analyst", "area": { "id": 2, "name": "Financeiro" }, "expires_at": "2026-10-13T12:00:00Z" } }
@@ -153,3 +155,41 @@ Sem endpoint: são disparadas pelas ações dos fluxos 2 e 3. Veja o [diagrama](
 `GET` devolve o mesmo formato, sem `id`, para a tela de cadastro preencher os dados. `accept` cria a conta com os dados do convite, grava a senha e abre a sessão; a resposta é o usuário, no formato de `GET /api/me` (seção 1). Como o login, exige a sessão do SPA (`419` sem ela).
 
 Convite inexistente, expirado ou já usado responde `404` com a mesma mensagem nos dois endpoints, sem distinguir o motivo: "Este convite expirou ou já foi usado. Peça um novo convite ao administrador." Regras e prazo: [PRD](prd.md), fluxo 6. Token: [ADR 0010](adr/0010-invitation-token.md).
+
+## 7. Gestão de usuários
+
+| Endpoint | Quem | Payload | Sucesso | Erros |
+|---|---|---|---|---|
+| `GET /api/users` | Administrador | query abaixo | `200` paginado | `403`, `422` |
+| `PATCH /api/users/{id}` | Administrador | `{name?, role?, area_id?}` | `200` usuário | `403`, `404`, `422` |
+| `POST /api/users/{id}/deactivate` | Administrador | n/d | `200` usuário | `403`, `404` |
+| `POST /api/users/{id}/reactivate` | Administrador | n/d | `200` usuário | `403`, `404` |
+
+**Query da listagem**
+
+| Parâmetro | Descrição |
+|---|---|
+| `search` | Texto no nome e no e-mail (máximo 255 caracteres) |
+| `role` | Filtra por perfil |
+| `area_id` | Filtra por área |
+| `status` | `active` ou `deactivated` |
+| `page`, `per_page` | Como na seção 2 (padrão 15, máximo 100) |
+
+Ordenada por nome. Parâmetros vazios são ignorados e valores inválidos respondem `422`.
+
+`PATCH` é parcial: cada campo é opcional, mas não pode ser enviado vazio. O e-mail não é editável. O administrador não altera o próprio perfil (`422` em `errors.role`) nem desativa a própria conta (`403`).
+
+`deactivate` apaga as sessões da pessoa e invalida o "Mantenha-me conectado". Desativar de novo uma conta já desativada, ou reativar uma ativa, responde `200` e não muda nada. Reativar devolve o acesso com a mesma senha. Dados e pedidos da conta permanecem. As regras estão no fluxo 7 da [PRD](prd.md).
+
+```json
+{
+  "data": {
+    "id": 7, "name": "Carla Dias", "email": "carla@empresa.com", "role": "analyst",
+    "area": { "id": 2, "name": "Financeiro" },
+    "status": "active", "deactivated_at": null, "created_at": "2026-10-03T13:00:00Z",
+    "can": { "update": true, "change_role": true, "deactivate": true, "reactivate": false }
+  }
+}
+```
+
+`status` é `active` ou `deactivated`. `can` vale na listagem e nas ações, como na seção 2: `change_role` e `deactivate` são `false` para a própria conta do administrador, e `deactivate` e `reactivate` dependem da situação da conta.

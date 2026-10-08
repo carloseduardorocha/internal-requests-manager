@@ -84,6 +84,7 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 | `role` | varchar | não | `requester`, `analyst` ou `admin` |
 | `area_id` | bigint | não | Área atual da pessoa (FK `areas`) |
 | `remember_token` | varchar | sim | Usado por "Mantenha-me conectado" |
+| `deactivated_at` | timestamp | sim | Quando a conta foi desativada; nulo = ativa |
 | `created_at`, `updated_at` | timestamp | sim | Controle do Laravel |
 
 ### `invitations`
@@ -171,3 +172,5 @@ Status, prioridade e perfil são `varchar` convertidos para enums no Laravel. To
 | Um convite por e-mail; convidar de novo invalida o link anterior (fluxo 6) | `invitations.email` único: o novo convite trava e sobrescreve a linha, com novo `token` e `expires_at`, e zera `accepted_at`; se o e-mail já estiver em `users`, é recusado |
 | Link vale por 7 dias e só uma vez | `expires_at` e `accepted_at`; aceitar trava a linha (`SELECT ... FOR UPDATE`) dentro de uma transação, checa os dois e que o e-mail ainda não está em `users`, e cria o usuário |
 | Link do convite não é recuperável a partir do banco | `token` guarda só o hash SHA-256; o valor do link existe apenas no e-mail ([ADR 0010](adr/0010-invitation-token.md)) |
+| Conta ativa ou desativada (fluxo 7) | `users.deactivated_at`: nulo é ativa. Desativar trava a linha da conta (`SELECT ... FOR UPDATE`) e, só na primeira vez, grava a data, apaga as linhas de `sessions` da pessoa e troca o `remember_token`; o middleware `active` recusa a sessão que restar. Reativar zera a coluna |
+| O e-mail não muda (fluxo 7) | Não há campo de edição; o convite e o cadastro são os únicos pontos que gravam `users.email` |
