@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { deactivateUser } from "@/features/users/api";
-import { failureMessage } from "@/features/users/api-error";
+import { failureMessage } from "@/lib/api-error";
 import type { ManagedUser } from "@/features/users/types";
 
 // Confirms before cutting the account's access: the session ends at once.

@@ -18,7 +18,7 @@ import {
   bulkAssignInternalRequests,
   bulkDeleteInternalRequests,
 } from "@/features/requests/api";
-import { failureMessage } from "@/features/users/api-error";
+import { failureMessage } from "@/lib/api-error";
 import { ApiError } from "@/lib/api";
 import type { BulkResult } from "@/lib/bulk";
 import type { Role } from "@/lib/types";
