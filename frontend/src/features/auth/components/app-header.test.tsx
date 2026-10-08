@@ -78,6 +78,45 @@ describe("AppHeader", () => {
   });
 });
 
+describe("AppHeader active item style", () => {
+  beforeEach(() => {
+    pathname = "/dashboard";
+    role = "analyst";
+  });
+
+  it("styles the active item with primary text and an underline, not a fill", () => {
+    render(<AppHeader />);
+    const active = nav().getByRole("link", { name: "Painel" });
+
+    expect(active).toHaveAttribute("aria-current", "page");
+    expect(active.className).toContain("aria-[current=page]:text-primary");
+    expect(active.className).toContain("aria-[current=page]:after:bg-primary");
+    expect(active.className).not.toContain("aria-[current=page]:bg-accent");
+    expect(active.className).not.toContain("hover:bg-accent");
+  });
+
+  it("gives the active item a primary-hover text and underline on hover", () => {
+    render(<AppHeader />);
+    const active = nav().getByRole("link", { name: "Painel" });
+
+    expect(active.className).toContain(
+      "aria-[current=page]:hover:text-primary-hover",
+    );
+    expect(active.className).toContain(
+      "aria-[current=page]:hover:after:bg-primary-hover",
+    );
+  });
+
+  it("keeps the underline transparent on the inactive items", () => {
+    render(<AppHeader />);
+    const inactive = nav().getByRole("link", { name: "Solicitações" });
+
+    expect(inactive).not.toHaveAttribute("aria-current");
+    expect(inactive.className).toContain("after:bg-transparent");
+    expect(inactive.className).toContain("hover:text-primary");
+  });
+});
+
 describe("UserMenu", () => {
   beforeEach(() => {
     logout.mockReset();

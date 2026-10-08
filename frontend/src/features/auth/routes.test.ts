@@ -71,6 +71,12 @@ describe("canAccess", () => {
     expect(canAccess("analyst", "/requests/123/edit")).toBe(true);
   });
 
+  it("lets only the admin open the invitation screen", () => {
+    expect(canAccess("admin", "/users/invite")).toBe(true);
+    expect(canAccess("analyst", "/users/invite")).toBe(false);
+    expect(canAccess("requester", "/users/invite")).toBe(false);
+  });
+
   it("allows any role on paths outside the map", () => {
     expect(canAccess("requester", "/other")).toBe(true);
   });
@@ -106,6 +112,20 @@ describe("routesFor", () => {
 
   it("skips entries with nav false even when the role matches", () => {
     expect(appRoutes.find((r) => r.href === "/requests/new")?.nav).toBe(false);
+  });
+
+  it.each(["requester", "analyst", "admin"] as const)(
+    "keeps /users/invite out of the menu for %s",
+    (role) => {
+      expect(routesFor(role).map((r) => r.href)).not.toContain("/users/invite");
+    },
+  );
+
+  it("declares /users/invite as admin only and outside the menu", () => {
+    const route = appRoutes.find((r) => r.href === "/users/invite");
+
+    expect(route?.roles).toEqual(["admin"]);
+    expect(route?.nav).toBe(false);
   });
 
   it("lists only requests for the requester", () => {
