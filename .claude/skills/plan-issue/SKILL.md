@@ -27,7 +27,7 @@ Não altere código nem documentação nesta etapa.
 5. **Tire as dúvidas**, uma por vez, cada uma com uma opção recomendada e o motivo. Não invente escopo: o que não está na PRD ou na issue é pergunta, não decisão.
    Em issues de `frontend/` com telas novas, valide o visual com um mockup antes de fechar o plano, seguindo a skill `frontend-project-style`.
 6. **Escreva o plano** com o modelo abaixo, num arquivo no scratchpad.
-7. **Mostre o plano** e espere a aprovação. Ajuste até o usuário aprovar.
+7. **Mostre o plano** e espere a aprovação. Antes de mostrar, releia as Decisões contra o Contrato e os Testes: uma regra dita de dois jeitos (por exemplo, "deduplica" numa seção e "responde 422" em outra) é corrigida antes. Ajuste até o usuário aprovar.
 8. **Publique o plano aprovado** como comentário na issue:
    ```bash
    gh issue comment <número> --body-file <arquivo>
