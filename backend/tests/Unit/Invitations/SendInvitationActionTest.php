@@ -34,4 +34,20 @@ class SendInvitationActionTest extends TestCase
         $this->assertSame($before, $invitation->fresh()->getAttributes());
         Notification::assertSentOnDemandTimes(InvitationSent::class, 0);
     }
+
+    public function test_a_deactivated_account_blocks_the_invitation(): void
+    {
+        Notification::fake();
+        User::factory()->deactivated()->create(['email' => 'maria@empresa.com']);
+
+        try {
+            app(SendInvitation::class)->handle('Maria', 'maria@empresa.com', Role::Admin, Area::factory()->create()->id);
+            $this->fail('Expected ValidationException.');
+        } catch (ValidationException $e) {
+            $this->assertSame([__('invitations.email_deactivated')], $e->errors()['email']);
+        }
+
+        $this->assertDatabaseCount('invitations', 0);
+        Notification::assertSentOnDemandTimes(InvitationSent::class, 0);
+    }
 }

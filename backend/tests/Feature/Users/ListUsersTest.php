@@ -148,7 +148,7 @@ class ListUsersTest extends TestCase
     {
         $admin = User::factory()->admin()->create();
 
-        foreach (['role=boss', 'status=gone', 'area_id=999999', 'area_id=abc', 'per_page=101', 'per_page=0'] as $query) {
+        foreach (['role=boss', 'status=gone', 'area_id=999999', 'area_id=abc', 'per_page=101', 'per_page=0', 'search='.str_repeat('a', 256)] as $query) {
             $this->actingAs($admin)->getJson("/api/users?{$query}")->assertUnprocessable();
         }
 
