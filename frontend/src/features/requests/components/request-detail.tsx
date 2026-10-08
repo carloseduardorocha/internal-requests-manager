@@ -1,6 +1,10 @@
-import { Pencil } from "lucide-react";
+"use client";
+
+import { Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { useState, type ReactNode } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { AssignRequestButton } from "@/features/requests/components/assign-request-button";
@@ -10,6 +14,7 @@ import { PriorityBadge } from "@/features/requests/components/priority-badge";
 import { StatusBadge } from "@/features/requests/components/status-badge";
 import { StatusTimeline } from "@/features/requests/components/status-timeline";
 import { formatDateTime } from "@/features/requests/format";
+import { listHref } from "@/features/requests/list-href";
 import type { InternalRequest } from "@/features/requests/types";
 
 function Section({
@@ -105,6 +110,8 @@ export function RequestDetail({
   onRefresh: () => void;
 }) {
   const { can } = request;
+  const router = useRouter();
+  const [deleting, setDeleting] = useState(false);
 
   return (
     <div className="grid gap-5">
@@ -138,7 +145,26 @@ export function RequestDetail({
               </Button>
             )}
             {can.delete && (
-              <DeleteRequestDialog request={request} onRefresh={onRefresh} />
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleting(true)}
+                  className="text-destructive hover:border-destructive hover:bg-status-rejected-bg hover:text-destructive max-[480px]:flex-1"
+                >
+                  <Trash2 aria-hidden="true" />
+                  Excluir
+                </Button>
+                <DeleteRequestDialog
+                  request={request}
+                  open={deleting}
+                  onOpenChange={setDeleting}
+                  onDeleted={() => {
+                    toast.success("Solicitação excluída");
+                    router.replace(listHref());
+                  }}
+                  onRefresh={onRefresh}
+                />
+              </>
             )}
           </div>
         )}

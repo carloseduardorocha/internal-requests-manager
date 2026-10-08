@@ -1,7 +1,6 @@
 "use client";
 
 import { Loader2, Trash2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -13,68 +12,74 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { deleteInternalRequest } from "@/features/requests/api";
-import { listHref } from "@/features/requests/list-href";
 import type { InternalRequest } from "@/features/requests/types";
 import { ApiError } from "@/lib/api";
 
-// Confirms before deleting. On a 409 (the request is no longer Open) it shows
-// the API message and asks the screen to reload.
+// Confirms before deleting. The screen opens it and decides what follows a
+// deletion. On a 409 (the request is no longer Open) it shows the API message
+// and asks the screen to reload.
 export function DeleteRequestDialog({
   request,
+  open,
+  onOpenChange,
+  onCloseFocus,
+  onDeleted,
   onRefresh,
 }: {
   request: Pick<InternalRequest, "id" | "title">;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  // Where the focus goes when the dialog closes, when the opener is gone.
+  onCloseFocus?: () => void;
+  onDeleted: () => void;
   onRefresh: () => void;
 }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function handleConfirm() {
     setDeleting(true);
     try {
       await deleteInternalRequest(request.id);
-      toast.success("Solicitação excluída");
-      router.replace(listHref());
+      onDeleted();
     } catch (error) {
-      setDeleting(false);
-      setOpen(false);
       // Expired session: the API client is already sending the user to the login.
-      if (
+      if (!(
         error instanceof ApiError &&
         (error.status === 401 || error.status === 419)
-      ) {
-        return;
+      )) {
+        toast.error("Não foi possível excluir", {
+          description:
+            error instanceof ApiError
+              ? error.message
+              : "Não foi possível concluir a ação. Tente novamente.",
+        });
+        if (error instanceof ApiError && error.status === 409) onRefresh();
       }
-      toast.error("Não foi possível excluir", {
-        description:
-          error instanceof ApiError
-            ? error.message
-            : "Não foi possível concluir a ação. Tente novamente.",
-      });
-      if (error instanceof ApiError && error.status === 409) onRefresh();
+    } finally {
+      setDeleting(false);
+      onOpenChange(false);
     }
   }
 
   return (
     <AlertDialog
       open={open}
-      onOpenChange={(next) => !deleting && setOpen(next)}
+      onOpenChange={(next) => !deleting && onOpenChange(next)}
     >
-      <AlertDialogTrigger asChild>
-        <Button
-          variant="outline"
-          className="text-destructive hover:border-destructive hover:bg-status-rejected-bg hover:text-destructive max-[480px]:flex-1"
-        >
-          <Trash2 aria-hidden="true" />
-          Excluir
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent className="gap-[18px]">
+      <AlertDialogContent
+        onCloseAutoFocus={
+          onCloseFocus
+            ? (event) => {
+                event.preventDefault();
+                onCloseFocus();
+              }
+            : undefined
+        }
+        className="gap-[18px]"
+      >
         <AlertDialogHeader className="place-items-start gap-1.5 text-left">
           <AlertDialogTitle>Excluir esta solicitação?</AlertDialogTitle>
           <AlertDialogDescription className="text-left text-[15px]">

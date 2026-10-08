@@ -29,23 +29,32 @@ const requests = [
   }),
 ];
 
+const props = {
+  isSelected: () => false,
+  toggle: vi.fn(),
+  allSelected: false,
+  someSelected: false,
+  toggleAll: vi.fn(),
+  onRefresh: vi.fn(),
+};
+
 describe("RequestList", () => {
-  it("renders one link per request to its detail", () => {
+  it("links each title to its detail", () => {
     role = "analyst";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     const first = screen.getByRole("link", { name: /Notebook novo/ });
     const second = screen.getByRole("link", { name: /Licença de software/ });
     expect(first).toHaveAttribute("href", "/requests/10");
     expect(second).toHaveAttribute("href", "/requests/11");
-    expect(screen.getAllByRole("link")).toHaveLength(2);
   });
 
   it("shows id, status, priority and the creation date in each row", () => {
     role = "analyst";
-    render(<RequestList requests={[requests[0]]} />);
+    render(<RequestList {...props} requests={[requests[0]]} />);
 
-    const row = screen.getByRole("link", { name: /Notebook novo/ });
+    const row = screen.getByRole("link", { name: /Notebook novo/ })
+      .parentElement!.parentElement!;
     expect(row).toHaveTextContent("#10");
     expect(row).toHaveTextContent("Aberta");
     expect(row).toHaveTextContent("Alta");
@@ -55,7 +64,7 @@ describe("RequestList", () => {
 
   it("shows the requester and the area to the analyst", () => {
     role = "analyst";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     expect(screen.getByText("Ana Souza · Financeiro")).toBeInTheDocument();
     expect(screen.getByText("Bruno Lima · Marketing")).toBeInTheDocument();
@@ -63,14 +72,14 @@ describe("RequestList", () => {
 
   it("shows the requester and the area to the admin", () => {
     role = "admin";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     expect(screen.getByText("Ana Souza · Financeiro")).toBeInTheDocument();
   });
 
   it("hides the requester and the area from the requester", () => {
     role = "requester";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     expect(screen.queryByText(/Ana Souza/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Financeiro/)).not.toBeInTheDocument();
@@ -80,7 +89,7 @@ describe("RequestList", () => {
 
   it("labels the columns", () => {
     role = "analyst";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     for (const column of ["Solicitação", "Prioridade", "Status", "Criada em"]) {
       expect(screen.getByText(column)).toBeInTheDocument();
