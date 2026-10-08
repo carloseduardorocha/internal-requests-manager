@@ -15,6 +15,7 @@ const onClear = vi.fn();
 const onStart = vi.fn();
 const onDone = vi.fn();
 const onForbidden = vi.fn();
+const onFocusFallback = vi.fn();
 
 vi.mock("sonner", () => ({
   toast: {
@@ -55,6 +56,7 @@ function setup(users: ManagedUser[]) {
       onStart={onStart}
       onDone={onDone}
       onForbidden={onForbidden}
+      onFocusFallback={onFocusFallback}
     />,
   );
   return ui;
@@ -75,6 +77,7 @@ describe("UserBulkActions", () => {
     onStart.mockReset();
     onDone.mockReset();
     onForbidden.mockReset();
+    onFocusFallback.mockReset();
   });
 
   describe("which actions the bar offers", () => {

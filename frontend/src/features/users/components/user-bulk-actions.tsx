@@ -23,6 +23,7 @@ export function UserBulkActions({
   onStart,
   onDone,
   onForbidden,
+  onFocusFallback,
 }: {
   users: ManagedUser[];
   onClear: () => void;
@@ -36,6 +37,8 @@ export function UserBulkActions({
   ) => void;
   // The profile cannot use the action: the page clears and reloads.
   onForbidden: () => void;
+  // Where the focus goes when the dialog closes and the bar is gone.
+  onFocusFallback: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -114,7 +117,11 @@ export function UserBulkActions({
         open={confirming}
         busy={busy}
         onOpenChange={setConfirming}
-        onCloseFocus={() => deactivateRef.current?.focus()}
+        onCloseFocus={() =>
+          deactivateRef.current
+            ? deactivateRef.current.focus()
+            : onFocusFallback()
+        }
         onConfirm={() => run("deactivate", snapshot)}
       />
     </>

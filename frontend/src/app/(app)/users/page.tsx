@@ -3,7 +3,7 @@
 import { UserPlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { BulkResultSummary } from "@/components/bulk-result-summary";
@@ -85,6 +85,13 @@ function UsersList({ areas }: { areas: Area[] }) {
   );
   const [summary, setSummary] = useState<Summary | null>(null);
   const shownSummary = summary?.key === resetKey ? summary : null;
+  // The summary takes the focus on its own; the dialog must not steal it.
+  const hasSummary = useRef(false);
+
+  function showSummary(next: Summary | null) {
+    hasSummary.current = next !== null;
+    setSummary(next);
+  }
 
   function handleBulkDone(
     result: BulkResult,
@@ -94,7 +101,7 @@ function UsersList({ areas }: { areas: Area[] }) {
     selection.clear();
     reload();
     if (result.skipped.length === 0) {
-      setSummary(null);
+      showSummary(null);
       const [one, many] = verbs[action];
       toast.success(
         result.done.length === 1
@@ -104,7 +111,7 @@ function UsersList({ areas }: { areas: Area[] }) {
       focusTitle();
       return;
     }
-    setSummary({ id: Date.now(), key: resetKey, result, action, labels });
+    showSummary({ id: Date.now(), key: resetKey, result, action, labels });
   }
 
   function handleBulkForbidden() {
@@ -189,7 +196,7 @@ function UsersList({ areas }: { areas: Area[] }) {
           } contas ${verbs[shownSummary.action][1]}`}
           labelFor={(id) => shownSummary.labels[id] ?? `Conta ${id}`}
           onClose={() => {
-            setSummary(null);
+            showSummary(null);
             focusTitle();
           }}
         />
@@ -198,7 +205,10 @@ function UsersList({ areas }: { areas: Area[] }) {
       <UserBulkActions
         users={data.filter((user) => selection.isSelected(user.id))}
         onClear={selection.clear}
-        onStart={() => setSummary(null)}
+        onStart={() => showSummary(null)}
+        onFocusFallback={() => {
+          if (!hasSummary.current) focusTitle();
+        }}
         onDone={handleBulkDone}
         onForbidden={handleBulkForbidden}
       />

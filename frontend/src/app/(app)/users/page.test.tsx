@@ -650,6 +650,95 @@ describe("UsersPage", () => {
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
+    describe("focus after the action", () => {
+      const title = () => screen.getByRole("heading", { name: "Usuários" });
+
+      it("goes to the title after deactivating with nothing left out", async () => {
+        respondWith([me, carla, bruno]);
+        bulkDeactivate.mockResolvedValue({ done: [7, 8], skipped: [] });
+        const ui = await renderLoaded();
+        await ui.click(selectAll());
+
+        await confirmDeactivation(ui);
+
+        await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+        await waitFor(() => expect(document.activeElement).toBe(title()));
+      });
+
+      it("stays on the summary when something was left out", async () => {
+        respondWith([me, carla, bruno]);
+        const ui = await renderLoaded();
+
+        await deactivateWithSkipped(ui);
+
+        await waitFor(() =>
+          expect(document.activeElement).toBe(screen.getByRole("status")),
+        );
+        await waitFor(() =>
+          expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+        );
+        expect(document.activeElement).toBe(screen.getByRole("status"));
+      });
+
+      it("goes to the title when the summary is closed", async () => {
+        respondWith([me, carla, bruno]);
+        const ui = await renderLoaded();
+        await deactivateWithSkipped(ui);
+
+        await ui.click(screen.getByRole("button", { name: "Fechar resumo" }));
+
+        expect(document.activeElement).toBe(title());
+      });
+
+      it("goes to the title on 403 from the dialog, with the bar gone", async () => {
+        respondWith([me, carla, bruno]);
+        bulkDeactivate.mockRejectedValue(new ApiError(403, "Sem permissão."));
+        const ui = await renderLoaded();
+        await ui.click(selectAll());
+
+        await confirmDeactivation(ui);
+
+        await waitFor(() => expect(toastError).toHaveBeenCalled());
+        await waitFor(() => expect(bar()).not.toBeInTheDocument());
+        await waitFor(() => expect(document.activeElement).toBe(title()));
+      });
+
+      it("goes back to 'Desativar' in the bar on Cancelar or an error that keeps the selection", async () => {
+        respondWith([me, carla, bruno]);
+        bulkDeactivate.mockRejectedValue(new ApiError(500, "Erro interno"));
+        const ui = await renderLoaded();
+        await ui.click(selectAll());
+        const barButton = () =>
+          within(bar()!).getByRole("button", { name: "Desativar" });
+
+        await ui.click(barButton());
+        const dialog = await screen.findByRole("alertdialog");
+        await ui.click(
+          within(dialog).getByRole("button", { name: "Cancelar" }),
+        );
+        await waitFor(() => expect(document.activeElement).toBe(barButton()));
+
+        await confirmDeactivation(ui);
+        await waitFor(() => expect(toastError).toHaveBeenCalled());
+        await waitFor(() =>
+          expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
+        );
+        await waitFor(() => expect(document.activeElement).toBe(barButton()));
+      });
+
+      it("goes to the title after reactivating with nothing left out", async () => {
+        respondWith([me, pedro]);
+        bulkReactivate.mockResolvedValue({ done: [9], skipped: [] });
+        const ui = await renderLoaded();
+        await ui.click(box("Pedro Inativo"));
+
+        await ui.click(screen.getByRole("button", { name: "Reativar" }));
+
+        await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+        await waitFor(() => expect(document.activeElement).toBe(title()));
+      });
+    });
+
     it("hides the summary when the page changes", async () => {
       const paged = makeMeta({ total: 30, last_page: 2, from: 1, to: 15 });
       respondWith([me, carla, bruno], paged);
