@@ -1,130 +1,87 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ApiError } from "@/lib/api";
+import { makeMeta } from "@/features/requests/test-fixtures";
+import { api } from "@/lib/api";
 
 import {
-  acceptInvitation,
-  createInvitation,
-  getInvitation,
+  deactivateUser,
   listAreas,
+  listUsers,
+  reactivateUser,
+  updateUser,
 } from "./api";
+import { makeArea, makeUser } from "./test-fixtures";
 
-const assign = vi.fn();
-const fetchMock = vi.fn();
-
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { "Content-Type": "application/json" },
-  });
-}
+vi.mock("@/lib/api", () => ({
+  api: {
+    get: vi.fn(),
+    post: vi.fn(),
+    patch: vi.fn(),
+    delete: vi.fn(),
+  },
+}));
 
 describe("users api", () => {
   beforeEach(() => {
-    assign.mockReset();
-    fetchMock.mockReset();
-    vi.stubGlobal("fetch", fetchMock);
-    vi.stubGlobal("location", { assign });
+    vi.mocked(api.get).mockReset();
+    vi.mocked(api.post).mockReset();
+    vi.mocked(api.patch).mockReset();
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("listAreas GETs /api/areas and unwraps data", async () => {
-    fetchMock.mockResolvedValue(json({ data: [{ id: 1, name: "TI" }] }));
-
-    await expect(listAreas()).resolves.toEqual([{ id: 1, name: "TI" }]);
-
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(String(url)).toMatch(/\/api\/areas$/);
-    expect(init.method ?? "GET").toBe("GET");
-  });
-
-  it("createInvitation POSTs the payload to /api/invitations", async () => {
-    const payload = {
-      name: "Ana",
-      email: "ana@empresa.com",
+  it("lists with every filter as query and returns the paginated body", async () => {
+    const body = { data: [makeUser()], meta: makeMeta() };
+    vi.mocked(api.get).mockResolvedValue(body);
+    const filters = {
+      search: "ca",
       role: "analyst" as const,
       area_id: 2,
-    };
-    fetchMock.mockImplementation(async (url: string) =>
-      String(url).includes("csrf-cookie")
-        ? new Response(null, { status: 204 })
-        : json({ data: { ...payload, area: { id: 2, name: "Ops" } } }, 201),
-    );
-
-    const result = await createInvitation(payload);
-
-    expect(result.email).toBe("ana@empresa.com");
-    const [url, init] = fetchMock.mock.calls.at(-1)!;
-    expect(String(url)).toMatch(/\/api\/invitations$/);
-    expect(init.method).toBe("POST");
-    expect(JSON.parse(init.body)).toEqual(payload);
-  });
-
-  it("getInvitation GETs the token route, encoding the token", async () => {
-    fetchMock.mockResolvedValue(
-      json({ data: { name: "Ana", email: "a@b.co" } }),
-    );
-
-    await getInvitation("a/b c");
-
-    const [url] = fetchMock.mock.calls[0];
-    expect(String(url)).toMatch(/\/api\/invitations\/a%2Fb%20c$/);
-  });
-
-  it("getInvitation rejects a 404 without redirecting", async () => {
-    fetchMock.mockResolvedValue(json({ message: "gone" }, 404));
-
-    await expect(getInvitation("tok")).rejects.toBeInstanceOf(ApiError);
-    expect(assign).not.toHaveBeenCalled();
-  });
-
-  it("getInvitation does not redirect on 401", async () => {
-    fetchMock.mockResolvedValue(json({}, 401));
-
-    await expect(getInvitation("tok")).rejects.toBeInstanceOf(ApiError);
-    expect(assign).not.toHaveBeenCalled();
-  });
-
-  it("acceptInvitation fetches the CSRF cookie, then POSTs the passwords", async () => {
-    fetchMock.mockImplementation(async (url: string) =>
-      String(url).includes("csrf-cookie")
-        ? new Response(null, { status: 204 })
-        : json({ data: { id: 1, role: "requester" } }, 201),
-    );
-    const input = {
-      password: "secret-123",
-      password_confirmation: "secret-123",
+      status: "active" as const,
+      page: 2,
     };
 
-    const user = await acceptInvitation("tok123", input);
-
-    expect(user).toEqual({ id: 1, role: "requester" });
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    expect(String(fetchMock.mock.calls[0][0])).toMatch(
-      /\/sanctum\/csrf-cookie$/,
-    );
-    const [url, init] = fetchMock.mock.calls[1];
-    expect(String(url)).toMatch(/\/api\/invitations\/tok123\/accept$/);
-    expect(init.method).toBe("POST");
-    expect(JSON.parse(init.body)).toEqual(input);
+    await expect(listUsers(filters)).resolves.toEqual(body);
+    expect(api.get).toHaveBeenCalledWith("/api/users", { query: filters });
   });
 
-  it.each([401, 419])(
-    "acceptInvitation rejects on %i without redirecting to the expired page",
-    async (status) => {
-      fetchMock.mockImplementation(async (url: string) =>
-        String(url).includes("csrf-cookie")
-          ? new Response(null, { status: 204 })
-          : json({}, status),
-      );
+  it("reads the data envelope on the areas", async () => {
+    const areas = [makeArea({ id: 1 }), makeArea({ id: 2, name: "TI" })];
+    vi.mocked(api.get).mockResolvedValue({ data: areas });
 
-      await expect(
-        acceptInvitation("tok", { password: "x", password_confirmation: "x" }),
-      ).rejects.toBeInstanceOf(ApiError);
-      expect(assign).not.toHaveBeenCalled();
-    },
-  );
+    await expect(listAreas()).resolves.toEqual(areas);
+    expect(api.get).toHaveBeenCalledWith("/api/areas");
+  });
+
+  it("updates with PATCH on the user and unwraps data", async () => {
+    const user = makeUser({ name: "Novo" });
+    vi.mocked(api.patch).mockResolvedValue({ data: user });
+    const payload = { name: "Novo", area_id: 3, role: "admin" as const };
+
+    await expect(updateUser(7, payload)).resolves.toEqual(user);
+    expect(api.patch).toHaveBeenCalledWith("/api/users/7", payload);
+  });
+
+  it("deactivates with POST on the deactivate route and unwraps data", async () => {
+    const user = makeUser({ status: "deactivated" });
+    vi.mocked(api.post).mockResolvedValue({ data: user });
+
+    await expect(deactivateUser(7)).resolves.toEqual(user);
+    expect(api.post).toHaveBeenCalledWith("/api/users/7/deactivate");
+  });
+
+  it("reactivates with POST on the reactivate route and unwraps data", async () => {
+    const user = makeUser({ status: "active" });
+    vi.mocked(api.post).mockResolvedValue({ data: user });
+
+    await expect(reactivateUser(7)).resolves.toEqual(user);
+    expect(api.post).toHaveBeenCalledWith("/api/users/7/reactivate");
+  });
+
+  it("lets a failure of the API reach the caller", async () => {
+    const failure = new Error("boom");
+    vi.mocked(api.patch).mockRejectedValue(failure);
+
+    await expect(updateUser(7, { name: "A", area_id: 1 })).rejects.toBe(
+      failure,
+    );
+  });
 });

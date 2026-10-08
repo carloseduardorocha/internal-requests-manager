@@ -71,6 +71,18 @@ describe("canAccess", () => {
     expect(canAccess("analyst", "/requests/123/edit")).toBe(true);
   });
 
+  it("allows only the admin on the users screen", () => {
+    expect(canAccess("admin", "/users")).toBe(true);
+    expect(canAccess("analyst", "/users")).toBe(false);
+    expect(canAccess("requester", "/users")).toBe(false);
+  });
+
+  it("applies the users restriction to its sub-paths too", () => {
+    expect(canAccess("admin", "/users/7")).toBe(true);
+    expect(canAccess("analyst", "/users/7")).toBe(false);
+    expect(canAccess("requester", "/users/7")).toBe(false);
+  });
+
   it("lets only the admin open the invitation screen", () => {
     expect(canAccess("admin", "/users/invite")).toBe(true);
     expect(canAccess("analyst", "/users/invite")).toBe(false);
@@ -132,13 +144,18 @@ describe("routesFor", () => {
     expect(routesFor("requester").map((r) => r.href)).toEqual(["/requests"]);
   });
 
-  it.each(["analyst", "admin"] as const)(
-    "lists dashboard and requests for %s",
-    (role) => {
-      expect(routesFor(role).map((r) => r.href)).toEqual([
-        "/dashboard",
-        "/requests",
-      ]);
-    },
-  );
+  it("lists dashboard and requests for the analyst", () => {
+    expect(routesFor("analyst").map((r) => r.href)).toEqual([
+      "/dashboard",
+      "/requests",
+    ]);
+  });
+
+  it("lists dashboard, requests and users for the admin", () => {
+    expect(routesFor("admin").map((r) => r.href)).toEqual([
+      "/dashboard",
+      "/requests",
+      "/users",
+    ]);
+  });
 });

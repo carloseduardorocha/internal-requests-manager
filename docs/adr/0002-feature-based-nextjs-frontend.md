@@ -12,7 +12,7 @@ O front-end acompanha os fluxos da [PRD](../prd.md). Agrupar por tipo de arquivo
 Next.js com App Router e TypeScript.
 
 - `src/app/` contém só as rotas.
-- `src/features/<fluxo>/` reúne componentes, chamadas à API, hooks e tipos de cada fluxo: `auth`, `requests`, `review` e `dashboard`.
+- `src/features/<fluxo>/` reúne componentes, chamadas à API, hooks e tipos de cada fluxo: `auth`, `requests`, `review`, `dashboard` e `users`.
 - Biblioteca de componentes: [ADR 0009](0009-shadcn-ui-component-library.md). Visual: [design-system.md](../design-system.md).
 
 Alternativa descartada: organização por tipo de arquivo.

@@ -6,48 +6,48 @@ import { usePathname, useRouter } from "next/navigation";
 import { SelectField } from "@/components/select-field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SEARCH_MAX } from "@/features/requests/filters";
+import type { PaginationMeta } from "@/features/requests/types";
 import {
-  SEARCH_MAX,
-  hasActiveFilters,
-  toSearchParams,
-} from "@/features/requests/filters";
+  hasActiveUserFilters,
+  toUserSearchParams,
+} from "@/features/users/filters";
 import {
-  priorities,
-  priorityLabels,
-  sortLabels,
-  sorts,
-  statuses,
-  statusLabels,
-} from "@/features/requests/labels";
-import type {
-  InternalRequestFilters,
-  PaginationMeta,
-} from "@/features/requests/types";
+  accountStatusFilterLabels,
+  accountStatuses,
+  roleLabels,
+  roles,
+} from "@/features/users/labels";
+import type { UserFilters as Filters } from "@/features/users/types";
 import { useDebouncedSearch } from "@/hooks/use-debounced-search";
+import type { Area } from "@/lib/types";
 
 function countText(meta: PaginationMeta): string {
-  if (meta.total === 0) return "Nenhuma solicitação encontrada";
-  if (meta.total === 1) return "1 solicitação encontrada";
-  return `Mostrando ${meta.from}–${meta.to} de ${meta.total} solicitações`;
+  if (meta.total === 0) return "Nenhum usuário encontrado";
+  if (meta.total === 1) return "1 usuário encontrado";
+  return `Mostrando ${meta.from}–${meta.to} de ${meta.total} usuários`;
 }
 
 // The filters live in the URL: every change replaces it (no history noise)
 // and goes back to page 1.
-export function RequestFilters({
+export function UserFilters({
   filters,
+  areas,
   meta,
 }: {
-  filters: InternalRequestFilters;
+  filters: Filters;
+  areas: Area[];
   meta: PaginationMeta | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  function replaceWith(next: InternalRequestFilters) {
-    const query = toSearchParams(next).toString();
+
+  function replaceWith(next: Filters) {
+    const query = toUserSearchParams(next).toString();
     router.replace(query ? `${pathname}?${query}` : pathname);
   }
 
-  function apply(patch: Partial<InternalRequestFilters>) {
+  function apply(patch: Partial<Filters>) {
     replaceWith({ ...filters, ...patch, page: 1 });
   }
 
@@ -61,15 +61,15 @@ export function RequestFilters({
     router.replace(pathname);
   }
 
-  const active = hasActiveFilters(filters) || trimmed !== "";
+  const active = hasActiveUserFilters(filters) || trimmed !== "";
 
   return (
     <>
       <form
         role="search"
-        aria-label="Filtrar solicitações"
+        aria-label="Filtrar usuários"
         onSubmit={(event) => event.preventDefault()}
-        className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_170px_170px_170px] md:items-end"
+        className="grid grid-cols-2 gap-3 md:grid-cols-[1fr_160px_170px_160px] md:items-end"
       >
         <div className="relative col-span-full md:col-auto">
           <Label htmlFor="search" className="sr-only">
@@ -82,7 +82,7 @@ export function RequestFilters({
           <Input
             id="search"
             type="search"
-            placeholder="Pesquisar no título ou na descrição"
+            placeholder="Pesquisar por nome ou e-mail"
             value={text}
             maxLength={SEARCH_MAX}
             onChange={(event) => setText(event.target.value)}
@@ -91,49 +91,52 @@ export function RequestFilters({
         </div>
 
         <SelectField
+          id="filter-role"
+          label="Perfil"
+          value={filters.role}
+          onChange={(event) =>
+            apply({ role: event.target.value as typeof filters.role })
+          }
+        >
+          <option value="">Todos</option>
+          {roles.map((role) => (
+            <option key={role} value={role}>
+              {roleLabels[role]}
+            </option>
+          ))}
+        </SelectField>
+
+        <SelectField
+          id="filter-area"
+          label="Área"
+          value={filters.area_id === null ? "" : String(filters.area_id)}
+          onChange={(event) =>
+            apply({
+              area_id: event.target.value ? Number(event.target.value) : null,
+            })
+          }
+        >
+          <option value="">Todas</option>
+          {areas.map((area) => (
+            <option key={area.id} value={area.id}>
+              {area.name}
+            </option>
+          ))}
+        </SelectField>
+
+        <SelectField
           id="filter-status"
-          label="Status"
+          label="Situação"
+          className="col-span-full md:col-auto"
           value={filters.status}
           onChange={(event) =>
             apply({ status: event.target.value as typeof filters.status })
           }
         >
-          <option value="">Todos</option>
-          {statuses.map((status) => (
-            <option key={status} value={status}>
-              {statusLabels[status]}
-            </option>
-          ))}
-        </SelectField>
-
-        <SelectField
-          id="filter-priority"
-          label="Prioridade"
-          value={filters.priority}
-          onChange={(event) =>
-            apply({ priority: event.target.value as typeof filters.priority })
-          }
-        >
           <option value="">Todas</option>
-          {priorities.map((priority) => (
-            <option key={priority} value={priority}>
-              {priorityLabels[priority]}
-            </option>
-          ))}
-        </SelectField>
-
-        <SelectField
-          id="filter-sort"
-          label="Ordenar por"
-          className="col-span-full md:col-auto"
-          value={filters.sort}
-          onChange={(event) =>
-            apply({ sort: event.target.value as typeof filters.sort })
-          }
-        >
-          {sorts.map((sort) => (
-            <option key={sort} value={sort}>
-              {sortLabels[sort]}
+          {accountStatuses.map((status) => (
+            <option key={status} value={status}>
+              {accountStatusFilterLabels[status]}
             </option>
           ))}
         </SelectField>
