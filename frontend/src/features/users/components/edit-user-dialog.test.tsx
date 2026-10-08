@@ -396,3 +396,87 @@ describe("EditUserDialog", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
+
+describe("EditUserDialog (reopening, alert, a11y and focus)", () => {
+  beforeEach(() => {
+    update.mockReset();
+    onSaved.mockReset();
+    onOpenChange.mockReset();
+  });
+
+  it("goes back to the row's values when reopened after cancelling", async () => {
+    const user = makeUser({
+      name: "Carla Dias",
+      role: "analyst",
+      area: areas[1],
+    });
+    const ui = userEvent.setup();
+    const props = { user, areas, onOpenChange, onSaved };
+    const { rerender } = render(<EditUserDialog {...props} open />);
+
+    await replaceName(ui, "Outro nome");
+    await ui.selectOptions(screen.getByLabelText("Perfil"), "admin");
+    await ui.selectOptions(screen.getByLabelText("Área"), "3");
+    rerender(<EditUserDialog {...props} open={false} />);
+    await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
+    rerender(<EditUserDialog {...props} open />);
+
+    expect(nameInput()).toHaveValue("Carla Dias");
+    expect(screen.getByLabelText("Perfil")).toHaveValue("analyst");
+    expect(screen.getByLabelText("Área")).toHaveValue("2");
+  });
+
+  it("shows the message of a 422 about another key in the alert", async () => {
+    update.mockRejectedValue(
+      new ApiError(422, "O e-mail não pode ser alterado.", {
+        email: ["O e-mail não pode ser alterado."],
+      }),
+    );
+    const { ui } = setup();
+
+    await ui.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "O e-mail não pode ser alterado.",
+    );
+  });
+
+  it("links each invalid field to its error", async () => {
+    update.mockRejectedValue(
+      validation({
+        name: ["O nome é obrigatório."],
+        role: ["O perfil é inválido."],
+        area_id: ["A área é inválida."],
+      }),
+    );
+    const { ui } = setup();
+
+    await ui.click(screen.getByRole("button", { name: "Salvar" }));
+
+    await waitFor(() =>
+      expect(nameInput()).toHaveAccessibleDescription("O nome é obrigatório."),
+    );
+    expect(screen.getByLabelText("Perfil")).toHaveAccessibleDescription(
+      "O perfil é inválido.",
+    );
+    expect(screen.getByLabelText("Área")).toHaveAccessibleDescription(
+      "A área é inválida.",
+    );
+  });
+
+  it.each([
+    ["403", new ApiError(403, "Sem permissão.")],
+    ["500", new ApiError(500, "Erro interno.")],
+    ["a 422 without a field error", validation({ email: ["Inválido."] })],
+  ])("focuses 'Salvar' when %s only reaches the alert", async (_, error) => {
+    update.mockRejectedValue(error);
+    const { ui } = setup();
+
+    await ui.click(screen.getByRole("button", { name: "Salvar" }));
+
+    await screen.findByRole("alert");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Salvar" })).toHaveFocus(),
+    );
+  });
+});
