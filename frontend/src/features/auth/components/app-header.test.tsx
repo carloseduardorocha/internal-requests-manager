@@ -53,6 +53,37 @@ describe("AppHeader", () => {
     expect(nav().getByText("Solicitações")).toBeInTheDocument();
   });
 
+  it.each(["requester", "analyst"] as const)(
+    "hides Usuários from the %s",
+    (value) => {
+      role = value;
+      render(<AppHeader />);
+
+      expect(nav().queryByText("Usuários")).not.toBeInTheDocument();
+    },
+  );
+
+  it("shows Usuários to the admin, linking to /users", () => {
+    role = "admin";
+    render(<AppHeader />);
+
+    expect(nav().getByRole("link", { name: "Usuários" })).toHaveAttribute(
+      "href",
+      "/users",
+    );
+  });
+
+  it("marks Usuários as current on its screen", () => {
+    role = "admin";
+    pathname = "/users";
+    render(<AppHeader />);
+
+    expect(nav().getByRole("link", { name: "Usuários" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
   it("marks the active route with aria-current", () => {
     role = "analyst";
     pathname = "/dashboard";
@@ -108,6 +139,24 @@ describe("UserMenu", () => {
       expect(await screen.findByText("Painel")).toBeInTheDocument();
     },
   );
+
+  it.each(["requester", "analyst"] as const)(
+    "hides Usuários from the %s",
+    async (value) => {
+      role = value;
+      await open();
+
+      await screen.findByText("Solicitações");
+      expect(screen.queryByText("Usuários")).not.toBeInTheDocument();
+    },
+  );
+
+  it("shows Usuários to the admin", async () => {
+    role = "admin";
+    await open();
+
+    expect(await screen.findByText("Usuários")).toBeInTheDocument();
+  });
 
   it("marks the active route, including sub-routes", async () => {
     pathname = "/requests/123";

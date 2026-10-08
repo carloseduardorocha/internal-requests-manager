@@ -1,4 +1,10 @@
-import { LayoutDashboard, List, Plus, type LucideIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  List,
+  Plus,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 import type { Role } from "@/lib/types";
 
@@ -32,6 +38,12 @@ export const appRoutes: AppRoute[] = [
     icon: Plus,
     roles: ["requester", "admin"],
     nav: false,
+  },
+  {
+    href: "/users",
+    label: "Usuários",
+    icon: Users,
+    roles: ["admin"],
   },
 ];
 
