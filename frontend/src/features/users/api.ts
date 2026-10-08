@@ -7,6 +7,7 @@ import type {
 } from "@/features/users/types";
 import type { Paginated } from "@/features/requests/types";
 import { api, getCsrfCookie } from "@/lib/api";
+import type { BulkResult } from "@/lib/bulk";
 import type { Area, User } from "@/lib/types";
 
 const BASE_PATH = "/api/users";
@@ -44,6 +45,22 @@ export async function deactivateUser(id: number): Promise<ManagedUser> {
 export async function reactivateUser(id: number): Promise<ManagedUser> {
   const { data } = await api.post<{ data: ManagedUser }>(
     `${BASE_PATH}/${id}/reactivate`,
+  );
+  return data;
+}
+
+export async function bulkDeactivateUsers(ids: number[]): Promise<BulkResult> {
+  const { data } = await api.post<{ data: BulkResult }>(
+    `${BASE_PATH}/bulk/deactivate`,
+    { ids },
+  );
+  return data;
+}
+
+export async function bulkReactivateUsers(ids: number[]): Promise<BulkResult> {
+  const { data } = await api.post<{ data: BulkResult }>(
+    `${BASE_PATH}/bulk/reactivate`,
+    { ids },
   );
   return data;
 }

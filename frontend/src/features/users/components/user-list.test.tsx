@@ -59,9 +59,24 @@ const deactivated = makeUser({
   },
 });
 
+const selection = {
+  isSelected: () => false,
+  onToggle: vi.fn(),
+  allSelected: false,
+  someSelected: false,
+  onToggleAll: vi.fn(),
+};
+
 function setup(users: ManagedUser[]) {
   const ui = userEvent.setup();
-  render(<UserList users={users} areas={areas} onUpdated={onUpdated} />);
+  render(
+    <UserList
+      users={users}
+      areas={areas}
+      selection={selection}
+      onUpdated={onUpdated}
+    />,
+  );
   return ui;
 }
 
