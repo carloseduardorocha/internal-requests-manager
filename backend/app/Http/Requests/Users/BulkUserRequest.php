@@ -2,39 +2,25 @@
 
 namespace App\Http\Requests\Users;
 
+use App\Http\Requests\BulkIdsRequest;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 
-class BulkUserRequest extends FormRequest
+class BulkUserRequest extends BulkIdsRequest
 {
-    /**
-     * The ability follows the controller method: deactivate -> bulkDeactivate, reactivate -> bulkReactivate.
-     */
     public function authorize(): Response
     {
-        return Gate::inspect('bulk'.ucfirst($this->route()?->getActionMethod() ?? ''), User::class);
-    }
+        $ability = match ($this->route()?->getActionMethod()) {
+            'deactivate' => 'bulkDeactivate',
+            'reactivate' => 'bulkReactivate',
+            default => null,
+        };
 
-    /**
-     * Unknown IDs are not a validation error: they come back as skipped. The cap matches the list's max per_page.
-     *
-     * @return array<string, array<int, string>>
-     */
-    public function rules(): array
-    {
-        return [
-            'ids' => ['required', 'array', 'min:1', 'max:100'],
-            'ids.*' => ['integer', 'distinct'],
-        ];
-    }
+        if ($ability === null) {
+            return Response::deny();
+        }
 
-    /**
-     * @return list<int>
-     */
-    public function ids(): array
-    {
-        return array_values(array_map('intval', $this->validated('ids')));
+        return Gate::inspect($ability, User::class);
     }
 }

@@ -30,7 +30,7 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | 403 | Perfil ou dono sem permissão |
 | 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante); convite inválido, expirado ou usado |
 | 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação |
-| 422 | Validação falhou, e-mail que já tem conta (ativa ou desativada) no convite, regra de usuários descumprida ou lista de IDs inválida nas ações em massa (seção 7), filtro inválido na listagem ou credencial inválida no login |
+| 422 | Validação falhou, e-mail que já tem conta (ativa ou desativada) no convite, regra de usuários descumprida (seção 7), lista de IDs inválida nas ações em massa (seções 3 e 7), filtro inválido na listagem ou credencial inválida no login |
 | 429 | Login bloqueado por tentativas, ou mais de 6 pedidos por minuto por IP em `forgot-password` (sem revelar a conta); traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
 
 ## 1. Acesso
@@ -63,6 +63,7 @@ Conta desativada ([PRD](prd.md), fluxo 7): o login e o `reset-password` responde
 | `GET /api/internal-requests/{id}` | Dono, analista e administrador | n/d | `200` com responsável, decisão e histórico | `404` |
 | `PATCH /api/internal-requests/{id}` | Dono e administrador | `{title, description, priority}` | `200` pedido | `403`, `404`, `409`, `422` |
 | `DELETE /api/internal-requests/{id}` | Dono e administrador | n/d | `204` | `403`, `404`, `409` |
+| `POST /api/internal-requests/bulk/delete` | Solicitante e administrador | `{ids}` | `200` resultado em massa | `403`, `422` |
 
 Editar e excluir só valem com o pedido `open` (`409` caso contrário, inclusive se ele for assumido ou excluído durante a requisição, com a mesma mensagem: "Este pedido não está mais Aberto e não pode ser alterado.").
 
@@ -112,10 +113,34 @@ Exemplo de detalhe (`200`):
 | Endpoint | Quem | Payload | Sucesso | Erros |
 |---|---|---|---|---|
 | `POST /api/internal-requests/{id}/assign` | Analista e administrador | n/d | `200` pedido `in_review` | `403`, `404`, `409` |
+| `POST /api/internal-requests/bulk/assign` | Analista e administrador | `{ids}` | `200` resultado em massa | `403`, `422` |
 | `POST /api/internal-requests/{id}/approve` | Quem assumiu e administrador | `{justification}` | `200` pedido `approved` | `403`, `404`, `409`, `422` |
 | `POST /api/internal-requests/{id}/reject` | Quem assumiu e administrador | `{justification}` | `200` pedido `rejected` | `403`, `404`, `409`, `422` |
 
 `assign` exige o pedido `open`; `approve` e `reject` exigem `in_review`. A resposta tem o mesmo formato do detalhe, e o pedido traz `can.assign`, `can.approve` e `can.reject`, calculados como `can.update` e `can.delete` (seção 2).
+
+**Ações em massa** (`bulk/delete` e `bulk/assign`; o mesmo formato vale para a seção 7)
+
+`ids` é obrigatório, com 1 a 100 inteiros sem repetição; fora disso responde `422` em `errors.ids` (ausente, vazio ou acima de 100) ou `errors.ids.N` (ID não inteiro ou repetido). Um perfil que não pode usar o endpoint recebe `403` na requisição toda. Cada item é processado sozinho, com as mesmas regras da ação individual, e o que falha não desfaz os outros. Um ID inexistente não dá `422`: entra em `skipped`. A resposta é sempre `200`, com a ordem dos IDs preservada ([ADR 0012](adr/0012-bulk-actions-partial-success.md)):
+
+```json
+{
+  "data": {
+    "done": [12, 15],
+    "skipped": [
+      { "id": 14, "reason": "not_open", "message": "Este pedido não está mais Aberto e não pode ser assumido." },
+      { "id": 99, "reason": "not_found", "message": "Pedido não encontrado." }
+    ]
+  }
+}
+```
+
+| `reason` | Quando |
+|---|---|
+| `not_found` | Pedido inexistente, excluído, ou sem permissão sobre ele (de outra pessoa, para o solicitante), sempre com a mesma mensagem |
+| `not_open` | O pedido não estava `open` ao ser processado, inclusive se mudou durante o lote |
+
+`reason` é estável, para o front decidir; `message` vem em português.
 
 ## 4. Painel
 
@@ -198,9 +223,7 @@ Ordenada por nome. Parâmetros vazios são ignorados e valores inválidos respon
 
 **Ações em massa** (fluxo 7 da [PRD](prd.md))
 
-O perfil é checado para o lote inteiro (`403`). Depois, cada conta é processada sozinha: as ignoradas não impedem as outras. A resposta traz `done`, só os IDs feitos, e `skipped`, com `{id, reason, message}` (`message` já em português). Os dois seguem a ordem enviada. A desativação encerra as sessões como na ação individual.
-
-`ids` é obrigatório, com 1 a 100 inteiros sem repetição; senão `422` em `errors.ids` (ausente, vazio ou acima de 100) ou `errors.ids.N` (ID não inteiro ou repetido). ID inexistente não é `422`: volta em `skipped` como `not_found`.
+Formato, regras de `ids`, `403` e ordem seguem o bloco "Ações em massa" da seção 3 e o [ADR 0012](adr/0012-bulk-actions-partial-success.md). A desativação encerra as sessões como na ação individual.
 
 | `reason` | Quando |
 |---|---|
@@ -209,13 +232,4 @@ O perfil é checado para o lote inteiro (`403`). Depois, cada conta é processad
 | `already_deactivated` | Desativar uma conta já desativada |
 | `already_active` | Reativar uma conta já ativa |
 
-```json
-{ "data": {
-  "done": [7, 9],
-  "skipped": [
-    { "id": 1, "reason": "self", "message": "Você não pode desativar a própria conta." },
-    { "id": 8, "reason": "already_deactivated", "message": "A conta já está desativada." },
-    { "id": 99, "reason": "not_found", "message": "Conta não encontrada." }
-  ]
-} }
-```
+Mensagens: `self` "Você não pode desativar a própria conta.", `already_deactivated` "A conta já está desativada.", `already_active` "A conta já está ativa." e `not_found` "Conta não encontrada."

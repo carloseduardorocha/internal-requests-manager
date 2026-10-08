@@ -4,6 +4,7 @@ use App\Http\Controllers\AreaController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InternalRequestBulkController;
 use App\Http\Controllers\InternalRequestController;
 use App\Http\Controllers\InternalRequestReviewController;
 use App\Http\Controllers\InvitationController;
@@ -32,6 +33,9 @@ Route::middleware(['auth:sanctum', 'active'])->group(function () {
     Route::post('users/{user}/reactivate', [UserController::class, 'reactivate']);
 
     Route::get('dashboard', DashboardController::class);
+
+    Route::post('internal-requests/bulk/delete', [InternalRequestBulkController::class, 'delete']);
+    Route::post('internal-requests/bulk/assign', [InternalRequestBulkController::class, 'assign']);
 
     Route::post('internal-requests/{internal_request}/assign', [InternalRequestReviewController::class, 'assign']);
     Route::post('internal-requests/{internal_request}/approve', [InternalRequestReviewController::class, 'approve']);
