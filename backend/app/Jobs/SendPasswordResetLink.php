@@ -34,6 +34,10 @@ class SendPasswordResetLink implements ShouldQueue
      */
     public function handle(): void
     {
-        Password::sendResetLink(['email' => $this->email]);
+        Password::sendResetLink([
+            'email' => $this->email,
+            // A deactivated account is treated as an unknown e-mail.
+            'active' => fn ($query) => $query->whereNull('deactivated_at'),
+        ]);
     }
 }

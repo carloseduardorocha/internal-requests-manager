@@ -3,9 +3,7 @@
 namespace App\Actions\Auth;
 
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ResetPassword
@@ -23,13 +21,18 @@ class ResetPassword
         bool $logoutOtherDevices,
     ): void {
         $status = Password::reset(
-            ['email' => $email, 'token' => $token, 'password' => $password],
+            [
+                'email' => $email,
+                'token' => $token,
+                'password' => $password,
+                // A deactivated account is treated as an unknown e-mail.
+                'active' => fn ($query) => $query->whereNull('deactivated_at'),
+            ],
             function (User $user, #[\SensitiveParameter] string $password) use ($logoutOtherDevices): void {
                 $user->forceFill(['password' => $password]);
 
                 if ($logoutOtherDevices) {
-                    DB::table((string) config('session.table'))->where('user_id', $user->getKey())->delete();
-                    $user->setRememberToken(Str::random(60));
+                    $user->logOutEverywhere();
                 }
 
                 $user->save();

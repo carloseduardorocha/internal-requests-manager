@@ -39,7 +39,12 @@ class LogIn
             $this->throttled($key);
         }
 
-        if (! Auth::guard('web')->attempt(['email' => $email, 'password' => $password], $remember)) {
+        if (! Auth::guard('web')->attempt([
+            'email' => $email,
+            'password' => $password,
+            // A deactivated account fails like a wrong password, without saying why.
+            'active' => fn ($query) => $query->whereNull('deactivated_at'),
+        ], $remember)) {
             throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
