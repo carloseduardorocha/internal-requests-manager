@@ -19,6 +19,22 @@ function setup(props: { count: number; busy?: boolean }) {
 }
 
 describe("BulkActionBar", () => {
+  it("keeps a spacer in the flow while the bar is shown, and none otherwise", () => {
+    const { container, rerender } = render(
+      <BulkActionBar count={2} busy={false} onClear={vi.fn()}>
+        <button>Assumir</button>
+      </BulkActionBar>,
+    );
+    expect(container.querySelector('div[aria-hidden="true"]')).not.toBeNull();
+
+    rerender(
+      <BulkActionBar count={0} busy={false} onClear={vi.fn()}>
+        <button>Assumir</button>
+      </BulkActionBar>,
+    );
+    expect(container.querySelector('div[aria-hidden="true"]')).toBeNull();
+  });
+
   it("is hidden with nothing selected", () => {
     setup({ count: 0 });
 

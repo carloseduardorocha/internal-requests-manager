@@ -3,7 +3,7 @@
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { BulkActionBar } from "@/components/bulk-action-bar";
@@ -36,6 +36,10 @@ import type { BulkResult } from "@/lib/bulk";
 
 type Summary = {
   key: string;
+  // One per bulk run, so a new summary remounts and takes the focus.
+  run: number;
+  // Set while the screen moves itself off a page the deletion emptied.
+  moveTo?: string;
   action: BulkRequestAction;
   result: BulkResult;
   total: number;
@@ -48,7 +52,9 @@ function summaryTitle(summary: Summary) {
       ? ["excluída", "excluídas"]
       : ["assumida", "assumidas"];
   const done = summary.result.done.length;
-  return `${done} de ${summary.total} solicitações ${verb[1]}`;
+  const noun =
+    summary.total === 1 ? `solicitação ${verb[0]}` : `solicitações ${verb[1]}`;
+  return `${done} de ${summary.total} ${noun}`;
 }
 
 function successMessage(action: BulkRequestAction, count: number) {
@@ -71,13 +77,34 @@ function RequestsContent() {
   );
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
-
-  // The summary belongs to the page and filters it came from.
-  if (summary && summary.key !== query) setSummary(null);
+  const runs = useRef(0);
 
   const canCreate = canAccess(user.role, "/requests/new");
   const active = hasActiveFilters(filters);
   const lastPage = meta?.last_page ?? 1;
+
+  // The summary belongs to the page and filters it came from. A bulk delete
+  // can empty the last page, and the move to the new last page (below) is not
+  // the person changing page, so the summary follows it.
+  const pastEnd = !loading && meta && filters.page > lastPage;
+  const lastPageQuery = toSearchParams({
+    ...filters,
+    page: lastPage,
+  }).toString();
+  if (
+    summary &&
+    summary.key === query &&
+    pastEnd &&
+    summary.moveTo === undefined
+  ) {
+    setSummary({ ...summary, moveTo: lastPageQuery });
+  } else if (summary && summary.key !== query) {
+    setSummary(
+      summary.moveTo === query
+        ? { ...summary, key: query, moveTo: undefined }
+        : null,
+    );
+  }
 
   // Remember the filters for the "back to the list" links.
   useEffect(() => saveListQuery(query), [query]);
@@ -98,6 +125,18 @@ function RequestsContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, meta, filters.page, lastPage, pathname, router]);
 
+  // The row menu's deletion (and its 409) remove the "⋯" that had the focus.
+  function reloadFocusingTitle() {
+    reload();
+    document.getElementById("requests-title")?.focus();
+  }
+
+  function handleBulkBusy(next: boolean) {
+    setBusy(next);
+    // A new bulk action replaces the previous summary.
+    if (next) setSummary(null);
+  }
+
   function handleBulkResult(action: BulkRequestAction, result: BulkResult) {
     // The list reloads after this, so the titles are kept now.
     const titles = new Map(data.map((request) => [request.id, request.title]));
@@ -111,8 +150,10 @@ function RequestsContent() {
       return;
     }
     // The summary takes the focus when it appears.
+    runs.current += 1;
     setSummary({
       key: query,
+      run: runs.current,
       action,
       result,
       total: result.done.length + result.skipped.length,
@@ -141,7 +182,13 @@ function RequestsContent() {
       <RequestListEmpty role={user.role} canCreate={canCreate} />
     );
   } else {
-    body = <RequestList requests={data} onRefresh={reload} {...selection} />;
+    body = (
+      <RequestList
+        requests={data}
+        onRefresh={reloadFocusingTitle}
+        {...selection}
+      />
+    );
   }
 
   return (
@@ -152,6 +199,7 @@ function RequestsContent() {
       />
       {summary && (
         <BulkResultSummary
+          key={summary.run}
           result={summary.result}
           title={summaryTitle(summary)}
           labelFor={(id) => `#${id} ${summary.titles.get(id) ?? ""}`.trim()}
@@ -171,7 +219,7 @@ function RequestsContent() {
           role={user.role}
           ids={selection.selected}
           busy={busy}
-          onBusyChange={setBusy}
+          onBusyChange={handleBulkBusy}
           onResult={handleBulkResult}
           onForbidden={handleBulkForbidden}
         />

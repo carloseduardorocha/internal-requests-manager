@@ -28,6 +28,8 @@ export function RequestRowActions({
 }) {
   const [deleting, setDeleting] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  // After a deletion (or a 409) the screen takes the focus: the "⋯" is going away.
+  const screenHasFocus = useRef(false);
 
   return (
     <>
@@ -41,7 +43,7 @@ export function RequestRowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="w-52 min-w-[200px] rounded-lg border border-border bg-card p-1 shadow-lg ring-0"
+          className="min-w-[200px] rounded-lg border border-border bg-card p-1 shadow-lg ring-0"
         >
           <DropdownMenuItem asChild className={itemClass}>
             <Link href={`/requests/${request.id}`}>
@@ -74,9 +76,18 @@ export function RequestRowActions({
           request={request}
           open={deleting}
           onOpenChange={setDeleting}
-          onCloseFocus={() => triggerRef.current?.focus()}
-          onDeleted={onDeleted}
-          onRefresh={onRefresh}
+          onCloseFocus={() => {
+            if (screenHasFocus.current) screenHasFocus.current = false;
+            else triggerRef.current?.focus();
+          }}
+          onDeleted={() => {
+            screenHasFocus.current = true;
+            onDeleted();
+          }}
+          onRefresh={() => {
+            screenHasFocus.current = true;
+            onRefresh();
+          }}
         />
       )}
     </>

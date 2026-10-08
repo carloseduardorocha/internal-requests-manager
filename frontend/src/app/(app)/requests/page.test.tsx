@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   bulkAssignInternalRequests,
   bulkDeleteInternalRequests,
+  deleteInternalRequest,
   listInternalRequests,
 } from "@/features/requests/api";
 import { makeMeta, makeRequest } from "@/features/requests/test-fixtures";
@@ -48,6 +49,7 @@ vi.mock("@/features/requests/api", () => ({
 const list = vi.mocked(listInternalRequests);
 const bulkAssign = vi.mocked(bulkAssignInternalRequests);
 const bulkDelete = vi.mocked(bulkDeleteInternalRequests);
+const removeOne = vi.mocked(deleteInternalRequest);
 
 const defaultFilters = {
   search: "",
@@ -76,6 +78,7 @@ describe("RequestsPage", () => {
     list.mockReset();
     bulkAssign.mockReset();
     bulkDelete.mockReset();
+    removeOne.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
     replace.mockReset();
@@ -583,6 +586,7 @@ describe("RequestsPage", () => {
         );
         await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
         expect(bulkAssign).not.toHaveBeenCalled();
+        await waitFor(() => expect(heading()).toHaveFocus());
       });
 
       it("Cancelar does not call the API and keeps the selection", async () => {
@@ -615,6 +619,155 @@ describe("RequestsPage", () => {
         expect(summary).toHaveTextContent("1 de 2 solicitações excluídas");
         expect(summary).toHaveTextContent("#2 Segunda");
         expect(summary).toHaveTextContent("Já não está Aberto.");
+        await waitFor(() => expect(summary).toHaveFocus());
+      });
+
+      it("403 on delete clears the selection, reloads and focuses the title", async () => {
+        bulkDelete.mockRejectedValue(new ApiError(403, "Sem permissão."));
+        const { ui, dialog } = await openConfirmation();
+
+        await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
+
+        await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(bar()).toBeNull());
+        await waitFor(() => expect(heading()).toHaveFocus());
+      });
+    });
+
+    describe("summary lifecycle", () => {
+      it("a second partial action replaces the summary and takes the focus", async () => {
+        const { ui } = await assignBoth(skippedSecond);
+        const first = await screen.findByRole("status");
+        await waitFor(() => expect(first).toHaveFocus());
+        await screen.findByText("Primeira");
+        bulkAssign.mockResolvedValue({
+          done: [2],
+          skipped: [{ id: 1, reason: "not_open", message: "Outra mensagem." }],
+        });
+
+        await ui.click(row(1, "Primeira"));
+        await ui.click(row(2, "Segunda"));
+        await ui.click(screen.getByRole("button", { name: "Assumir" }));
+
+        await waitFor(() =>
+          expect(screen.getByRole("status")).toHaveTextContent(
+            "Outra mensagem.",
+          ),
+        );
+        const second = screen.getByRole("status");
+        expect(second).not.toBe(first);
+        await waitFor(() => expect(second).toHaveFocus());
+      });
+
+      it("the summary goes away as soon as another action starts", async () => {
+        const { ui } = await assignBoth(skippedSecond);
+        await screen.findByRole("status");
+        await screen.findByText("Primeira");
+        bulkAssign.mockImplementation(() => new Promise(() => {}));
+
+        await ui.click(row(1, "Primeira"));
+        await ui.click(screen.getByRole("button", { name: "Assumir" }));
+
+        await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+      });
+
+      it("uses the singular in the title when only one was selected", async () => {
+        role = "analyst";
+        respondWith(two);
+        bulkAssign.mockResolvedValue({
+          done: [],
+          skipped: [{ id: 1, reason: "not_open", message: "Já foi assumido." }],
+        });
+        await renderLoaded();
+        const ui = userEvent.setup();
+        await ui.click(row(1, "Primeira"));
+
+        await ui.click(screen.getByRole("button", { name: "Assumir" }));
+
+        expect(await screen.findByRole("status")).toHaveTextContent(
+          "0 de 1 solicitação assumida",
+        );
+      });
+
+      it("survives the automatic move off a last page the deletion emptied", async () => {
+        role = "admin";
+        query = "page=2";
+        respondWith(
+          two,
+          makeMeta({ current_page: 2, last_page: 2, total: 17 }),
+        );
+        bulkDelete.mockResolvedValue({
+          done: [1],
+          skipped: [
+            { id: 2, reason: "not_open", message: "Já não está Aberto." },
+          ],
+        });
+        const view = render(<RequestsPage />);
+        await screen.findByText("Primeira");
+        const ui = await selectBoth();
+        list.mockResolvedValue({
+          data: [],
+          meta: makeMeta({ current_page: 2, last_page: 1, total: 0 }),
+        });
+        await ui.click(screen.getByRole("button", { name: "Excluir" }));
+        await ui.click(
+          within(await screen.findByRole("alertdialog")).getByRole("button", {
+            name: "Excluir",
+          }),
+        );
+
+        await waitFor(() => expect(replace).toHaveBeenCalledWith("/requests"));
+        query = "";
+        respondWith(two);
+        view.rerender(<RequestsPage />);
+
+        expect(await screen.findByRole("status")).toHaveTextContent(
+          "1 de 2 solicitações excluídas",
+        );
+      });
+    });
+
+    describe("row menu delete", () => {
+      async function deleteFirstFromMenu() {
+        respondWith(two);
+        await renderLoaded();
+        const ui = userEvent.setup();
+        await ui.click(
+          screen.getByRole("button", { name: "Ações de #1 Primeira" }),
+        );
+        await ui.click(
+          await screen.findByRole("menuitem", { name: "Excluir" }),
+        );
+        const dialog = await screen.findByRole("alertdialog");
+        await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
+      }
+
+      it("toasts, reloads the list and leaves the focus on the title", async () => {
+        removeOne.mockResolvedValue(undefined);
+
+        await deleteFirstFromMenu();
+
+        await waitFor(() =>
+          expect(toastSuccess).toHaveBeenCalledWith("Solicitação excluída"),
+        );
+        await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+        await waitFor(() =>
+          expect(screen.queryByRole("alertdialog")).toBeNull(),
+        );
+        expect(heading()).toHaveFocus();
+      });
+
+      it("on a 409 reloads the list and leaves the focus on the title", async () => {
+        removeOne.mockRejectedValue(new ApiError(409, "Não está mais Aberto."));
+
+        await deleteFirstFromMenu();
+
+        await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+        await waitFor(() =>
+          expect(screen.queryByRole("alertdialog")).toBeNull(),
+        );
+        expect(heading()).toHaveFocus();
       });
     });
 
