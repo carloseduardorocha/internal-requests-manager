@@ -5,6 +5,7 @@ namespace Tests\Feature\Users;
 use App\Actions\Users\DeactivateUser;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -97,10 +98,12 @@ class DeactivateUserTest extends TestCase
 
         $this->actingAs($admin)->postJson("/api/users/{$target->id}/deactivate")->assertOk();
         $first = $target->fresh()->deactivated_at;
+        $firstToken = $target->fresh()->remember_token;
 
         $this->travel(1)->hours();
         $this->actingAs($admin)->postJson("/api/users/{$target->id}/deactivate")->assertOk()->assertJsonPath('data.status', 'deactivated');
         $this->assertEquals($first, $target->fresh()->deactivated_at);
+        $this->assertSame($firstToken, $target->fresh()->remember_token);
 
         $this->actingAs($admin)->postJson("/api/users/{$target->id}/reactivate")->assertOk();
         $this->actingAs($admin)->postJson("/api/users/{$target->id}/reactivate")->assertOk()->assertJsonPath('data.status', 'active');
@@ -185,7 +188,15 @@ class DeactivateUserTest extends TestCase
             ->getJson('/api/me')
             ->assertOk();
 
+        // The 401 below also comes from the middleware, so check the token itself: the guard
+        // provider must no longer accept the old remember token once the action rotated it.
+        $oldToken = $target->fresh()->remember_token;
+        $provider = Auth::guard('web')->getProvider();
+        $this->assertNotNull($provider->retrieveByToken($target->id, $oldToken));
+
         app(DeactivateUser::class)->handle($target);
+
+        $this->assertNull($provider->retrieveByToken($target->id, $oldToken));
 
         $this->app['auth']->forgetGuards();
         $this->flushSession();

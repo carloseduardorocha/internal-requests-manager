@@ -15,9 +15,11 @@ class DeactivateUser
         return DB::transaction(function () use ($user): User {
             $current = User::query()->whereKey($user->getKey())->lockForUpdate()->firstOrFail();
 
-            $current->deactivated_at ??= now();
-            $current->logOutEverywhere();
-            $current->save();
+            if ($current->deactivated_at === null) {
+                $current->deactivated_at = now();
+                $current->logOutEverywhere();
+                $current->save();
+            }
 
             return $current;
         });
