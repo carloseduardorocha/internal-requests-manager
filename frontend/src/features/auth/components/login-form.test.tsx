@@ -218,4 +218,55 @@ describe("LoginForm", () => {
     await ui.click(screen.getByRole("button", { name: "Ocultar senha" }));
     expect(field).toHaveAttribute("type", "password");
   });
+
+  it("shows the password-reset notice with reset", () => {
+    render(<LoginForm reset />);
+
+    const notice = screen.getByRole("status");
+    expect(notice).toHaveTextContent("Senha redefinida.");
+    expect(notice).toHaveTextContent("Entre com a nova senha.");
+  });
+
+  it("does not show the reset notice by default", () => {
+    render(<LoginForm />);
+
+    expect(screen.queryByText(/Senha redefinida/)).not.toBeInTheDocument();
+  });
+
+  it("gives reset priority over expired", () => {
+    render(<LoginForm reset expired />);
+
+    expect(screen.getByText(/Senha redefinida/)).toBeInTheDocument();
+    expect(screen.queryByText(/sessão expirou/)).not.toBeInTheDocument();
+  });
+
+  it("hides the reset notice after a login error", async () => {
+    login.mockRejectedValue(new ApiError(422, "x", { email: ["x"] }));
+    const ui = userEvent.setup();
+    render(<LoginForm reset />);
+
+    await fill(ui);
+    await ui.click(screen.getByRole("button", { name: "Entrar" }));
+
+    expect(
+      await screen.findByText("E-mail ou senha incorretos."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Senha redefinida/)).not.toBeInTheDocument();
+  });
+
+  it("links to the forgot-password page", () => {
+    render(<LoginForm />);
+
+    expect(
+      screen.getByRole("link", { name: "Esqueci minha senha" }),
+    ).toHaveAttribute("href", "/forgot-password");
+  });
+
+  it("tells the user to ask the administrator for access", () => {
+    render(<LoginForm />);
+
+    expect(
+      screen.getByText("Não tem acesso? Fale com o administrador."),
+    ).toBeInTheDocument();
+  });
 });

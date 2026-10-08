@@ -47,8 +47,18 @@ describe("proxy", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it("keeps /login public", () => {
-    const response = run("/login");
+  it.each(["/login", "/forgot-password", "/reset-password"])(
+    "keeps %s public",
+    (path) => {
+      const response = run(path);
+
+      expect(response.headers.get("location")).toBeNull();
+      expect(response.headers.get("x-middleware-next")).toBe("1");
+    },
+  );
+
+  it("keeps /reset-password public with the token in the query string", () => {
+    const response = run("/reset-password?token=abc&email=a%40b.co");
 
     expect(response.headers.get("location")).toBeNull();
     expect(response.headers.get("x-middleware-next")).toBe("1");
@@ -59,12 +69,16 @@ describe("proxy matcher", () => {
   const matches = (url: string) =>
     unstable_doesMiddlewareMatch({ config, url });
 
-  it.each(["/", "/login", "/requests", "/requests/123"])(
-    "runs the proxy for %s",
-    (url) => {
-      expect(matches(url)).toBe(true);
-    },
-  );
+  it.each([
+    "/",
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/requests",
+    "/requests/123",
+  ])("runs the proxy for %s", (url) => {
+    expect(matches(url)).toBe(true);
+  });
 
   it.each([
     "/robots.txt",
