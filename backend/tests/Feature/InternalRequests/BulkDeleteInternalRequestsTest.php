@@ -81,6 +81,23 @@ class BulkDeleteInternalRequestsTest extends TestCase
         $this->assertNotSoftDeleted($approved);
     }
 
+    public function test_requester_own_request_in_review_is_not_open_and_stays(): void
+    {
+        $owner = User::factory()->create();
+        $request = InternalRequest::factory()->inReview()->create(['requester_id' => $owner->id]);
+
+        $this->actingAs($owner)
+            ->postJson(self::URL, ['ids' => [$request->id]])
+            ->assertOk()
+            ->assertExactJson(['data' => [
+                'done' => [],
+                'skipped' => [['id' => $request->id, 'reason' => 'not_open', 'message' => __('internal_requests.not_open')]],
+            ]]);
+
+        $this->assertNotSoftDeleted($request);
+        $this->assertNull(InternalRequest::withTrashed()->find($request->id)->deleted_by);
+    }
+
     public function test_mixed_batch_keeps_the_order_and_reports_missing_and_deleted_ids(): void
     {
         $admin = User::factory()->admin()->create();
