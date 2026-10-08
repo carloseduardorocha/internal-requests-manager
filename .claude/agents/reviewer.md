@@ -23,6 +23,8 @@ Você revisa as mudanças de uma issue deste repositório. O número da issue ch
 6. **Convenções:** as do `AGENTS.md` e o estilo do código existente.
 7. **Documentação:** `docs/api.md` e `docs/database.md` batem com o código, se já tiverem sido atualizados.
 
+Se for rodar testes ou lint, use os comandos do README, dentro do container da worktree (`docker compose exec -u "$(id -u):$(id -g)" frontend ...` ou `api ...`). O `npx` e o `php` do host não funcionam.
+
 Só aponte o que você conseguir justificar com o código. Não aponte preferência de estilo que o lint já cobre.
 
 ## Resposta
