@@ -29,7 +29,7 @@ export function AppHeader() {
               key={href}
               href={href}
               aria-current={matchesRoute(pathname, href) ? "page" : undefined}
-              className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 font-bold text-muted-foreground no-underline outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=page]:bg-accent aria-[current=page]:text-accent-foreground"
+              className="relative inline-flex min-h-11 items-center gap-2 rounded-lg px-3 font-bold text-muted-foreground no-underline outline-hidden transition-colors after:absolute after:inset-x-3 after:bottom-1.5 after:h-0.5 after:rounded-sm after:bg-transparent after:transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-[current=page]:text-primary aria-[current=page]:after:bg-primary aria-[current=page]:hover:text-primary-hover aria-[current=page]:hover:after:bg-primary-hover"
             >
               <Icon aria-hidden="true" className="size-4" />
               {label}

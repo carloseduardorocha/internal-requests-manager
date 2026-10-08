@@ -136,6 +136,15 @@ describe("UsersPage", () => {
     ).toBeInTheDocument();
   });
 
+  it("links to the invitation screen", async () => {
+    respondWith();
+    await renderLoaded();
+
+    expect(
+      screen.getByRole("link", { name: "Convidar usuário" }),
+    ).toHaveAttribute("href", "/users/invite");
+  });
+
   describe("states", () => {
     it("shows the skeleton while loading", () => {
       list.mockImplementation(() => new Promise(() => {}));

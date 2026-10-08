@@ -47,15 +47,35 @@ describe("proxy", () => {
     expect(response.headers.get("x-middleware-next")).toBe("1");
   });
 
-  it.each(["/login", "/forgot-password", "/reset-password"])(
-    "keeps %s public",
-    (path) => {
-      const response = run(path);
+  it.each([
+    "/login",
+    "/forgot-password",
+    "/reset-password",
+    "/accept-invitation",
+  ])("keeps %s public", (path) => {
+    const response = run(path);
 
-      expect(response.headers.get("location")).toBeNull();
-      expect(response.headers.get("x-middleware-next")).toBe("1");
-    },
-  );
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("keeps /accept-invitation public with the token in the query string", () => {
+    const response = run("/accept-invitation?token=abc123");
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
+
+  it("redirects /users/invite to /login without a session cookie", () => {
+    expect(redirectsToLogin(run("/users/invite"))).toBe(true);
+  });
+
+  it("lets /users/invite through with the session cookie", () => {
+    const response = run("/users/invite", "irm_session=abc");
+
+    expect(response.headers.get("location")).toBeNull();
+    expect(response.headers.get("x-middleware-next")).toBe("1");
+  });
 
   it("keeps /reset-password public with the token in the query string", () => {
     const response = run("/reset-password?token=abc&email=a%40b.co");
@@ -74,6 +94,8 @@ describe("proxy matcher", () => {
     "/login",
     "/forgot-password",
     "/reset-password",
+    "/accept-invitation",
+    "/users/invite",
     "/requests",
     "/requests/123",
   ])("runs the proxy for %s", (url) => {

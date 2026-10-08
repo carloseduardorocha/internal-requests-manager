@@ -3,6 +3,7 @@ import {
   List,
   Plus,
   Users,
+  UserPlus,
   type LucideIcon,
 } from "lucide-react";
 
@@ -44,6 +45,13 @@ export const appRoutes: AppRoute[] = [
     label: "Usuários",
     icon: Users,
     roles: ["admin"],
+  },
+  {
+    href: "/users/invite",
+    label: "Convidar usuário",
+    icon: UserPlus,
+    roles: ["admin"],
+    nav: false,
   },
 ];
 

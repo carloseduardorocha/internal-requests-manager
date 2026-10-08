@@ -1,8 +1,11 @@
 "use client";
 
+import { UserPlus } from "lucide-react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { Pagination } from "@/features/requests/components/pagination";
 import { UserFilters } from "@/features/users/components/user-filters";
@@ -118,7 +121,12 @@ export default function UsersPage() {
             Contas da empresa: perfil, área e situação.
           </p>
         </div>
-        {/* The "Convidar usuário" button goes here (issue #37). */}
+        <Button asChild className="max-[480px]:w-full">
+          <Link href="/users/invite">
+            <UserPlus aria-hidden="true" />
+            Convidar usuário
+          </Link>
+        </Button>
       </div>
 
       <Suspense fallback={<UserListSkeleton />}>
