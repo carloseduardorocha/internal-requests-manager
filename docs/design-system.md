@@ -68,6 +68,7 @@ botões e campos: altura mínima de 48px (alvo de toque acima dos 44px)
 
 - Botões: todo botão tem hover, foco visível e estado desabilitado.
 - Foco: outline de 2px em `--ring`, com offset de 2px.
+- Foco ao fechar: um modal, menu ou ação que desabilita o próprio botão devolve o foco ao controle que o abriu; um erro sem campo leva o foco a um ponto dentro do formulário.
 - Status: cor, ícone e texto juntos; nunca só a cor.
 - Prioridade: seta e texto, sem fundo.
 - Acessibilidade: o nome acessível de um controle contém o texto visível dele.
