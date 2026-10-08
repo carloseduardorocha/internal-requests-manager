@@ -23,11 +23,14 @@ export function DeactivateUserDialog({
   user,
   open,
   onOpenChange,
+  onCloseFocus,
   onDeactivated,
 }: {
   user: ManagedUser;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Where the focus goes when the dialog closes (it has no trigger).
+  onCloseFocus?: () => void;
   onDeactivated: (user: ManagedUser) => void;
 }) {
   const [deactivating, setDeactivating] = useState(false);
@@ -56,7 +59,13 @@ export function DeactivateUserDialog({
       open={open}
       onOpenChange={(next) => !deactivating && onOpenChange(next)}
     >
-      <AlertDialogContent className="gap-[18px]">
+      <AlertDialogContent
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          onCloseFocus?.();
+        }}
+        className="gap-[18px]"
+      >
         <AlertDialogHeader className="place-items-start gap-1.5 text-left">
           <AlertDialogTitle>Desativar {user.name}?</AlertDialogTitle>
           <AlertDialogDescription className="text-left text-[15px]">

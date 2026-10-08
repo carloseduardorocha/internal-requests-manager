@@ -26,6 +26,7 @@ import { ApiError } from "@/lib/api";
 import type { Area, Role } from "@/lib/types";
 
 const NAME_MAX = 255;
+const SAVE_ID = "edit-save";
 
 type Field = "name" | "role" | "area_id";
 type FieldErrors = Partial<Record<Field, string>>;
@@ -48,8 +49,10 @@ function ReadOnlyField({
         <Lock aria-hidden="true" className="size-3.5 text-muted-foreground" />
         {label}
       </dt>
-      <dd className="[overflow-wrap:anywhere]">{value}</dd>
-      <small className="text-xs text-muted-foreground">{note}</small>
+      <dd className="grid gap-0.5 [overflow-wrap:anywhere]">
+        {value}
+        <small className="text-xs text-muted-foreground">{note}</small>
+      </dd>
     </dl>
   );
 }
@@ -81,6 +84,7 @@ function EditUserForm({
   // ignores `focus()`, and it is still disabled right after the failed call.
   const pendingFocus = useRef<string | null>(null);
 
+  // The failure went only to the alert: the focus goes to "Salvar" (SAVE_ID).
   // Name, then role, then area.
   function firstErrorId(found: FieldErrors): string | null {
     if (found.name) return "edit-name";
@@ -150,12 +154,15 @@ function EditUserForm({
         setAlert(
           extra ?? (Object.values(found).some(Boolean) ? null : error.message),
         );
-        pendingFocus.current = firstErrorId(found);
+        pendingFocus.current = firstErrorId(found) ?? SAVE_ID;
         return;
       }
 
       const message = failureMessage(error);
-      if (message !== null) setAlert(message || FALLBACK_ALERT);
+      if (message !== null) {
+        setAlert(message || FALLBACK_ALERT);
+        pendingFocus.current = SAVE_ID;
+      }
     }
   }
 
@@ -252,13 +259,13 @@ function EditUserForm({
         <FieldError id="edit-area-error" message={errors.area_id} />
       </div>
 
-      <DialogFooter>
+      <DialogFooter className="min-[481px]:flex-row min-[481px]:justify-end">
         <DialogClose asChild>
           <Button type="button" variant="outline" disabled={saving}>
             Cancelar
           </Button>
         </DialogClose>
-        <Button type="submit" disabled={saving}>
+        <Button id={SAVE_ID} type="submit" disabled={saving}>
           {saving && <Loader2 aria-hidden="true" className="animate-spin" />}
           {saving ? "Salvando…" : "Salvar"}
         </Button>
@@ -273,19 +280,28 @@ export function EditUserDialog({
   areas,
   open,
   onOpenChange,
+  onCloseFocus,
   onSaved,
 }: {
   user: ManagedUser;
   areas: Area[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Where the focus goes when the dialog closes (it has no trigger).
+  onCloseFocus?: () => void;
   onSaved: (user: ManagedUser) => void;
 }) {
   const [saving, setSaving] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={(next) => !saving && onOpenChange(next)}>
-      <DialogContent className="gap-[18px] sm:max-w-[460px]">
+      <DialogContent
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          onCloseFocus?.();
+        }}
+        className="gap-[18px] sm:max-w-[460px]"
+      >
         <DialogHeader>
           <DialogTitle>Editar usuário</DialogTitle>
           <DialogDescription>

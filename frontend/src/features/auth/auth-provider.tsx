@@ -18,6 +18,8 @@ import type { User } from "@/lib/types";
 
 type AuthContextValue = {
   user: User;
+  // Replaces the signed-in user (after an admin edits their own account).
+  updateUser: (user: User) => void;
   logout: () => Promise<void>;
 };
 
@@ -66,7 +68,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.replace("/login");
   }, [router]);
 
-  const value = useMemo(() => (user ? { user, logout } : null), [user, logout]);
+  const value = useMemo(
+    () => (user ? { user, updateUser: setUser, logout } : null),
+    [user, logout],
+  );
 
   if (!value) {
     return (

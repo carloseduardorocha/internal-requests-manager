@@ -3,6 +3,7 @@
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect } from "react";
 
+import { useAuth } from "@/features/auth/auth-provider";
 import { Pagination } from "@/features/requests/components/pagination";
 import { UserFilters } from "@/features/users/components/user-filters";
 import { UserList } from "@/features/users/components/user-list";
@@ -18,6 +19,7 @@ import {
 } from "@/features/users/filters";
 import { useAreas } from "@/features/users/hooks/use-areas";
 import { useUsers } from "@/features/users/hooks/use-users";
+import type { ManagedUser } from "@/features/users/types";
 import type { Area } from "@/lib/types";
 
 // The areas are loaded first: an `area_id` in the URL is only valid if the
@@ -32,6 +34,7 @@ function UsersContent() {
 }
 
 function UsersList({ areas }: { areas: Area[] }) {
+  const { user: me, updateUser } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -40,6 +43,15 @@ function UsersList({ areas }: { areas: Area[] }) {
     areas.map((area) => area.id),
   );
   const { loading, error, data, meta, reload, replace } = useUsers(filters);
+
+  // The row is swapped in place; the own account also feeds the header.
+  function handleUpdated(updated: ManagedUser) {
+    replace(updated);
+    if (updated.id === me.id) {
+      const { id, name, email, role, area } = updated;
+      updateUser({ id, name, email, role, area });
+    }
+  }
 
   const active = hasActiveUserFilters(filters);
   const lastPage = meta?.last_page ?? 1;
@@ -77,7 +89,7 @@ function UsersList({ areas }: { areas: Area[] }) {
           onClear={() => router.replace(pathname)}
         />
       ) : (
-        <UserList users={data} areas={areas} onUpdated={replace} />
+        <UserList users={data} areas={areas} onUpdated={handleUpdated} />
       );
   }
 
