@@ -112,13 +112,18 @@ describe("routesFor", () => {
     expect(routesFor("requester").map((r) => r.href)).toEqual(["/requests"]);
   });
 
-  it.each(["analyst", "admin"] as const)(
-    "lists dashboard and requests for %s",
-    (role) => {
-      expect(routesFor(role).map((r) => r.href)).toEqual([
-        "/dashboard",
-        "/requests",
-      ]);
-    },
-  );
+  it("lists dashboard and requests for the analyst", () => {
+    expect(routesFor("analyst").map((r) => r.href)).toEqual([
+      "/dashboard",
+      "/requests",
+    ]);
+  });
+
+  it("lists dashboard, requests and users for the admin", () => {
+    expect(routesFor("admin").map((r) => r.href)).toEqual([
+      "/dashboard",
+      "/requests",
+      "/users",
+    ]);
+  });
 });

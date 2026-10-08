@@ -14,13 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/features/auth/auth-provider";
 import { matchesRoute, routesFor } from "@/features/auth/routes";
-import type { Role } from "@/lib/types";
-
-const roleLabels: Record<Role, string> = {
-  requester: "Solicitante",
-  analyst: "Analista",
-  admin: "Administrador",
-};
+import { roleLabels } from "@/features/users/labels";
 
 const itemClass =
   "min-h-11 cursor-pointer gap-2 rounded-lg px-3 font-bold text-foreground focus:bg-accent focus:text-accent-foreground";
