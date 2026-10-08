@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2, Lock, TriangleAlert } from "lucide-react";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 
 import { FieldError } from "@/components/field-error";
@@ -77,12 +77,23 @@ function EditUserForm({
   const [alert, setAlert] = useState<string | null>(null);
   const nameRef = useRef<HTMLInputElement>(null);
 
-  // Name, then role, then area (the selects have ids to look up).
-  function focusFirstError(found: FieldErrors) {
-    if (found.name) nameRef.current?.focus();
-    else if (found.role) document.getElementById("edit-role")?.focus();
-    else if (found.area_id) document.getElementById("edit-area")?.focus();
+  // The field to focus once the form is enabled again: a disabled field
+  // ignores `focus()`, and it is still disabled right after the failed call.
+  const pendingFocus = useRef<string | null>(null);
+
+  // Name, then role, then area.
+  function firstErrorId(found: FieldErrors): string | null {
+    if (found.name) return "edit-name";
+    if (found.role) return "edit-role";
+    if (found.area_id) return "edit-area";
+    return null;
   }
+
+  useEffect(() => {
+    if (saving || pendingFocus.current === null) return;
+    document.getElementById(pendingFocus.current)?.focus();
+    pendingFocus.current = null;
+  }, [saving]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -94,7 +105,7 @@ function EditUserForm({
     if (trimmedName === "") {
       const found = { name: "Informe o nome." };
       setErrors(found);
-      focusFirstError(found);
+      nameRef.current?.focus();
       return;
     }
 
@@ -139,7 +150,7 @@ function EditUserForm({
         setAlert(
           extra ?? (Object.values(found).some(Boolean) ? null : error.message),
         );
-        focusFirstError(found);
+        pendingFocus.current = firstErrorId(found);
         return;
       }
 
