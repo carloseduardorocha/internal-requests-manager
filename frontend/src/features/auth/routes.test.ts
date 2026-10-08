@@ -71,6 +71,18 @@ describe("canAccess", () => {
     expect(canAccess("analyst", "/requests/123/edit")).toBe(true);
   });
 
+  it("allows only the admin on the users screen", () => {
+    expect(canAccess("admin", "/users")).toBe(true);
+    expect(canAccess("analyst", "/users")).toBe(false);
+    expect(canAccess("requester", "/users")).toBe(false);
+  });
+
+  it("applies the users restriction to its sub-paths too", () => {
+    expect(canAccess("admin", "/users/7")).toBe(true);
+    expect(canAccess("analyst", "/users/7")).toBe(false);
+    expect(canAccess("requester", "/users/7")).toBe(false);
+  });
+
   it("allows any role on paths outside the map", () => {
     expect(canAccess("requester", "/other")).toBe(true);
   });
