@@ -11,19 +11,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { resetPassword } from "@/features/auth/api";
 import { AuthAlert } from "@/features/auth/components/auth-alert";
+import { AuthCard } from "@/features/auth/components/auth-card";
 import { AuthLink } from "@/features/auth/components/auth-link";
 import { PasswordInput } from "@/features/auth/components/password-input";
 import { ApiError } from "@/lib/api";
 
-const CARD =
-  "rounded-lg border border-border bg-card px-5 py-6 shadow-sm min-[481px]:px-7 min-[481px]:py-8";
 const MIN_PASSWORD = 8;
 
 type FieldErrors = { password?: string; confirmation?: string };
 
 function LinkUnavailable() {
   return (
-    <section aria-labelledby="gone-title" className={`${CARD} text-center`}>
+    <AuthCard aria-labelledby="gone-title" className="text-center">
       <span className="mb-3 inline-grid size-14 place-items-center rounded-full bg-status-rejected-bg text-status-rejected-fg">
         <Link2Off aria-hidden="true" className="size-7" />
       </span>
@@ -44,7 +43,7 @@ function LinkUnavailable() {
           Voltar para o login
         </AuthLink>
       </div>
-    </section>
+    </AuthCard>
   );
 }
 
@@ -96,7 +95,7 @@ export function ResetPasswordForm({
       setSubmitting(false);
 
       if (error instanceof ApiError && error.status === 422) {
-        if (error.errors.token) {
+        if (error.errors.token || error.errors.email) {
           setUnavailable(true);
         } else {
           setFieldErrors({
@@ -110,7 +109,7 @@ export function ResetPasswordForm({
   }
 
   return (
-    <section aria-labelledby="reset-title" className={CARD}>
+    <AuthCard aria-labelledby="reset-title">
       <h1
         id="reset-title"
         className="font-heading text-2xl leading-normal font-extrabold"
@@ -217,6 +216,6 @@ export function ResetPasswordForm({
           {submitting ? "Salvando…" : "Salvar nova senha"}
         </Button>
       </form>
-    </section>
+    </AuthCard>
   );
 }

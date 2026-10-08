@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -79,6 +79,43 @@ describe("ForgotPasswordForm", () => {
     expect(await screen.findByText(/Muitos pedidos seguidos/)).toBeVisible();
     expect(screen.getByText(/10 minutos/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Enviar link" })).toBeDisabled();
+  });
+
+  it("lifts the block by itself after Retry-After", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      forgotPassword.mockRejectedValue(new ApiError(429, "Muitas.", {}, 600));
+      const ui = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<ForgotPasswordForm />);
+
+      await submit(ui, "ana@empresa.com");
+      expect(await screen.findByText(/Muitos pedidos seguidos/)).toBeVisible();
+      expect(
+        screen.getByRole("button", { name: "Enviar link" }),
+      ).toBeDisabled();
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(600 * 1000);
+      });
+
+      expect(
+        screen.queryByText(/Muitos pedidos seguidos/),
+      ).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Enviar link" })).toBeEnabled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it("shows the API message without disabling the button on 429 without Retry-After", async () => {
+    forgotPassword.mockRejectedValue(new ApiError(429, "Muitas tentativas."));
+    const ui = userEvent.setup();
+    render(<ForgotPasswordForm />);
+
+    await submit(ui, "ana@empresa.com");
+
+    expect(await screen.findByText("Muitas tentativas.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Enviar link" })).toBeEnabled();
   });
 
   it("uses the singular for one minute", async () => {

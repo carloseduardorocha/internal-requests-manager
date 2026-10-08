@@ -10,12 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { forgotPassword } from "@/features/auth/api";
 import { AuthAlert } from "@/features/auth/components/auth-alert";
-import { AuthLink } from "@/features/auth/components/auth-link";
+import { AuthCard } from "@/features/auth/components/auth-card";
+import {
+  AUTH_LINK_CLASS,
+  AuthLink,
+} from "@/features/auth/components/auth-link";
 import { EMAIL_PATTERN } from "@/features/auth/validation";
 import { ApiError } from "@/lib/api";
-
-const CARD =
-  "rounded-lg border border-border bg-card px-5 py-6 shadow-sm min-[481px]:px-7 min-[481px]:py-8";
 
 type Failure =
   | { kind: "blocked"; message: string; seconds: number | null }
@@ -80,7 +81,7 @@ export function ForgotPasswordForm() {
 
   if (sent) {
     return (
-      <section aria-labelledby="sent-title" className={`${CARD} text-center`}>
+      <AuthCard aria-labelledby="sent-title" className="text-center">
         <span className="mb-3 inline-grid size-14 place-items-center rounded-full bg-status-approved-bg text-status-approved-fg">
           <Mail aria-hidden="true" className="size-7" />
         </span>
@@ -106,18 +107,18 @@ export function ForgotPasswordForm() {
           <button
             type="button"
             onClick={() => setSent(false)}
-            className="-my-3 inline-flex min-h-11 items-center rounded font-bold text-primary underline underline-offset-2 outline-hidden hover:text-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className={AUTH_LINK_CLASS}
           >
             peça de novo
           </button>
           .
         </p>
-      </section>
+      </AuthCard>
     );
   }
 
   return (
-    <section aria-labelledby="forgot-title" className={CARD}>
+    <AuthCard aria-labelledby="forgot-title">
       <h1
         id="forgot-title"
         className="font-heading text-2xl leading-normal font-extrabold"
@@ -177,6 +178,6 @@ export function ForgotPasswordForm() {
           Voltar para o login
         </AuthLink>
       </div>
-    </section>
+    </AuthCard>
   );
 }

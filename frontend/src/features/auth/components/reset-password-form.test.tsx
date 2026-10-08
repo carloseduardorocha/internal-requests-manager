@@ -149,6 +149,26 @@ describe("ResetPasswordForm", () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
+  it("shows 'Link indisponível' on 422 with errors.email", async () => {
+    resetPassword.mockRejectedValue(
+      new ApiError(422, "E-mail inválido.", { email: ["E-mail inválido."] }),
+    );
+    const ui = userEvent.setup();
+    renderForm();
+
+    await fill(ui);
+    await ui.click(screen.getByRole("button", SAVE));
+
+    expect(
+      await screen.findByRole("heading", { name: "Link indisponível" }),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText("Nova senha")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Pedir novo link" }),
+    ).toHaveAttribute("href", "/forgot-password");
+    expect(replace).not.toHaveBeenCalled();
+  });
+
   it("shows the API message on the password field on 422 with errors.password", async () => {
     resetPassword.mockRejectedValue(
       new ApiError(422, "x", { password: ["A senha é fraca."] }),

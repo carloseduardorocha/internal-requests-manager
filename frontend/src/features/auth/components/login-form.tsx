@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { login } from "@/features/auth/api";
 import { AuthLink } from "@/features/auth/components/auth-link";
 import { AuthAlert } from "@/features/auth/components/auth-alert";
+import { AuthCard } from "@/features/auth/components/auth-card";
 import { PasswordInput } from "@/features/auth/components/password-input";
 import { homeFor } from "@/features/auth/routes";
 import { EMAIL_PATTERN } from "@/features/auth/validation";
@@ -98,10 +99,7 @@ export function LoginForm({
   }
 
   return (
-    <section
-      aria-labelledby="login-title"
-      className="rounded-lg border border-border bg-card px-5 py-6 shadow-sm min-[481px]:px-7 min-[481px]:py-8"
-    >
+    <AuthCard aria-labelledby="login-title">
       <h1
         id="login-title"
         className="font-heading text-2xl leading-normal font-extrabold"
@@ -208,6 +206,6 @@ export function LoginForm({
       <p className="mt-5 text-center text-[13px] text-muted-foreground">
         Não tem acesso? Fale com o administrador.
       </p>
-    </section>
+    </AuthCard>
   );
 }
