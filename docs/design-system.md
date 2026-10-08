@@ -70,6 +70,7 @@ botões e campos: altura mínima de 48px (alvo de toque acima dos 44px)
 - Foco: outline de 2px em `--ring`, com offset de 2px.
 - Status: cor, ícone e texto juntos; nunca só a cor.
 - Prioridade: seta e texto, sem fundo.
+- Navegação (só a do desktop): item ativo com texto `primary` e traço de 2px sob o rótulo, sem fundo. O hover do inativo só muda o texto para `primary`, sem traço; o do ativo passa texto e traço para `primary-hover`.
 - Acessibilidade: o nome acessível de um controle contém o texto visível dele.
 - Itálico: recurso pontual para dar dinamismo. O guia da marca para interfaces digitais substitui o ângulo de 8° por itálico.
 - Favicon: neutro (`src/app/icon.svg`) até haver o arquivo "Símbolo" oficial.
