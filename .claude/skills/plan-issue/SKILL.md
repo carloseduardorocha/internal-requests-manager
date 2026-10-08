@@ -54,6 +54,7 @@ O plano é a única fonte para quem implementa, testa e revisa. Ele precisa ser 
 
 ### Contrato e dados
 - Endpoints (método, rota, payload, respostas e erros) e mudanças no banco. Escreva "nenhum" se não houver.
+- Em issues de tela, diga o que a tela faz com cada campo que a validação da API pode devolver no `422`, conferindo as regras do FormRequest, e não só os campos que o fluxo espera.
 
 ### Testes
 | Critério de aceite | Teste |
