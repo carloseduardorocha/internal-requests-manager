@@ -57,6 +57,16 @@ class InternalRequestPolicy
         return $user->role === Role::Requester ? Response::deny() : Response::allow();
     }
 
+    public function bulkDelete(User $user): bool
+    {
+        return $user->role !== Role::Analyst;
+    }
+
+    public function bulkAssign(User $user): bool
+    {
+        return $user->role !== Role::Requester;
+    }
+
     public function decide(User $user, InternalRequest $internalRequest): Response
     {
         $visible = $this->view($user, $internalRequest);
