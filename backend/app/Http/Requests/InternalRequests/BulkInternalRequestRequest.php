@@ -11,8 +11,15 @@ class BulkInternalRequestRequest extends FormRequest
 {
     public function authorize(): Response
     {
-        // The route method (delete or assign) names the ability: bulkDelete or bulkAssign.
-        $ability = 'bulk'.ucfirst($this->route()?->getActionMethod() ?? '');
+        $ability = match ($this->route()?->getActionMethod()) {
+            'delete' => 'bulkDelete',
+            'assign' => 'bulkAssign',
+            default => null,
+        };
+
+        if ($ability === null) {
+            return Response::deny();
+        }
 
         return Gate::inspect($ability, InternalRequest::class);
     }

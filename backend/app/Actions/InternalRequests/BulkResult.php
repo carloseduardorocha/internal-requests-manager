@@ -15,12 +15,4 @@ final readonly class BulkResult
         public array $done,
         public array $skipped,
     ) {}
-
-    /**
-     * @return array{done: list<int>, skipped: list<array{id: int, reason: string, message: string}>}
-     */
-    public function toArray(): array
-    {
-        return ['done' => $this->done, 'skipped' => $this->skipped];
-    }
 }

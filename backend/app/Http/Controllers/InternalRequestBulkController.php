@@ -5,18 +5,18 @@ namespace App\Http\Controllers;
 use App\Actions\InternalRequests\BulkAssumeInternalRequests;
 use App\Actions\InternalRequests\BulkDeleteInternalRequests;
 use App\Http\Requests\InternalRequests\BulkInternalRequestRequest;
-use Illuminate\Http\JsonResponse;
+use App\Http\Resources\BulkResultResource;
 
 class InternalRequestBulkController extends Controller
 {
-    public function delete(BulkInternalRequestRequest $request, BulkDeleteInternalRequests $delete): JsonResponse
+    public function delete(BulkInternalRequestRequest $request, BulkDeleteInternalRequests $delete): BulkResultResource
     {
-        return response()->json(['data' => $delete->handle($this->ids($request), $request->user())->toArray()]);
+        return new BulkResultResource($delete->handle($this->ids($request), $request->user()));
     }
 
-    public function assign(BulkInternalRequestRequest $request, BulkAssumeInternalRequests $assume): JsonResponse
+    public function assign(BulkInternalRequestRequest $request, BulkAssumeInternalRequests $assume): BulkResultResource
     {
-        return response()->json(['data' => $assume->handle($this->ids($request), $request->user())->toArray()]);
+        return new BulkResultResource($assume->handle($this->ids($request), $request->user()));
     }
 
     /**

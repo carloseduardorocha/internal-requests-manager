@@ -35,17 +35,11 @@ abstract class BulkInternalRequestAction
 
         foreach ($ids as $id) {
             $internalRequest = InternalRequest::query()->find($id);
-            // A missing request and one the user cannot see get the same answer.
-            $response = $internalRequest === null ? null : Gate::inspect($this->ability(), $internalRequest);
+            // A missing request and one the policy refuses get the same answer.
+            $response = $internalRequest === null ? null : Gate::forUser($user)->inspect($this->ability(), $internalRequest);
 
-            if ($response === null || $response->status() === 404) {
+            if ($response === null || $response->denied()) {
                 $skipped[] = $this->skip($id, 'not_found', __('internal_requests.not_found'));
-
-                continue;
-            }
-
-            if ($response->denied()) {
-                $skipped[] = $this->skip($id, 'forbidden', __('internal_requests.forbidden'));
 
                 continue;
             }
