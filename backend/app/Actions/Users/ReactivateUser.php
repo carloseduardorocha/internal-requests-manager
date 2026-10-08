@@ -11,7 +11,8 @@ class ReactivateUser
      */
     public function handle(User $user): User
     {
-        $user->update(['deactivated_at' => null]);
+        $user->deactivated_at = null;
+        $user->save();
 
         return $user;
     }
