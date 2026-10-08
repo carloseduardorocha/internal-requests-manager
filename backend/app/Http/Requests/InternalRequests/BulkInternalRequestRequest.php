@@ -2,12 +2,12 @@
 
 namespace App\Http\Requests\InternalRequests;
 
+use App\Http\Requests\BulkIdsRequest;
 use App\Models\InternalRequest;
 use Illuminate\Auth\Access\Response;
-use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 
-class BulkInternalRequestRequest extends FormRequest
+class BulkInternalRequestRequest extends BulkIdsRequest
 {
     public function authorize(): Response
     {
@@ -22,19 +22,6 @@ class BulkInternalRequestRequest extends FormRequest
         }
 
         return Gate::inspect($ability, InternalRequest::class);
-    }
-
-    /**
-     * IDs are not checked against the database: an unknown one is skipped as not found.
-     *
-     * @return array<string, array<int, mixed>>
-     */
-    public function rules(): array
-    {
-        return [
-            'ids' => ['required', 'array', 'min:1', 'max:100'],
-            'ids.*' => ['integer', 'distinct'],
-        ];
     }
 
     /**

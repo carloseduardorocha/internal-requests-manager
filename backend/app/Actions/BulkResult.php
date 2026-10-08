@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Actions\InternalRequests;
+namespace App\Actions;
 
 /**
  * Outcome of a bulk action: the processed IDs and the skipped ones with the reason.

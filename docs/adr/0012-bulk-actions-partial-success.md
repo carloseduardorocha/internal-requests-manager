@@ -15,7 +15,8 @@ A [PRD](../prd.md) pede ações em massa na lista de solicitações (fluxo 2, A�
 - **Permissão por item:** checada com `Gate::forUser($user)->inspect`. Recusa vira `not_found`, igual ao pedido inexistente, para não revelar que o pedido existe.
 - **Resposta:** `BulkResultResource`, no padrão do [ADR 0001](0001-layered-laravel-backend.md), com `done` (IDs) e `skipped` (`id`, `reason`, `message`). O `reason` é estável e em inglês; a `message`, em português. ID repetido é `422` (`distinct`), sem deduplicar.
 - **Motivo no momento do lock:** reflete o estado do pedido quando ele é processado. Um pedido excluído durante o lote aparece como `not_open`.
-- O padrão vale também para a gestão de usuários (#48).
+- **Classes comuns:** `App\Actions\BulkResult`, `App\Http\Resources\BulkResultResource` e `App\Http\Requests\BulkIdsRequest`, base com as regras de `ids`. Os FormRequests de cada domínio a estendem, cada um com o seu `match` explícito de ability.
+- **Gestão de usuários (#48):** segue o mesmo contrato (`POST` com `{ids}`, limite de 100, `403` no lote inteiro, uma transação por item, `done` e `skipped`) e as classes comuns. A permissão por item e o `not_found` para pedido alheio são próprios dos pedidos; os motivos dos usuários estão no [api.md](../api.md), seção 7.
 
 Alternativas descartadas:
 - **Tudo ou nada:** um pedido já assumido por outra pessoa derrubaria o lote todo, contra a PRD.

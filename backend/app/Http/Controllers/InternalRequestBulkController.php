@@ -11,19 +11,11 @@ class InternalRequestBulkController extends Controller
 {
     public function delete(BulkInternalRequestRequest $request, BulkDeleteInternalRequests $delete): BulkResultResource
     {
-        return new BulkResultResource($delete->handle($this->ids($request), $request->user()));
+        return new BulkResultResource($delete->handle($request->ids(), $request->user()));
     }
 
     public function assign(BulkInternalRequestRequest $request, BulkAssumeInternalRequests $assume): BulkResultResource
     {
-        return new BulkResultResource($assume->handle($this->ids($request), $request->user()));
-    }
-
-    /**
-     * @return list<int>
-     */
-    private function ids(BulkInternalRequestRequest $request): array
-    {
-        return array_map('intval', array_values($request->validated('ids')));
+        return new BulkResultResource($assume->handle($request->ids(), $request->user()));
     }
 }

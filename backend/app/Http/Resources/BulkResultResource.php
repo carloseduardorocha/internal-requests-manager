@@ -2,12 +2,12 @@
 
 namespace App\Http\Resources;
 
-use App\Actions\InternalRequests\BulkResult;
+use App\Actions\BulkResult;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin BulkResult
+ * @property BulkResult $resource
  */
 class BulkResultResource extends JsonResource
 {
@@ -17,8 +17,8 @@ class BulkResultResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'done' => $this->done,
-            'skipped' => $this->skipped,
+            'done' => $this->resource->done,
+            'skipped' => $this->resource->skipped,
         ];
     }
 }

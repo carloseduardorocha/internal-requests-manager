@@ -2,6 +2,7 @@
 
 namespace App\Actions\InternalRequests;
 
+use App\Actions\BulkResult;
 use App\Models\InternalRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;

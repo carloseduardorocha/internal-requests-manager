@@ -31,4 +31,14 @@ class UserPolicy
     {
         return $user->role === Role::Admin;
     }
+
+    public function bulkDeactivate(User $user): bool
+    {
+        return $user->role === Role::Admin;
+    }
+
+    public function bulkReactivate(User $user): bool
+    {
+        return $user->role === Role::Admin;
+    }
 }

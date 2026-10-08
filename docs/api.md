@@ -30,7 +30,7 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | 403 | Perfil ou dono sem permissão |
 | 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante); convite inválido, expirado ou usado |
 | 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação |
-| 422 | Validação falhou, e-mail que já tem conta (ativa ou desativada) no convite, regra de usuários descumprida (seção 7), filtro inválido na listagem ou credencial inválida no login |
+| 422 | Validação falhou, e-mail que já tem conta (ativa ou desativada) no convite, regra de usuários descumprida (seção 7), lista de IDs inválida nas ações em massa (seções 3 e 7), filtro inválido na listagem ou credencial inválida no login |
 | 429 | Login bloqueado por tentativas, ou mais de 6 pedidos por minuto por IP em `forgot-password` (sem revelar a conta); traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
 
 ## 1. Acesso
@@ -119,9 +119,9 @@ Exemplo de detalhe (`200`):
 
 `assign` exige o pedido `open`; `approve` e `reject` exigem `in_review`. A resposta tem o mesmo formato do detalhe, e o pedido traz `can.assign`, `can.approve` e `can.reject`, calculados como `can.update` e `can.delete` (seção 2).
 
-**Ações em massa** (`bulk/delete` e `bulk/assign`)
+**Ações em massa** (`bulk/delete` e `bulk/assign`; o mesmo formato vale para a seção 7)
 
-`ids` é obrigatório, com 1 a 100 inteiros sem repetição; fora disso responde `422` em `errors.ids` ou `errors.ids.N`. Um perfil que não pode usar o endpoint recebe `403` na requisição toda. Cada pedido é processado sozinho, com as mesmas regras da ação individual, e o que falha não desfaz os outros. Um ID inexistente não dá `422`: entra em `skipped`. A resposta é sempre `200`, com a ordem dos IDs preservada ([ADR 0012](adr/0012-bulk-actions-partial-success.md)):
+`ids` é obrigatório, com 1 a 100 inteiros sem repetição; fora disso responde `422` em `errors.ids` (ausente, vazio ou acima de 100) ou `errors.ids.N` (ID não inteiro ou repetido). Um perfil que não pode usar o endpoint recebe `403` na requisição toda. Cada item é processado sozinho, com as mesmas regras da ação individual, e o que falha não desfaz os outros. Um ID inexistente não dá `422`: entra em `skipped`. A resposta é sempre `200`, com a ordem dos IDs preservada ([ADR 0012](adr/0012-bulk-actions-partial-success.md)):
 
 ```json
 {
@@ -189,6 +189,8 @@ Convite inexistente, expirado ou já usado responde `404` com a mesma mensagem n
 | `PATCH /api/users/{id}` | Administrador | `{name?, role?, area_id?}` | `200` usuário | `403`, `404`, `422` |
 | `POST /api/users/{id}/deactivate` | Administrador | n/d | `200` usuário | `403`, `404` |
 | `POST /api/users/{id}/reactivate` | Administrador | n/d | `200` usuário | `403`, `404` |
+| `POST /api/users/bulk/deactivate` | Administrador | `{ids: int[]}` | `200` resultado | `403`, `422` |
+| `POST /api/users/bulk/reactivate` | Administrador | `{ids: int[]}` | `200` resultado | `403`, `422` |
 
 **Query da listagem**
 
@@ -218,3 +220,16 @@ Ordenada por nome. Parâmetros vazios são ignorados e valores inválidos respon
 ```
 
 `status` é `active` ou `deactivated`. `can` vale na listagem e nas ações, como na seção 2: `change_role` e `deactivate` são `false` para a própria conta do administrador, e `deactivate` e `reactivate` dependem da situação da conta.
+
+**Ações em massa** (fluxo 7 da [PRD](prd.md))
+
+Formato, regras de `ids`, `403` e ordem seguem o bloco "Ações em massa" da seção 3 e o [ADR 0012](adr/0012-bulk-actions-partial-success.md). A desativação encerra as sessões como na ação individual.
+
+| `reason` | Quando |
+|---|---|
+| `not_found` | A conta não existe |
+| `self` | A própria conta (só em `bulk/deactivate`) |
+| `already_deactivated` | Desativar uma conta já desativada |
+| `already_active` | Reativar uma conta já ativa |
+
+Mensagens: `self` "Você não pode desativar a própria conta.", `already_deactivated` "A conta já está desativada.", `already_active` "A conta já está ativa." e `not_found` "Conta não encontrada."
