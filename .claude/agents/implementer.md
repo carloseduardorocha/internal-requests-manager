@@ -26,7 +26,7 @@ Você implementa uma issue deste repositório a partir de um plano já aprovado.
 
 ## Next.js
 
-- Depois do `npx shadcn add`, confira o `git diff` do `package.json`: o CLI pode instalar o pacote npm `cn`. Reverta essa dependência e importe `cn` de `@/lib/utils`.
+- Rode o `npx shadcn add` sem interação e sem sobrescrever o que já existe em `src/components/ui/`: esses componentes já têm o visual do design system, e a pergunta de sobrescrever trava o CLI. Depois, confira o `git diff` do `package.json`: o CLI pode instalar o pacote npm `cn`. Reverta essa dependência e importe `cn` de `@/lib/utils`.
 - Ao juntar classes que disputam a mesma propriedade (por exemplo, `p-4` numa base e `p-0` no uso), use `cn` de `@/lib/utils`. Numa template string, quem vale é a ordem do CSS gerado pelo Tailwind, e não a ordem na string.
 - Antes de entregar uma tela, compare-a com o mockup aprovado em 375, 768 e 1280px, nos dois temas e com cada perfil que vê a tela, incluindo diálogos e estados. A conferência do `tester` é uma segunda checagem, e não substitui a sua. Se o `click` do Playwright não fizer efeito, use `fill` e `element.click()` via `browser_evaluate`. Isso não justifica deixar a comparação incompleta.
 - Para abrir o mockup no Playwright, sirva `docs/mockups` por um container (`docker run -d --rm --name mockups -p 8099:80 -v "$PWD/docs/mockups:/usr/share/nginx/html:ro" nginx:alpine`) e remova-o no fim. O navegador não abre `file://` nem servidores do WSL.
