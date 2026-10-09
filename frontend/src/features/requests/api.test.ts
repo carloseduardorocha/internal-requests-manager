@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/lib/api";
 
 import {
+  bulkAssignInternalRequests,
+  bulkDeleteInternalRequests,
   createInternalRequest,
   deleteInternalRequest,
   getInternalRequest,
@@ -80,5 +82,38 @@ describe("internal requests api", () => {
 
     await expect(deleteInternalRequest(5)).resolves.toBeUndefined();
     expect(api.delete).toHaveBeenCalledWith("/api/internal-requests/5");
+  });
+});
+
+describe("internal requests bulk api", () => {
+  const result = {
+    done: [1, 2],
+    skipped: [{ id: 3, reason: "not_open", message: "Já foi assumido." }],
+  };
+
+  beforeEach(() => {
+    vi.mocked(api.post).mockReset();
+  });
+
+  it("posts the ids to bulk/delete and returns the data", async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: result });
+
+    await expect(bulkDeleteInternalRequests([1, 2, 3])).resolves.toEqual(
+      result,
+    );
+    expect(api.post).toHaveBeenCalledWith(
+      "/api/internal-requests/bulk/delete",
+      { ids: [1, 2, 3] },
+    );
+  });
+
+  it("posts the ids to bulk/assign and returns the data", async () => {
+    vi.mocked(api.post).mockResolvedValue({ data: result });
+
+    await expect(bulkAssignInternalRequests([4, 5])).resolves.toEqual(result);
+    expect(api.post).toHaveBeenCalledWith(
+      "/api/internal-requests/bulk/assign",
+      { ids: [4, 5] },
+    );
   });
 });

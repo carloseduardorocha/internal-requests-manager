@@ -7,15 +7,11 @@ import { ApiError } from "@/lib/api";
 
 import { DeleteRequestDialog } from "./delete-request-dialog";
 
-const replace = vi.fn();
-const push = vi.fn();
 const toastSuccess = vi.fn();
 const toastError = vi.fn();
 const onRefresh = vi.fn();
-
-vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace, push }),
-}));
+const onDeleted = vi.fn();
+const onOpenChange = vi.fn();
 
 vi.mock("sonner", () => ({
   toast: {
@@ -35,10 +31,12 @@ async function openDialog() {
   render(
     <DeleteRequestDialog
       request={{ id: 10, title: "Notebook novo" }}
+      open
+      onOpenChange={onOpenChange}
+      onDeleted={onDeleted}
       onRefresh={onRefresh}
     />,
   );
-  await ui.click(screen.getByRole("button", { name: "Excluir" }));
   const dialog = await screen.findByRole("alertdialog");
   return { ui, dialog };
 }
@@ -46,8 +44,8 @@ async function openDialog() {
 describe("DeleteRequestDialog", () => {
   beforeEach(() => {
     remove.mockReset();
-    replace.mockReset();
-    push.mockReset();
+    onDeleted.mockReset();
+    onOpenChange.mockReset();
     toastSuccess.mockReset();
     toastError.mockReset();
     onRefresh.mockReset();
@@ -68,25 +66,22 @@ describe("DeleteRequestDialog", () => {
 
     await ui.click(within(dialog).getByRole("button", { name: "Cancelar" }));
 
-    await waitFor(() =>
-      expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument(),
-    );
+    expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(remove).not.toHaveBeenCalled();
-    expect(replace).not.toHaveBeenCalled();
-    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(onDeleted).not.toHaveBeenCalled();
   });
 
-  it("deletes on confirm, shows a toast and goes to the list with replace", async () => {
+  it("deletes on confirm, tells the screen and closes", async () => {
     remove.mockResolvedValue(undefined);
     const { ui, dialog } = await openDialog();
 
     await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
 
-    await waitFor(() => expect(replace).toHaveBeenCalledWith("/requests"));
+    await waitFor(() => expect(onDeleted).toHaveBeenCalledTimes(1));
     expect(remove).toHaveBeenCalledTimes(1);
     expect(remove).toHaveBeenCalledWith(10);
-    expect(toastSuccess).toHaveBeenCalledWith("Solicitação excluída");
-    expect(push).not.toHaveBeenCalled();
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+    expect(toastSuccess).not.toHaveBeenCalled();
     expect(onRefresh).not.toHaveBeenCalled();
   });
 
@@ -109,11 +104,10 @@ describe("DeleteRequestDialog", () => {
           "Este pedido não está mais Aberto e não pode ser alterado.",
       }),
     );
-    expect(replace).not.toHaveBeenCalled();
-    expect(toastSuccess).not.toHaveBeenCalled();
+    expect(onDeleted).not.toHaveBeenCalled();
   });
 
-  it("on other errors shows a toast without reloading or navigating", async () => {
+  it("on other errors shows a toast without reloading", async () => {
     remove.mockRejectedValue(new ApiError(500, "Erro interno"));
     const { ui, dialog } = await openDialog();
 
@@ -121,7 +115,7 @@ describe("DeleteRequestDialog", () => {
 
     await waitFor(() => expect(toastError).toHaveBeenCalledTimes(1));
     expect(onRefresh).not.toHaveBeenCalled();
-    expect(replace).not.toHaveBeenCalled();
+    expect(onDeleted).not.toHaveBeenCalled();
   });
 
   it("shows a generic message when the failure is not an ApiError", async () => {
@@ -150,17 +144,4 @@ describe("DeleteRequestDialog", () => {
       expect(onRefresh).not.toHaveBeenCalled();
     },
   );
-
-  it("goes back to the list with the filters it had after deleting", async () => {
-    sessionStorage.setItem("requests:list-query", "status=open");
-    remove.mockResolvedValue(undefined);
-    const { ui, dialog } = await openDialog();
-
-    await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
-
-    await waitFor(() =>
-      expect(replace).toHaveBeenCalledWith("/requests?status=open"),
-    );
-    sessionStorage.clear();
-  });
 });

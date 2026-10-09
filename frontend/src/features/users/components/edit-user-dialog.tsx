@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateUser } from "@/features/users/api";
-import { failureMessage } from "@/features/users/api-error";
+import { failureMessage } from "@/lib/api-error";
 import { roleLabels, roles } from "@/features/users/labels";
 import type { ManagedUser, UserUpdatePayload } from "@/features/users/types";
 import { ApiError } from "@/lib/api";

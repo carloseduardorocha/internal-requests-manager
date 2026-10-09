@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { EMAIL_PATTERN } from "@/features/auth/validation";
 import { createInvitation, listAreas } from "@/features/users/api";
-import { failureMessage } from "@/features/users/api-error";
+import { failureMessage } from "@/lib/api-error";
 import { roleDescriptions, roleLabels, roles } from "@/features/users/labels";
 import { ApiError } from "@/lib/api";
 import type { Area, Role } from "@/lib/types";

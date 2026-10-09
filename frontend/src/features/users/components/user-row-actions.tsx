@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { reactivateUser } from "@/features/users/api";
-import { failureMessage } from "@/features/users/api-error";
+import { failureMessage } from "@/lib/api-error";
 import { DeactivateUserDialog } from "@/features/users/components/deactivate-user-dialog";
 import { EditUserDialog } from "@/features/users/components/edit-user-dialog";
 import type { ManagedUser } from "@/features/users/types";
