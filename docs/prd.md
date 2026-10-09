@@ -1,6 +1,6 @@
 # Gestão de Solicitações Internas
 
-**PRD · Versão 3.0 · 08/10/2026**
+**PRD · Versão 4.0 · 08/10/2026**
 
 ## Visão geral
 
@@ -113,7 +113,7 @@ O botão do convite abre a tela de cadastro com nome, e-mail, perfil e área já
 **Recuperar a senha**
 Na tela de login, "Esqueci minha senha" leva a uma tela onde a pessoa informa o e-mail e recebe um link para criar uma nova senha. Ela informa e confirma a nova senha, pode escolher desconectar dos outros dispositivos onde está conectada, e volta para o login.
 
-- A resposta é a mesma exista ou não uma conta com aquele e-mail.
+- A resposta é a mesma, exista ou não uma conta com aquele e-mail.
 - O link vale por 60 minutos e só pode ser usado uma vez.
 
 A senha, no cadastro e na recuperação, tem no mínimo 8 caracteres.
@@ -146,11 +146,14 @@ Acesso, solicitações, análise e decisão, e painel.
 **Fase 2: comunicação**
 Notificações por Discord e por e-mail.
 
-**Fase 3: expansão**
+**Fase 3: extras**
 
 - **Convite e recuperação de senha** (fluxo 6).
 - **Gestão de usuários** (fluxo 7).
 - **Ações na lista:** menu de ações por item e ações em massa (fluxos 2 e 7).
+
+**Fase 4: expansão II**
+
 - **Disponibilização online:** até aqui, o sistema roda localmente.
 - **Sugestão de prioridade ou resumo do pedido por IA**, sempre como sugestão e com a decisão final de uma pessoa.
 - **Login com Google ou SSO da empresa.**

@@ -132,17 +132,18 @@ Mais detalhes:
 |---|---|
 | [Fase 1: operação básica](https://github.com/carloseduardorocha/internal-requests-manager/milestone/1?closed=1) | Entregue: acesso, solicitações, análise e decisão, e painel |
 | [Fase 2: comunicação](https://github.com/carloseduardorocha/internal-requests-manager/milestone/2?closed=1) | Entregue: Discord para a equipe e e-mail para o solicitante |
-| [Fase 3: expansão](docs/prd.md#fases) | Não iniciada (veja [Evolução](#evolução)) |
+| [Fase 3: extras](https://github.com/carloseduardorocha/internal-requests-manager/milestone/3?closed=1) | Entregue: convite, recuperação de senha, gestão de usuários e ações na lista |
+| [Fase 4: expansão II](docs/prd.md#fases) | Não iniciada (veja [Evolução](#evolução)) |
 
 **Limitações conhecidas**
 
 - Roda só localmente. Os containers são de desenvolvimento, com o código montado do disco e o servidor embutido do PHP, e não há imagens nem guia de produção.
-- O convite de usuários existe só na API; ainda não há tela. A gestão (listar, editar, desativar e reativar) tem tela para administradores. Se dois administradores se desativarem ao mesmo tempo, ou um desativar o outro enquanto o outro tira o perfil de administrador do primeiro, o sistema pode ficar sem administrador ativo ([ADR 0004](docs/adr/0004-sanctum-spa-authentication.md)).
+- Se dois administradores se desativarem ao mesmo tempo, ou um desativar o outro enquanto o outro tira o perfil de administrador do primeiro, o sistema pode ficar sem administrador ativo ([ADR 0004](docs/adr/0004-sanctum-spa-authentication.md)).
 - Não há tela para ver `notification_logs` nem `failed_jobs`. Para reenviar o que falhou, rode `docker compose exec -u "$(id -u):$(id -g)" api php artisan queue:retry all`.
 - O e-mail usa o layout padrão do Laravel, sem a identidade visual do produto, e não há preferência de notificação por usuário.
 - O Discord tem um canal só, o da equipe.
 - Se o `worker` cair no meio de um envio, essa tentativa não fica registrada em `notification_logs` ([ADR 0005](docs/adr/0005-database-queue-and-retries.md)).
-- O painel mostra só contagens. Os tempos até assumir e até decidir ficam para a Fase 3.
+- O painel mostra só contagens. Os tempos até assumir e até decidir ficam para a Fase 4.
 - Os checks do CI não são obrigatórios na `main`, e o [ADR 0008](docs/adr/0008-quality-tooling-and-ci.md) explica o que seria preciso para torná-los obrigatórios.
 
 **Critérios de priorização**
@@ -151,13 +152,13 @@ As fases da [PRD](docs/prd.md#fases) seguem esta ordem:
 
 1. **Operação básica primeiro:** sem registrar, decidir e acompanhar pedidos, não há produto. Cada fluxo virou uma issue de API e uma de tela, na ordem da PRD.
 2. **Comunicação depois:** as notificações só têm valor quando o fluxo já funciona, e não podem atrasar nem quebrar quem usa. Por isso saem por uma fila, com novas tentativas e o registro de cada uma.
-3. **Expansão por último:** convite, produção, SSO, IA e novos canais ampliam o alcance de algo que já precisa estar estável.
+3. **Extras em seguida:** convite, recuperação de senha, gestão de usuários e ações na lista tiram do suporte o trabalho manual com contas e agilizam o dia a dia, sem mudar o fluxo dos pedidos.
+4. **Expansão por último:** produção, SSO, IA, indicadores de tempo e novos canais ampliam o alcance de algo que já precisa estar estável.
 
 ## Evolução
 
-O que a [Fase 3 da PRD](docs/prd.md#fases) prevê:
+O que a [Fase 4 da PRD](docs/prd.md#fases) prevê:
 
-- Cadastro por convite, recuperação de senha e gestão de usuários.
 - Disponibilização online.
 - Sugestão de prioridade ou resumo do pedido por IA, sempre com a decisão final de uma pessoa.
 - Login com Google ou SSO da empresa.
