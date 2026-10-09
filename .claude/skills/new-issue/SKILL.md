@@ -26,7 +26,8 @@ Exemplos: `[backend] Solicitações: criar, consultar, editar e excluir`, `[fron
 |---|---|
 | `Fase 1 — Operação básica` | Setup, acesso, solicitações, análise e decisão, painel |
 | `Fase 2 — Comunicação` | Notificações por Discord e e-mail |
-| `Fase 3 — Expansão` | Convite, recuperação de senha, disponibilização online, IA, SSO etc. |
+| `Fase 3 — Extras` | Convite, recuperação de senha, gestão de usuários, ações na lista |
+| `Fase 4 — Expansão II` | Disponibilização online, IA, SSO, indicadores de tempo, novos canais |
 
 **Project:** toda issue entra no project `Board de Atividades`.
 
