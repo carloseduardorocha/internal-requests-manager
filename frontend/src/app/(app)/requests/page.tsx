@@ -78,6 +78,9 @@ function RequestsContent() {
   const [busy, setBusy] = useState(false);
   const [summary, setSummary] = useState<Summary | null>(null);
   const runs = useRef(0);
+  // Bumped to send the focus to the page title once the render has committed:
+  // an open dialog still traps the focus until then.
+  const [titleFocus, setTitleFocus] = useState(0);
 
   const canCreate = canAccess(user.role, "/requests/new");
   const active = hasActiveFilters(filters);
@@ -109,6 +112,10 @@ function RequestsContent() {
   // Remember the filters for the "back to the list" links.
   useEffect(() => saveListQuery(query), [query]);
 
+  useEffect(() => {
+    if (titleFocus) document.getElementById("requests-title")?.focus();
+  }, [titleFocus]);
+
   // Paging is navigation (back goes to the previous page); typing is not.
   function goTo(page: number) {
     const query = toSearchParams({ ...filters, page }).toString();
@@ -128,7 +135,7 @@ function RequestsContent() {
   // The row menu's deletion (and its 409) remove the "⋯" that had the focus.
   function reloadFocusingTitle() {
     reload();
-    document.getElementById("requests-title")?.focus();
+    setTitleFocus((n) => n + 1);
   }
 
   function handleBulkBusy(next: boolean) {
@@ -146,7 +153,7 @@ function RequestsContent() {
       setSummary(null);
       toast.success(successMessage(action, result.done.length));
       // The bar is gone with the selection: the focus goes to the page title.
-      document.getElementById("requests-title")?.focus();
+      setTitleFocus((n) => n + 1);
       return;
     }
     // The summary takes the focus when it appears.
@@ -164,7 +171,7 @@ function RequestsContent() {
   function handleBulkForbidden() {
     selection.clear();
     reload();
-    document.getElementById("requests-title")?.focus();
+    setTitleFocus((n) => n + 1);
   }
 
   let body;

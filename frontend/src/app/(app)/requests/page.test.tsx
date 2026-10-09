@@ -1,4 +1,10 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -725,6 +731,70 @@ describe("RequestsPage", () => {
         expect(await screen.findByRole("status")).toHaveTextContent(
           "1 de 2 solicitações excluídas",
         );
+
+        // The person changing page afterwards still clears it.
+        query = "status=open";
+        view.rerender(<RequestsPage />);
+        await waitFor(() => expect(screen.queryByRole("status")).toBeNull());
+      });
+    });
+
+    describe("focus with the dialog as the last focused element", () => {
+      it("bulk delete: the title gets the focus although the dialog had it", async () => {
+        role = "requester";
+        respondWith(two);
+        bulkDelete.mockResolvedValue({ done: [1, 2], skipped: [] });
+        await renderLoaded();
+        const ui = await selectBoth();
+        await ui.click(screen.getByRole("button", { name: "Excluir" }));
+        const dialog = await screen.findByRole("alertdialog");
+
+        dialog.focus();
+        fireEvent.click(
+          within(dialog).getByRole("button", { name: "Excluir" }),
+        );
+
+        await waitFor(() => expect(toastSuccess).toHaveBeenCalled());
+        await waitFor(() => expect(heading()).toHaveFocus());
+      });
+
+      it("row menu delete: the title gets the focus although the dialog had it", async () => {
+        respondWith(two);
+        removeOne.mockResolvedValue(undefined);
+        await renderLoaded();
+        const ui = userEvent.setup();
+        await ui.click(
+          screen.getByRole("button", { name: "Ações de #1 Primeira" }),
+        );
+        await ui.click(
+          await screen.findByRole("menuitem", { name: "Excluir" }),
+        );
+        const dialog = await screen.findByRole("alertdialog");
+
+        dialog.focus();
+        fireEvent.click(
+          within(dialog).getByRole("button", { name: "Excluir" }),
+        );
+
+        await waitFor(() => expect(list).toHaveBeenCalledTimes(2));
+        await waitFor(() => expect(heading()).toHaveFocus());
+      });
+
+      it("bulk 403: the title gets the focus although the dialog had it", async () => {
+        bulkDelete.mockRejectedValue(new ApiError(403, "Sem permissão."));
+        respondWith(two);
+        await renderLoaded();
+        const ui = await selectBoth();
+        await ui.click(screen.getByRole("button", { name: "Excluir" }));
+        const dialog = await screen.findByRole("alertdialog");
+
+        dialog.focus();
+        fireEvent.click(
+          within(dialog).getByRole("button", { name: "Excluir" }),
+        );
+
+        await waitFor(() => expect(toastError).toHaveBeenCalled());
+        await waitFor(() => expect(heading()).toHaveFocus());
       });
     });
 
