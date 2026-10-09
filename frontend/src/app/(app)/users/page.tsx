@@ -3,11 +3,17 @@
 import { UserPlus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
+import { BulkResultSummary } from "@/components/bulk-result-summary";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/auth-provider";
 import { Pagination } from "@/features/requests/components/pagination";
+import {
+  UserBulkActions,
+  type UserBulkAction,
+} from "@/features/users/components/user-bulk-actions";
 import { UserFilters } from "@/features/users/components/user-filters";
 import { UserList } from "@/features/users/components/user-list";
 import {
@@ -23,7 +29,30 @@ import {
 import { useAreas } from "@/features/users/hooks/use-areas";
 import { useUsers } from "@/features/users/hooks/use-users";
 import type { ManagedUser } from "@/features/users/types";
+import { useSelection } from "@/hooks/use-selection";
+import type { BulkResult } from "@/lib/bulk";
 import type { Area } from "@/lib/types";
+
+const TITLE_ID = "users-title";
+
+// What the last bulk action left out; it belongs to the page and filters it
+// was run on.
+type Summary = {
+  id: number;
+  key: string;
+  result: BulkResult;
+  action: UserBulkAction;
+  labels: Record<number, string>;
+};
+
+const verbs = {
+  deactivate: ["desativada", "desativadas"],
+  reactivate: ["reativada", "reativadas"],
+} as const;
+
+function focusTitle() {
+  document.getElementById(TITLE_ID)?.focus();
+}
 
 // The areas are loaded first: an `area_id` in the URL is only valid if the
 // area exists.
@@ -46,6 +75,49 @@ function UsersList({ areas }: { areas: Area[] }) {
     areas.map((area) => area.id),
   );
   const { loading, error, data, meta, reload, replace } = useUsers(filters);
+
+  // The own account has no checkbox, so it never counts as selectable. The
+  // selection is per page: any change of page or filter clears it.
+  const resetKey = toUserSearchParams(filters).toString();
+  const selection = useSelection(
+    data.filter((user) => user.id !== me.id).map((user) => user.id),
+    resetKey,
+  );
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const shownSummary = summary?.key === resetKey ? summary : null;
+  // The summary takes the focus on its own; the dialog must not steal it.
+  const hasSummary = useRef(false);
+
+  function showSummary(next: Summary | null) {
+    hasSummary.current = next !== null;
+    setSummary(next);
+  }
+
+  function handleBulkDone(
+    result: BulkResult,
+    action: UserBulkAction,
+    labels: Record<number, string>,
+  ) {
+    selection.clear();
+    reload();
+    if (result.skipped.length === 0) {
+      showSummary(null);
+      const [one, many] = verbs[action];
+      toast.success(
+        result.done.length === 1
+          ? `1 conta ${one}`
+          : `${result.done.length} contas ${many}`,
+      );
+      focusTitle();
+      return;
+    }
+    showSummary({ id: Date.now(), key: resetKey, result, action, labels });
+  }
+
+  function handleBulkForbidden() {
+    selection.clear();
+    reload();
+  }
 
   // The row is swapped in place; the own account also feeds the header.
   function handleUpdated(updated: ManagedUser) {
@@ -92,7 +164,18 @@ function UsersList({ areas }: { areas: Area[] }) {
           onClear={() => router.replace(pathname)}
         />
       ) : (
-        <UserList users={data} areas={areas} onUpdated={handleUpdated} />
+        <UserList
+          users={data}
+          areas={areas}
+          selection={{
+            isSelected: selection.isSelected,
+            onToggle: selection.toggle,
+            allSelected: selection.allSelected,
+            someSelected: selection.someSelected,
+            onToggleAll: selection.toggleAll,
+          }}
+          onUpdated={handleUpdated}
+        />
       );
   }
 
@@ -103,7 +186,32 @@ function UsersList({ areas }: { areas: Area[] }) {
         areas={areas}
         meta={!loading && !error && (data.length > 0 || active) ? meta : null}
       />
+      {shownSummary && (
+        <BulkResultSummary
+          // A new action remounts it, so it takes the focus again.
+          key={shownSummary.id}
+          result={shownSummary.result}
+          title={`${shownSummary.result.done.length} de ${
+            shownSummary.result.done.length + shownSummary.result.skipped.length
+          } contas ${verbs[shownSummary.action][1]}`}
+          labelFor={(id) => shownSummary.labels[id] ?? `Conta ${id}`}
+          onClose={() => {
+            showSummary(null);
+            focusTitle();
+          }}
+        />
+      )}
       {body}
+      <UserBulkActions
+        users={data.filter((user) => selection.isSelected(user.id))}
+        onClear={selection.clear}
+        onStart={() => showSummary(null)}
+        onFocusFallback={() => {
+          if (!hasSummary.current) focusTitle();
+        }}
+        onDone={handleBulkDone}
+        onForbidden={handleBulkForbidden}
+      />
       {!loading && !error && meta && meta.last_page > 1 && (
         <Pagination meta={meta} onPageChange={goTo} />
       )}
@@ -116,7 +224,13 @@ export default function UsersPage() {
     <>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-heading text-[26px] font-extrabold">Usuários</h1>
+          <h1
+            id={TITLE_ID}
+            tabIndex={-1}
+            className="font-heading text-[26px] font-extrabold outline-hidden"
+          >
+            Usuários
+          </h1>
           <p className="mt-1 text-muted-foreground">
             Contas da empresa: perfil, área e situação.
           </p>

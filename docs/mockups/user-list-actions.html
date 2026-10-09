@@ -1,0 +1,345 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usuários: ações em massa — mockup v1</title>
+<style>
+:root {
+  --brand: #3FA110; --brand-dark: #0A4B1E;
+  --primary: #33820D; --primary-hover: #26610A; --on-primary: #ffffff;
+  --background: #F8F9F7; --surface: #ffffff; --border: #E1E6E1; --border-strong: #CDD3CD;
+  --text-primary: #323C32; --text-secondary: #5A645A;
+  --accent: #ECF6E7; --accent-fg: #26610A; --ring: #33820D;
+  --success: #047857; --warning: #B45309; --error: #B91C1C; --error-hover: #991B1B; --on-error: #ffffff;
+  --st-ok-bg: #ECF6E7; --st-ok-fg: #26610A;
+  --st-no-bg: #FEF2F2; --st-no-fg: #B91C1C;
+  --header-bg: #ffffff; --header-fg: #323C32;
+  --overlay: rgba(12, 14, 12, .5);
+  --radius: 8px;
+}
+[data-theme="dark"] {
+  --brand: #64C832;
+  --primary: #64C832; --primary-hover: #A0DC8C; --on-primary: #0C0E0C;
+  --background: #0C0E0C; --surface: #161A16; --border: #262C26; --border-strong: #343C34;
+  --text-primary: #E1E6E1; --text-secondary: #A0AAA0;
+  --accent: #1A2A16; --accent-fg: #A0DC8C; --ring: #64C832;
+  --st-ok-bg: #1A2A16; --st-ok-fg: #A0DC8C;
+  --st-no-bg: #3A1212; --st-no-fg: #FCA5A5;
+  --header-bg: #161A16; --header-fg: #E1E6E1;
+  --overlay: rgba(0, 0, 0, .65);
+  --error: #F87171; --error-hover: #FCA5A5; --on-error: #0C0E0C;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--background); color: var(--text-primary);
+  font-family: "Nunito", ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI", sans-serif; font-size: 15px; line-height: 1.5; }
+h1, h3, .bar strong { font-family: "Exo 2", "Trebuchet MS", system-ui, sans-serif; }
+svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+header { background: var(--header-bg); color: var(--header-fg); border-bottom: 1px solid var(--border); }
+.bar { max-width: 1100px; margin: 0 auto; padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.bar .logo { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); }
+.bar strong { font-size: 16px; }
+.bar .sp { flex: 1; }
+.bar small { color: var(--text-secondary); }
+main { max-width: 1100px; margin: 0 auto; padding: 24px 16px 120px; display: grid; gap: 20px; }
+h1 { font-size: 26px; margin: 0; font-weight: 800; }
+h1:focus { outline: none; }
+.page-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; justify-content: space-between; }
+.page-head .btn { width: 100%; }
+@media (min-width: 481px) { .page-head .btn { width: auto; } }
+.page-sub { margin: 4px 0 0; color: var(--text-secondary); }
+.btn { min-height: 48px; padding: 0 20px; border-radius: var(--radius); font: inherit; font-weight: 700; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color .15s, border-color .15s, color .15s; }
+.btn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.btn-primary { background: var(--primary); color: var(--on-primary); }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-outline { background: var(--surface); color: var(--text-primary); border-color: var(--border); }
+.btn-outline:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+.btn-danger { background: var(--error); color: var(--on-error); }
+.btn-danger:hover:not(:disabled) { background: var(--error-hover); }
+.btn-danger-outline { background: var(--surface); color: var(--error); border-color: var(--border); }
+.btn-danger-outline:hover:not(:disabled) { border-color: var(--error); background: var(--st-no-bg); }
+.linkbtn { border: 0; background: transparent; color: var(--primary); font: inherit; font-weight: 700; cursor: pointer; min-height: 44px; padding: 0 4px; border-radius: var(--radius); }
+.linkbtn:hover { text-decoration: underline; }
+.linkbtn:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.b-on { background: var(--st-ok-bg); color: var(--st-ok-fg); }
+.b-off { background: var(--background); color: var(--text-secondary); border: 1px solid var(--border-strong); }
+.you { font-size: 12px; font-weight: 700; padding: 0 8px; border-radius: 999px; border: 1px solid var(--border-strong); color: var(--text-secondary); }
+
+/* checkbox: 44px touch target around an 18px box (same as #49) */
+.chk { position: relative; display: grid; place-items: center; width: 44px; height: 44px; margin: -12px 0 -12px -12px; cursor: pointer; border-radius: var(--radius); }
+.chk input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.chk span { width: 18px; height: 18px; border: 2px solid var(--border-strong); border-radius: 4px; background: var(--surface); display: grid; place-items: center; color: var(--on-primary); }
+.chk span svg { width: 14px; height: 14px; stroke-width: 3; display: none; }
+.chk input:checked + span, .chk input:indeterminate + span { background: var(--primary); border-color: var(--primary); }
+.chk input:checked + span .i-check { display: block; }
+.chk input:indeterminate + span .i-minus { display: block; }
+.chk:hover span { border-color: var(--primary); }
+.chk input:focus-visible + span { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* user list: checkbox column first, as in the request list of #49 */
+.rlist { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.uhead { display: grid; grid-template-columns: 32px 1fr; align-items: center; gap: 12px; padding: 10px 8px 10px 16px; background: var(--background); border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--text-secondary); }
+.uhead .col { display: none; }
+.uhead .all-lbl { text-transform: none; letter-spacing: 0; font-size: 13px; }
+.u { display: grid; grid-template-columns: 32px minmax(0, 1fr) 44px; grid-template-areas: "chk main act" ". tags act"; gap: 8px 12px; padding: 14px 8px 14px 16px; border-top: 1px solid var(--border); align-items: center; }
+.uhead + .u { border-top: 0; }
+.u:hover { background: var(--accent); }
+.u.sel { background: var(--accent); box-shadow: inset 3px 0 0 var(--primary); }
+.u-chk { grid-area: chk; align-self: start; padding-top: 2px; }
+.u-main { grid-area: main; display: grid; gap: 2px; min-width: 0; }
+.u-name { font-weight: 700; overflow-wrap: anywhere; display: flex; flex-wrap: wrap; gap: 4px 8px; align-items: center; }
+.u-mail { font-size: 13px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.u-tags { grid-area: tags; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; font-size: 13px; color: var(--text-secondary); }
+.u-role, .u-area { display: inline-flex; gap: 4px; }
+.u-role b { color: var(--text-primary); font-weight: 700; }
+.u-act { grid-area: act; align-self: start; }
+.u.off .u-name span:first-child { color: var(--text-secondary); }
+@media (min-width: 768px) {
+  .uhead, .u { grid-template-columns: 32px minmax(0, 1fr) 120px 150px 130px 44px; grid-template-areas: "chk main role area status act"; }
+  .uhead .col { display: block; }
+  .uhead .all-lbl { display: none; }
+  .u { padding-top: 12px; padding-bottom: 12px; }
+  .u-chk, .u-act { align-self: center; padding-top: 0; }
+  .u-tags { display: contents; }
+  .u-role { grid-area: role; } .u-area { grid-area: area; } .u-status { grid-area: status; }
+  .u-role b { font-weight: 400; } .u-role .sep { display: none; }
+}
+.kebab { width: 44px; height: 44px; display: grid; place-items: center; border-radius: var(--radius); border: 1px solid transparent; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.kebab svg { width: 18px; height: 18px; }
+.kebab:hover { border-color: var(--border); background: var(--accent); color: var(--accent-fg); }
+.kebab:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* bulk bar (from #49) */
+.bulkbar { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 40; max-width: 760px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 10px 10px 16px; background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,.18); }
+.bulkbar[hidden] { display: none; }
+.bulkbar .count { font-weight: 800; }
+.bulkbar .sp { flex: 1; }
+.bulkbar .acts { display: flex; gap: 8px; width: 100%; }
+.bulkbar .acts .btn { flex: 1; }
+.bulkbar .acts .btn[hidden] { display: none; }
+@media (min-width: 600px) { .bulkbar .acts { width: auto; } .bulkbar .acts .btn { flex: none; } }
+
+/* result summary (from #49) */
+.summary { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; padding: 14px 8px 14px 16px; border: 1px solid var(--border); border-left: 4px solid var(--warning); border-radius: var(--radius); background: var(--surface); }
+.summary:focus { outline: 2px solid var(--ring); outline-offset: 2px; }
+.summary[hidden] { display: none; }
+.summary > svg { width: 20px; height: 20px; color: var(--warning); margin-top: 2px; }
+.summary b { display: block; }
+.summary p { margin: 0; color: var(--text-secondary); }
+.summary ul { margin: 8px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 14px; }
+.summary li { overflow-wrap: anywhere; }
+.summary li small { display: block; color: var(--text-secondary); }
+.summary .x { width: 44px; height: 44px; margin-top: -10px; border: 0; background: transparent; color: var(--text-secondary); border-radius: var(--radius); cursor: pointer; display: grid; place-items: center; }
+.summary .x:hover { background: var(--accent); color: var(--accent-fg); }
+.summary .x:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+/* dialog + toast */
+.modal { position: fixed; inset: 0; background: var(--overlay); display: grid; place-items: center; padding: 16px; z-index: 70; }
+.modal[hidden] { display: none; }
+.dialog { background: var(--surface); border-radius: 8px; padding: 20px; max-width: 440px; width: 100%; box-shadow: 0 20px 50px rgba(0,0,0,.3); display: grid; gap: 18px; }
+.dialog h3 { margin: 0 0 6px; font-size: 18px; }
+.dialog p { margin: 0; color: var(--text-secondary); }
+.dialog .row { display: flex; gap: 12px; justify-content: flex-end; }
+.dialog .row .btn { flex: 1; }
+@media (min-width: 481px) { .dialog .row .btn { flex: none; } }
+.toasts { position: fixed; right: 16px; top: 16px; left: 16px; display: grid; justify-items: end; gap: 8px; z-index: 60; pointer-events: none; }
+.toast { pointer-events: auto; display: flex; gap: 10px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--success); border-radius: var(--radius); padding: 12px 14px; box-shadow: 0 6px 20px rgba(0,0,0,.12); max-width: 360px; width: 100%; }
+.toast.e { border-left-color: var(--error); }
+.toast svg { width: 18px; height: 18px; margin-top: 2px; color: var(--success); }
+.toast.e svg { color: var(--error); }
+.toast small { display: block; color: var(--text-secondary); }
+
+/* mockup controls */
+.mk { position: sticky; top: 0; z-index: 50; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 8px 12px; background: #1f2937; color: #e5e7eb; font: 12px/1.3 system-ui, sans-serif; }
+.mk button { font: inherit; padding: 4px 8px; border-radius: 4px; border: 1px solid #4b5563; background: transparent; color: inherit; cursor: pointer; }
+.mk button.on { background: #e5e7eb; color: #111827; }
+.mk-sep { width: 1px; height: 18px; background: #4b5563; margin: 0 4px; }
+</style>
+</head>
+<body>
+<nav class="mk" aria-label="Controles do mockup">
+  <span>Simular na próxima ação:</span>
+  <button data-sim="ok" class="on">Resposta normal</button>
+  <button data-sim="403">Erro 403</button>
+  <button data-sim="net">Erro de rede</button>
+  <span class="mk-sep"></span>
+  <button id="mkReset">Recomeçar dados</button>
+  <button id="mkTheme">Tema escuro</button>
+</nav>
+
+<div id="app">
+  <header><div class="bar"><span class="logo" aria-hidden="true"></span><strong>Solicitações Internas</strong><span class="sp"></span><small>Marina Costa · Administrador</small></div></header>
+  <main>
+    <div class="page-head">
+      <div>
+        <h1 id="pageTitle" tabindex="-1">Usuários</h1>
+        <p class="page-sub">Contas da empresa: perfil, área e situação.</p>
+      </div>
+      <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Convidar usuário</button>
+    </div>
+    <section class="summary" id="summary" role="status" tabindex="-1" hidden></section>
+    <div class="rlist" id="rlist"></div>
+  </main>
+
+  <div class="bulkbar" id="bulkbar" role="region" aria-label="Ações em massa" hidden>
+    <span class="count" id="bulkCount" aria-live="polite">0 selecionadas</span>
+    <button class="linkbtn" id="bulkClear">Limpar seleção</button>
+    <span class="sp"></span>
+    <div class="acts">
+      <button class="btn btn-outline" id="bulkReactivate"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>Reativar</button>
+      <button class="btn btn-danger-outline" id="bulkDeactivate"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/></svg>Desativar</button>
+    </div>
+  </div>
+
+  <div class="modal" id="offModal" hidden>
+    <div class="dialog" role="alertdialog" aria-modal="true" aria-labelledby="offT" aria-describedby="offD">
+      <div><h3 id="offT"></h3><p id="offD">As pessoas deixam de entrar no sistema e as sessões delas terminam na hora. Os pedidos e o histórico continuam com o nome delas. Você pode reativar as contas depois. Contas que já estão desativadas ficam de fora e aparecem no resumo.</p></div>
+      <div class="row">
+        <button class="btn btn-outline" id="offCancel">Cancelar</button>
+        <button class="btn btn-danger" id="offOk"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/></svg>Desativar</button>
+      </div>
+    </div>
+  </div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+</div>
+
+<script>
+const I = {
+  check: '<svg class="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>',
+  minus: '<svg class="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></svg>',
+  dots: '<svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>',
+  on: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg>',
+  off: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/></svg>',
+  ok: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>',
+  err: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>',
+  warn: '<svg viewBox="0 0 24 24"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/></svg>',
+  x: '<svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+};
+const ROLE = { requester: "Solicitante", analyst: "Analista", admin: "Administrador" };
+const MSG = { already_deactivated: "A conta já está desativada.", already_active: "A conta já está ativa." };
+const ME = 1;
+const SEED = [
+  [2, "Ana Souza", "ana.souza@empresa.com", "requester", "Financeiro", true],
+  [4, "Bruno Lima", "bruno.lima@empresa.com", "analyst", "Financeiro", true],
+  [7, "Carla Dias", "carla.dias@empresa.com", "analyst", "Financeiro", true],
+  [9, "Diego Martins", "diego.martins@empresa.com", "requester", "Marketing", false],
+  [12, "Fernanda Albuquerque Nogueira", "fernanda.albuquerque.nogueira@empresa.com", "requester", "Recursos Humanos", true],
+  [15, "Gustavo Rocha", "gustavo.rocha@empresa.com", "analyst", "Jurídico", false],
+  [18, "Helena Prado", "helena.prado@empresa.com", "requester", "Compras", true],
+  [1, "Marina Costa", "marina.costa@empresa.com", "admin", "Tecnologia", true],
+];
+let users, selected = new Set(), sim = "ok";
+const $ = (s) => document.querySelector(s);
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+const selectable = () => users.filter((u) => u.id !== ME);
+function reset() {
+  users = SEED.map(([id, name, email, role, area, on]) => ({ id, name, email, role, area, on }));
+  selected.clear(); $("#summary").hidden = true; render();
+}
+
+function row(u) {
+  const self = u.id === ME, sel = selected.has(u.id);
+  return `<div class="u ${u.on ? "" : "off"} ${sel ? "sel" : ""}">
+    <span class="u-chk">${self ? "" : `<label class="chk"><input type="checkbox" data-sel="${u.id}" aria-label="Selecionar ${u.name}" ${sel ? "checked" : ""}><span>${I.check}${I.minus}</span></label>`}</span>
+    <div class="u-main">
+      <div class="u-name"><span>${u.name}</span>${self ? '<span class="you">Você</span>' : ""}</div>
+      <div class="u-mail">${u.email}</div>
+    </div>
+    <div class="u-tags">
+      <span class="u-role"><b>${ROLE[u.role]}</b><span class="sep">·</span></span>
+      <span class="u-area">${u.area}</span>
+      <span class="u-status">${u.on ? `<span class="badge b-on">${I.on}Ativa</span>` : `<span class="badge b-off">${I.off}Desativada</span>`}</span>
+    </div>
+    <div class="u-act"><button class="kebab" aria-label="Ações de ${u.name}">${I.dots}</button></div>
+  </div>`;
+}
+
+function render() {
+  const list = selectable();
+  const all = list.length > 0 && list.every((u) => selected.has(u.id));
+  const some = !all && list.some((u) => selected.has(u.id));
+  $("#rlist").innerHTML =
+    `<div class="uhead"><label class="chk"><input type="checkbox" id="all" aria-label="Selecionar todas desta página" ${all ? "checked" : ""}><span>${I.check}${I.minus}</span></label><span class="all-lbl">Selecionar todas desta página</span><span class="col" aria-hidden="true">Usuário</span><span class="col" aria-hidden="true">Perfil</span><span class="col" aria-hidden="true">Área</span><span class="col" aria-hidden="true">Situação</span><span class="col"></span></div>` +
+    users.map(row).join("");
+  $("#all").indeterminate = some;
+  const chosen = users.filter((u) => selected.has(u.id));
+  $("#bulkbar").hidden = chosen.length === 0;
+  $("#bulkCount").textContent = chosen.length === 1 ? "1 selecionada" : `${chosen.length} selecionadas`;
+  // Each button only when it applies to at least one selected account (`can`).
+  $("#bulkDeactivate").hidden = !chosen.some((u) => u.on);
+  $("#bulkReactivate").hidden = !chosen.some((u) => !u.on);
+}
+
+function toast(title, desc, error) {
+  const t = document.createElement("div");
+  t.className = `toast ${error ? "e" : ""}`; t.innerHTML = `${error ? I.err : I.ok}<div><b>${title}</b>${desc ? `<small>${desc}</small>` : ""}</div>`;
+  $("#toasts").append(t); setTimeout(() => t.remove(), 3500);
+}
+
+function showSummary(action, done, skipped) {
+  const verb = action === "deactivate" ? ["desativada", "desativadas"] : ["reativada", "reativadas"];
+  const s = $("#summary");
+  if (skipped.length === 0) {
+    s.hidden = true;
+    toast(plural(done.length, "conta " + verb[0], "contas " + verb[1]));
+    $("#pageTitle").focus();
+    return;
+  }
+  s.innerHTML = `${I.warn}<div>
+      <b>${done.length} de ${done.length + skipped.length} contas ${verb[1]}</b>
+      <p>${plural(skipped.length, "ficou de fora", "ficaram de fora")}:</p>
+      <ul>${skipped.map((k) => `<li>${k.name}<small>${k.message}</small></li>`).join("")}</ul>
+    </div><button class="x" aria-label="Fechar resumo">${I.x}</button>`;
+  s.hidden = false; s.focus();
+  s.querySelector(".x").onclick = () => { s.hidden = true; $("#pageTitle").focus(); };
+}
+
+function setBusy(busy) {
+  $("#bulkbar").querySelectorAll("button").forEach((b) => { b.disabled = busy; });
+}
+
+function runBulk(action) {
+  $("#summary").hidden = true;
+  setBusy(true);
+  setTimeout(() => {
+    setBusy(false);
+    if (sim === "net") { toast(`Não foi possível ${action === "deactivate" ? "desativar" : "reativar"}`, "Não foi possível concluir a ação. Tente novamente.", true); return; }
+    if (sim === "403") { selected.clear(); render(); toast(`Não foi possível ${action === "deactivate" ? "desativar" : "reativar"}`, "Esta ação não é permitida para o seu perfil.", true); return; }
+    const done = [], skipped = [];
+    users.filter((u) => selected.has(u.id)).forEach((u) => {
+      if (action === "deactivate") { if (u.on) { u.on = false; done.push(u); } else skipped.push({ name: u.name, message: MSG.already_deactivated }); }
+      else { if (!u.on) { u.on = true; done.push(u); } else skipped.push({ name: u.name, message: MSG.already_active }); }
+    });
+    selected.clear(); render(); showSummary(action, done, skipped);
+  }, 600);
+}
+
+function confirmDeactivate() {
+  const n = selected.size;
+  $("#offT").textContent = n === 1 ? `Desativar ${users.find((u) => selected.has(u.id)).name}?` : `Desativar ${n} contas?`;
+  $("#offModal").hidden = false;
+  $("#offCancel").focus();
+}
+
+document.addEventListener("click", (e) => {
+  const s = e.target.closest("[data-sim]");
+  if (s) { document.querySelectorAll("[data-sim]").forEach((b) => b.classList.toggle("on", b === s)); sim = s.dataset.sim; return; }
+  if (e.target.closest("#mkReset")) return reset();
+  if (e.target.closest("#mkTheme")) { const d = document.documentElement; const dark = d.dataset.theme === "dark"; d.dataset.theme = dark ? "" : "dark"; e.target.textContent = dark ? "Tema escuro" : "Tema claro"; return; }
+  if (e.target.closest("#bulkClear")) { selected.clear(); render(); }
+  if (e.target.closest("#bulkReactivate")) runBulk("reactivate");
+  if (e.target.closest("#bulkDeactivate")) confirmDeactivate();
+  if (e.target.closest("#offCancel")) { $("#offModal").hidden = true; $("#bulkDeactivate").focus(); }
+  if (e.target.closest("#offOk")) { $("#offModal").hidden = true; runBulk("deactivate"); }
+});
+document.addEventListener("change", (e) => {
+  if (e.target.id === "all") { if (e.target.checked) selectable().forEach((u) => selected.add(u.id)); else selected.clear(); render(); $("#all").focus(); return; }
+  if (e.target.dataset.sel) { const id = +e.target.dataset.sel; selected.has(id) ? selected.delete(id) : selected.add(id); render(); document.querySelector(`[data-sel="${id}"]`).focus(); }
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("#offModal").hidden = true; });
+reset();
+</script>
+</body>
+</html>

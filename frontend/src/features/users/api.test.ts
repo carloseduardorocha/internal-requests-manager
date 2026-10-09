@@ -4,6 +4,8 @@ import { makeMeta } from "@/features/requests/test-fixtures";
 import { api } from "@/lib/api";
 
 import {
+  bulkDeactivateUsers,
+  bulkReactivateUsers,
   deactivateUser,
   listAreas,
   listUsers,
@@ -41,6 +43,24 @@ describe("users api", () => {
 
     await expect(listUsers(filters)).resolves.toEqual(body);
     expect(api.get).toHaveBeenCalledWith("/api/users", { query: filters });
+  });
+
+  it("posts the ids to the bulk endpoints and returns the result", async () => {
+    const result = {
+      done: [2],
+      skipped: [{ id: 3, reason: "self", message: "Sua própria conta." }],
+    };
+    vi.mocked(api.post).mockResolvedValue({ data: result });
+
+    await expect(bulkDeactivateUsers([2, 3])).resolves.toEqual(result);
+    expect(api.post).toHaveBeenCalledWith("/api/users/bulk/deactivate", {
+      ids: [2, 3],
+    });
+
+    await expect(bulkReactivateUsers([4])).resolves.toEqual(result);
+    expect(api.post).toHaveBeenCalledWith("/api/users/bulk/reactivate", {
+      ids: [4],
+    });
   });
 
   it("reads the data envelope on the areas", async () => {

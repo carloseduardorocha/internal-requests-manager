@@ -59,9 +59,24 @@ const deactivated = makeUser({
   },
 });
 
+const selection = {
+  isSelected: () => false,
+  onToggle: vi.fn(),
+  allSelected: false,
+  someSelected: false,
+  onToggleAll: vi.fn(),
+};
+
 function setup(users: ManagedUser[]) {
   const ui = userEvent.setup();
-  render(<UserList users={users} areas={areas} onUpdated={onUpdated} />);
+  render(
+    <UserList
+      users={users}
+      areas={areas}
+      selection={selection}
+      onUpdated={onUpdated}
+    />,
+  );
   return ui;
 }
 
@@ -88,6 +103,15 @@ describe("UserList", () => {
     expect(screen.getByText("Ativa")).toBeInTheDocument();
   });
 
+  it("toggles 'select all' from the visible text next to the checkbox", async () => {
+    selection.onToggleAll.mockClear();
+    const ui = setup([makeUser()]);
+
+    await ui.click(screen.getByText("Selecionar todas desta página"));
+
+    expect(selection.onToggleAll).toHaveBeenCalledTimes(1);
+  });
+
   it("marks only the own account with 'Você'", () => {
     setup([ownAccount, makeUser({ id: 7, name: "Carla Dias" })]);
 
@@ -104,6 +128,59 @@ describe("UserList", () => {
 
     expect(screen.getByText("Ativa")).toBeInTheDocument();
     expect(screen.getByText("Desativada")).toBeInTheDocument();
+  });
+
+  describe("selection", () => {
+    it("gives every row a checkbox except the own account", () => {
+      setup([ownAccount, makeUser({ id: 7, name: "Carla Dias" }), deactivated]);
+
+      expect(
+        screen.queryByRole("checkbox", { name: "Selecionar Maria Admin" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.getByRole("checkbox", { name: "Selecionar Carla Dias" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByRole("checkbox", { name: "Selecionar Pedro Inativo" }),
+      ).toBeInTheDocument();
+    });
+
+    it("has a 'select all' checkbox in the header", () => {
+      setup([ownAccount, makeUser({ id: 7 })]);
+
+      expect(
+        screen.getByRole("checkbox", { name: "Selecionar todas desta página" }),
+      ).toBeInTheDocument();
+    });
+
+    it("reflects the selection received from the page", () => {
+      render(
+        <UserList
+          users={[ownAccount, makeUser({ id: 7, name: "Carla Dias" })]}
+          areas={areas}
+          selection={{ ...selection, isSelected: (id) => id === 7 }}
+          onUpdated={onUpdated}
+        />,
+      );
+
+      expect(
+        screen.getByRole("checkbox", { name: "Selecionar Carla Dias" }),
+      ).toBeChecked();
+    });
+
+    it("reports the toggles to the page", async () => {
+      const ui = setup([ownAccount, makeUser({ id: 7, name: "Carla Dias" })]);
+
+      await ui.click(
+        screen.getByRole("checkbox", { name: "Selecionar Carla Dias" }),
+      );
+      expect(selection.onToggle).toHaveBeenCalledWith(7);
+
+      await ui.click(
+        screen.getByRole("checkbox", { name: "Selecionar todas desta página" }),
+      );
+      expect(selection.onToggleAll).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe("row menu", () => {
