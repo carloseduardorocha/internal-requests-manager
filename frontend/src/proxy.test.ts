@@ -105,7 +105,7 @@ describe("proxy matcher", () => {
   it.each([
     "/robots.txt",
     "/brand/logo.svg",
-    "/icon.svg",
+    "/icon.png",
     "/_next/static/a.js",
   ])("skips %s", (url) => {
     expect(matches(url)).toBe(false);
