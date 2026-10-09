@@ -103,6 +103,15 @@ describe("UserList", () => {
     expect(screen.getByText("Ativa")).toBeInTheDocument();
   });
 
+  it("toggles 'select all' from the visible text next to the checkbox", async () => {
+    selection.onToggleAll.mockClear();
+    const ui = setup([makeUser()]);
+
+    await ui.click(screen.getByText("Selecionar todas desta página"));
+
+    expect(selection.onToggleAll).toHaveBeenCalledTimes(1);
+  });
+
   it("marks only the own account with 'Você'", () => {
     setup([ownAccount, makeUser({ id: 7, name: "Carla Dias" })]);
 

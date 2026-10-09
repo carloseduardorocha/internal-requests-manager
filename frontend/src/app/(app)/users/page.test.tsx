@@ -739,6 +739,35 @@ describe("UsersPage", () => {
       });
     });
 
+    it("hides the summary when a new bulk action starts", async () => {
+      respondWith([me, carla, bruno]);
+      const ui = await renderLoaded();
+      await deactivateWithSkipped(ui);
+      bulkDeactivate.mockReturnValue(new Promise(() => {}));
+
+      await ui.click(box("Carla Dias"));
+      await confirmDeactivation(ui);
+
+      await waitFor(() =>
+        expect(screen.queryByRole("status")).not.toBeInTheDocument(),
+      );
+    });
+
+    it("hides the summary when a filter changes", async () => {
+      respondWith([me, carla, bruno]);
+      const ui = userEvent.setup();
+      const { rerender } = render(<UsersPage />);
+      await screen.findByText("Carla Dias");
+      await deactivateWithSkipped(ui);
+
+      query = "role=analyst";
+      rerender(<UsersPage />);
+
+      await waitFor(() =>
+        expect(screen.queryByRole("status")).not.toBeInTheDocument(),
+      );
+    });
+
     it("hides the summary when the page changes", async () => {
       const paged = makeMeta({ total: 30, last_page: 2, from: 1, to: 15 });
       respondWith([me, carla, bruno], paged);

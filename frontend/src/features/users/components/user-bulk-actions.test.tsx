@@ -212,6 +212,34 @@ describe("UserBulkActions", () => {
     });
   });
 
+  describe("while the call is running", () => {
+    it("disables the bar and keeps the dialog open on Escape, with Cancelar disabled", async () => {
+      deactivate.mockReturnValue(new Promise(() => {}));
+      const ui = setup([carla, pedro]);
+      await ui.click(screen.getByRole("button", { name: "Desativar" }));
+      const dialog = await screen.findByRole("alertdialog");
+
+      await ui.click(within(dialog).getByRole("button", { name: "Desativar" }));
+
+      await waitFor(() =>
+        expect(
+          within(dialog).getByRole("button", { name: "Cancelar" }),
+        ).toBeDisabled(),
+      );
+      await ui.keyboard("{Escape}");
+      expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+      const bar = screen.getByRole("region", {
+        name: "Ações em massa",
+        hidden: true,
+      });
+      for (const button of within(bar).getAllByRole("button", {
+        hidden: true,
+      })) {
+        expect(button).toBeDisabled();
+      }
+    });
+  });
+
   describe("errors", () => {
     async function failDeactivating(error: unknown) {
       deactivate.mockRejectedValue(error);

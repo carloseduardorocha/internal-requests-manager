@@ -1,5 +1,7 @@
 "use client";
 
+import { useId } from "react";
+
 import { SelectionCheckbox } from "@/components/selection-checkbox";
 import { cn } from "@/lib/utils";
 import { UserRowActions } from "@/features/users/components/user-row-actions";
@@ -103,6 +105,7 @@ export function UserList({
   onUpdated: (user: ManagedUser) => void;
 }) {
   const { user: me } = useAuth();
+  const selectAllId = useId();
 
   return (
     <div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">
@@ -110,6 +113,7 @@ export function UserList({
         className={`grid grid-cols-[32px_minmax(0,1fr)] items-center gap-3 bg-background py-2.5 pr-2 pl-4 text-xs leading-[18px] font-bold tracking-[0.05em] text-muted-foreground uppercase ${COLUMNS}`}
       >
         <SelectionCheckbox
+          id={selectAllId}
           checked={
             selection.allSelected
               ? true
@@ -120,9 +124,14 @@ export function UserList({
           onCheckedChange={selection.onToggleAll}
           aria-label="Selecionar todas desta página"
         />
-        <span className="text-[13px] tracking-normal normal-case md:hidden">
+        {/* The checkbox already has the accessible name; the text only widens its click area. */}
+        <label
+          htmlFor={selectAllId}
+          aria-hidden="true"
+          className="cursor-pointer text-[13px] tracking-normal normal-case md:hidden"
+        >
           Selecionar todas desta página
-        </span>
+        </label>
         <span aria-hidden="true" className="hidden md:inline">
           Usuário
         </span>
