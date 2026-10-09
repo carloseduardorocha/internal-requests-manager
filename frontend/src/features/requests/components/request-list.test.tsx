@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import { makeRequest } from "@/features/requests/test-fixtures";
@@ -29,23 +30,32 @@ const requests = [
   }),
 ];
 
+const props = {
+  isSelected: () => false,
+  toggle: vi.fn(),
+  allSelected: false,
+  someSelected: false,
+  toggleAll: vi.fn(),
+  onRefresh: vi.fn(),
+};
+
 describe("RequestList", () => {
-  it("renders one link per request to its detail", () => {
+  it("links each title to its detail", () => {
     role = "analyst";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     const first = screen.getByRole("link", { name: /Notebook novo/ });
     const second = screen.getByRole("link", { name: /Licença de software/ });
     expect(first).toHaveAttribute("href", "/requests/10");
     expect(second).toHaveAttribute("href", "/requests/11");
-    expect(screen.getAllByRole("link")).toHaveLength(2);
   });
 
   it("shows id, status, priority and the creation date in each row", () => {
     role = "analyst";
-    render(<RequestList requests={[requests[0]]} />);
+    render(<RequestList {...props} requests={[requests[0]]} />);
 
-    const row = screen.getByRole("link", { name: /Notebook novo/ });
+    const row = screen.getByRole("link", { name: /Notebook novo/ })
+      .parentElement!.parentElement!;
     expect(row).toHaveTextContent("#10");
     expect(row).toHaveTextContent("Aberta");
     expect(row).toHaveTextContent("Alta");
@@ -55,7 +65,7 @@ describe("RequestList", () => {
 
   it("shows the requester and the area to the analyst", () => {
     role = "analyst";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     expect(screen.getByText("Ana Souza · Financeiro")).toBeInTheDocument();
     expect(screen.getByText("Bruno Lima · Marketing")).toBeInTheDocument();
@@ -63,14 +73,14 @@ describe("RequestList", () => {
 
   it("shows the requester and the area to the admin", () => {
     role = "admin";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     expect(screen.getByText("Ana Souza · Financeiro")).toBeInTheDocument();
   });
 
   it("hides the requester and the area from the requester", () => {
     role = "requester";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     expect(screen.queryByText(/Ana Souza/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Financeiro/)).not.toBeInTheDocument();
@@ -78,9 +88,87 @@ describe("RequestList", () => {
     expect(screen.getByText("Notebook novo")).toBeInTheDocument();
   });
 
+  it("has a checkbox per row, labeled with the id and the title, that toggles it", async () => {
+    role = "analyst";
+    const toggle = vi.fn();
+    render(<RequestList {...props} toggle={toggle} requests={requests} />);
+
+    await userEvent.click(
+      screen.getByRole("checkbox", {
+        name: "Selecionar #11 Licença de software",
+      }),
+    );
+
+    expect(toggle).toHaveBeenCalledWith(11);
+    expect(
+      screen.getByRole("checkbox", { name: "Selecionar #10 Notebook novo" }),
+    ).not.toBeChecked();
+  });
+
+  it("checks the rows isSelected says are selected", () => {
+    role = "analyst";
+    render(
+      <RequestList
+        {...props}
+        isSelected={(id) => id === 10}
+        requests={requests}
+      />,
+    );
+
+    expect(
+      screen.getByRole("checkbox", { name: "Selecionar #10 Notebook novo" }),
+    ).toBeChecked();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Selecionar #11 Licença de software",
+      }),
+    ).not.toBeChecked();
+  });
+
+  it("shows the select-all checkbox unchecked, indeterminate and checked", () => {
+    role = "analyst";
+    const all = () =>
+      screen.getByRole("checkbox", { name: "Selecionar todas desta página" });
+
+    const { rerender } = render(<RequestList {...props} requests={requests} />);
+    expect(all()).not.toBeChecked();
+
+    rerender(<RequestList {...props} someSelected requests={requests} />);
+    expect(all()).toHaveAttribute("aria-checked", "mixed");
+
+    rerender(<RequestList {...props} allSelected requests={requests} />);
+    expect(all()).toBeChecked();
+  });
+
+  it("calls toggleAll from the select-all checkbox", async () => {
+    role = "analyst";
+    const toggleAll = vi.fn();
+    render(
+      <RequestList {...props} toggleAll={toggleAll} requests={requests} />,
+    );
+
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Selecionar todas desta página" }),
+    );
+
+    expect(toggleAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("has a menu per row", () => {
+    role = "analyst";
+    render(<RequestList {...props} requests={requests} />);
+
+    expect(
+      screen.getByRole("button", { name: "Ações de #10 Notebook novo" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Ações de #11 Licença de software" }),
+    ).toBeInTheDocument();
+  });
+
   it("labels the columns", () => {
     role = "analyst";
-    render(<RequestList requests={requests} />);
+    render(<RequestList {...props} requests={requests} />);
 
     for (const column of ["Solicitação", "Prioridade", "Status", "Criada em"]) {
       expect(screen.getByText(column)).toBeInTheDocument();

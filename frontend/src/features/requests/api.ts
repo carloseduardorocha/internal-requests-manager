@@ -5,6 +5,7 @@ import type {
   Paginated,
 } from "@/features/requests/types";
 import { api } from "@/lib/api";
+import type { BulkResult } from "@/lib/bulk";
 
 const BASE_PATH = "/api/internal-requests";
 
@@ -52,6 +53,26 @@ export async function assignInternalRequest(
 ): Promise<InternalRequest> {
   const { data } = await api.post<{ data: InternalRequest }>(
     `${BASE_PATH}/${id}/assign`,
+  );
+  return data;
+}
+
+export async function bulkDeleteInternalRequests(
+  ids: number[],
+): Promise<BulkResult> {
+  const { data } = await api.post<{ data: BulkResult }>(
+    `${BASE_PATH}/bulk/delete`,
+    { ids },
+  );
+  return data;
+}
+
+export async function bulkAssignInternalRequests(
+  ids: number[],
+): Promise<BulkResult> {
+  const { data } = await api.post<{ data: BulkResult }>(
+    `${BASE_PATH}/bulk/assign`,
+    { ids },
   );
   return data;
 }

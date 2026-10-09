@@ -69,6 +69,7 @@ botões e campos: altura mínima de 48px (alvo de toque acima dos 44px)
 - Botões: todo botão tem hover, foco visível e estado desabilitado.
 - Foco: outline de 2px em `--ring`, com offset de 2px.
 - Foco ao fechar: um modal, menu ou ação que desabilita o próprio botão devolve o foco ao controle que o abriu; um erro sem campo leva o foco a um ponto dentro do formulário.
+- Ações em massa: a seleção vale para a página; a barra flutua no rodapé; o resultado parcial aparece num aviso acima da lista. Referência: [mockups/request-list-actions.html](mockups/request-list-actions.html).
 - Status: cor, ícone e texto juntos; nunca só a cor.
 - Prioridade: seta e texto, sem fundo.
 - Navegação (só a do desktop): item ativo com texto `primary` e traço de 2px sob o rótulo, sem fundo. O hover do inativo só muda o texto para `primary`, sem traço; o do ativo passa texto e traço para `primary-hover`.

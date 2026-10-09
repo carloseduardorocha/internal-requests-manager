@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { BulkActionBar } from "@/components/bulk-action-bar";
 import { Button } from "@/components/ui/button";
 import { bulkDeactivateUsers, bulkReactivateUsers } from "@/features/users/api";
-import { failureMessage } from "@/features/users/api-error";
+import { failureMessage } from "@/lib/api-error";
 import { BulkDeactivateDialog } from "@/features/users/components/bulk-deactivate-dialog";
 import type { ManagedUser } from "@/features/users/types";
 import { ApiError } from "@/lib/api";

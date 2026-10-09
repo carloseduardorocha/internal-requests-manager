@@ -1,12 +1,24 @@
-import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { deleteInternalRequest } from "@/features/requests/api";
 import { makeRequest } from "@/features/requests/test-fixtures";
 
 import { RequestDetail } from "./request-detail";
 
+const replace = vi.fn();
+const toastSuccess = vi.fn();
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ replace: vi.fn() }),
+  useRouter: () => ({ replace }),
+}));
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: (...args: unknown[]) => toastSuccess(...args),
+    error: vi.fn(),
+  },
 }));
 
 vi.mock("@/features/requests/api", () => ({
@@ -309,5 +321,63 @@ describe("RequestDetail review actions", () => {
     expect(
       screen.queryByRole("button", { name: "Aprovar" }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("RequestDetail delete", () => {
+  beforeEach(() => {
+    vi.mocked(deleteInternalRequest).mockReset();
+    replace.mockReset();
+    toastSuccess.mockReset();
+  });
+  afterEach(() => sessionStorage.clear());
+
+  async function confirmDelete() {
+    const ui = userEvent.setup();
+    renderDetail({ id: 10, can: { ...noCan, delete: true } });
+    await ui.click(screen.getByRole("button", { name: "Excluir" }));
+    const dialog = await screen.findByRole("alertdialog");
+    await ui.click(within(dialog).getByRole("button", { name: "Excluir" }));
+  }
+
+  it("asks first: opening the dialog does not delete", async () => {
+    const ui = userEvent.setup();
+    renderDetail({ can: { ...noCan, delete: true } });
+
+    await ui.click(screen.getByRole("button", { name: "Excluir" }));
+
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+    expect(deleteInternalRequest).not.toHaveBeenCalled();
+  });
+
+  it("deletes, shows the toast and goes back to the list with replace", async () => {
+    vi.mocked(deleteInternalRequest).mockResolvedValue(undefined);
+
+    await confirmDelete();
+
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/requests"));
+    expect(deleteInternalRequest).toHaveBeenCalledWith(10);
+    expect(toastSuccess).toHaveBeenCalledWith("Solicitação excluída");
+  });
+
+  it("goes back to the list with the filters it had after deleting", async () => {
+    sessionStorage.setItem("requests:list-query", "status=open");
+    vi.mocked(deleteInternalRequest).mockResolvedValue(undefined);
+
+    await confirmDelete();
+
+    await waitFor(() =>
+      expect(replace).toHaveBeenCalledWith("/requests?status=open"),
+    );
+  });
+
+  it("stays on the detail when the deletion fails", async () => {
+    vi.mocked(deleteInternalRequest).mockRejectedValue(new Error("boom"));
+
+    await confirmDelete();
+
+    await waitFor(() => expect(deleteInternalRequest).toHaveBeenCalled());
+    expect(replace).not.toHaveBeenCalled();
+    expect(toastSuccess).not.toHaveBeenCalled();
   });
 });
