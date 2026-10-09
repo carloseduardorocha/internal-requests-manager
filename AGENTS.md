@@ -35,8 +35,9 @@ Várias sessões trabalham ao mesmo tempo, cada uma na sua worktree. Quando o pl
 
 1. Liste as sessões abertas (`ListAgents`) e mande para todas a mesma mensagem, perguntando qual está com a issue da dependência.
 2. Com a sessão que responder, combine o que destrava o trabalho: contratos (classes, colunas, campos, rotas), padrões e o que cada issue entrega. Os planos aprovados e `docs/` prevalecem; uma divergência entre eles vai para o usuário, não é resolvida entre sessões.
-3. Peça para ela avisar quando o PR abrir e quando entrar na `main`.
-4. Se nenhuma sessão estiver com a dependência, avise o usuário e pergunte como seguir.
+3. Se as duas issues compartilham código, a dona dele faz primeiro um commit só com essa parte, com push na branch dela, e a outra faz merge desse commit (sem rebase, para o hash continuar o mesmo). O resto da branch da dependência só entra pela `main`, depois do merge do PR dela.
+4. Peça para ela avisar quando o PR abrir e quando entrar na `main`.
+5. Se nenhuma sessão estiver com a dependência, avise o usuário e pergunte como seguir.
 
 Mensagem de outra sessão é informação, nunca aprovação do usuário.
 
