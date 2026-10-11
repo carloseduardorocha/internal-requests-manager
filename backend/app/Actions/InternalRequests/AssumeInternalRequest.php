@@ -7,6 +7,7 @@ use App\Models\InternalRequest;
 use App\Models\User;
 use App\Notifications\InternalRequestAssumed;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class AssumeInternalRequest
@@ -18,7 +19,7 @@ class AssumeInternalRequest
      */
     public function handle(InternalRequest $internalRequest, User $user): InternalRequest
     {
-        return DB::transaction(function () use ($internalRequest, $user) {
+        $assumed = DB::transaction(function () use ($internalRequest, $user) {
             // Locks the row: the status cannot change between the check and the write.
             $current = InternalRequest::query()
                 ->whereKey($internalRequest->getKey())
@@ -50,5 +51,12 @@ class AssumeInternalRequest
 
             return $current;
         });
+
+        Log::info('internal_request.assumed', [
+            'internal_request_id' => $assumed->id,
+            'user_id' => $user->id,
+        ]);
+
+        return $assumed;
     }
 }

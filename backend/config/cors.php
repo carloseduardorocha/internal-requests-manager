@@ -25,7 +25,7 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => ['Retry-After'],
+    'exposed_headers' => ['Retry-After', 'X-Request-Id'],
 
     'max_age' => 0,
 

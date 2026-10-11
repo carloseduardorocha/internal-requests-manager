@@ -50,7 +50,7 @@ services:
 
   worker:
     build: ./backend
-    command: ["php", "artisan", "queue:work"]
+    command: ["php", "artisan", "queue:work", "--quiet"]
     restart: unless-stopped
     environment:
       RUN_MIGRATIONS: "false"

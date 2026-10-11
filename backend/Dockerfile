@@ -16,5 +16,5 @@ COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT ["entrypoint.sh"]
-# --no-reload keeps the compose environment: without it, serve drops every variable outside its passthrough list when a .env exists.
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000", "--no-reload"]
+# Not artisan serve nor the framework's server.php: both print a text line per request, which breaks the JSON-only logs.
+CMD ["php", "-q", "-S", "0.0.0.0:8000", "-t", "public", "docker/server.php"]

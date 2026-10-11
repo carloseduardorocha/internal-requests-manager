@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Notifications\InternalRequestDecided;
 use App\Notifications\NotifyTeam;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
@@ -31,7 +32,7 @@ class DecideInternalRequest
             throw new InvalidArgumentException('The decision must be approved or rejected.');
         }
 
-        return DB::transaction(function () use ($internalRequest, $user, $decision, $justification) {
+        $decided = DB::transaction(function () use ($internalRequest, $user, $decision, $justification) {
             // Locks the row: the status cannot change between the check and the write.
             $current = InternalRequest::query()
                 ->whereKey($internalRequest->getKey())
@@ -65,5 +66,12 @@ class DecideInternalRequest
 
             return $current;
         });
+
+        Log::info('internal_request.'.$decision->value, [
+            'internal_request_id' => $decided->id,
+            'user_id' => $user->id,
+        ]);
+
+        return $decided;
     }
 }

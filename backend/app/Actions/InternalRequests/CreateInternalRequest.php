@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\InternalRequestCreated;
 use App\Notifications\NotifyTeam;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CreateInternalRequest
 {
@@ -19,7 +20,7 @@ class CreateInternalRequest
      */
     public function handle(User $user, string $title, string $description, InternalRequestPriority $priority): InternalRequest
     {
-        return DB::transaction(function () use ($user, $title, $description, $priority) {
+        $internalRequest = DB::transaction(function () use ($user, $title, $description, $priority) {
             $internalRequest = InternalRequest::create([
                 'title' => $title,
                 'description' => $description,
@@ -39,5 +40,12 @@ class CreateInternalRequest
 
             return $internalRequest;
         });
+
+        Log::info('internal_request.created', [
+            'internal_request_id' => $internalRequest->id,
+            'user_id' => $user->id,
+        ]);
+
+        return $internalRequest;
     }
 }
