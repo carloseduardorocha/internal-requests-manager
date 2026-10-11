@@ -31,6 +31,17 @@ class RequestIdTest extends TestCase
         $this->assertUuid($this->actingAs($user)->getJson('/api/me')->assertOk()->headers->get('X-Request-Id'));
     }
 
+    public function test_the_csrf_cookie_and_the_throttled_login_carry_a_request_id(): void
+    {
+        $this->assertUuid($this->get('/sanctum/csrf-cookie')->assertNoContent()->headers->get('X-Request-Id'));
+
+        User::factory()->create(['email' => 'ana@empresa.com']);
+        for ($i = 0; $i < 5; $i++) {
+            $this->postJson('/api/login', ['email' => 'ana@empresa.com', 'password' => 'wrong'])->assertUnprocessable();
+        }
+        $this->assertUuid($this->postJson('/api/login', ['email' => 'ana@empresa.com', 'password' => 'password'])->assertStatus(429)->headers->get('X-Request-Id'));
+    }
+
     public function test_a_valid_incoming_request_id_is_echoed_back(): void
     {
         foreach (['abc-123_DEF.456', str_repeat('a', 128)] as $id) {
@@ -40,7 +51,7 @@ class RequestIdTest extends TestCase
 
     public function test_an_invalid_incoming_request_id_is_replaced_by_a_uuid(): void
     {
-        foreach (['has space', "line\nbreak", str_repeat('a', 129), 'with/slash'] as $id) {
+        foreach (['has space', "line\nbreak", "abc\n", str_repeat('a', 129), 'with/slash'] as $id) {
             $value = $this->withHeader('X-Request-Id', $id)->get('/up')->headers->get('X-Request-Id');
 
             $this->assertNotSame($id, $value);

@@ -105,6 +105,22 @@ class BusinessEventLogsTest extends TestCase
         );
     }
 
+    public function test_bulk_delete_logs_one_event_for_the_valid_request_and_none_for_the_skipped(): void
+    {
+        $user = User::factory()->create();
+        $open = InternalRequest::factory()->create(['requester_id' => $user->id]);
+        $inReview = InternalRequest::factory()->inReview()->create(['requester_id' => $user->id]);
+
+        $this->actingAs($user)
+            ->postJson('/api/internal-requests/bulk/delete', ['ids' => [$open->id, $inReview->id]])
+            ->assertOk();
+
+        $this->assertSame(
+            ['internal_request_id' => $open->id, 'user_id' => $user->id],
+            $this->singleLog('internal_request.deleted')['context'],
+        );
+    }
+
     public function test_a_wrong_password_logs_login_failed_with_ip_and_hashed_email(): void
     {
         User::factory()->create(['email' => 'Ana@Empresa.com']);

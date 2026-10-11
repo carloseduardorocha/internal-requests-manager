@@ -18,7 +18,7 @@ class AssignRequestId
         $incoming = $request->header('X-Request-Id');
 
         // Only a short, plain value is trusted: anything else could inject log lines or bloat them.
-        $requestId = is_string($incoming) && preg_match('/^[A-Za-z0-9._-]{1,128}$/', $incoming) === 1
+        $requestId = is_string($incoming) && preg_match('/^[A-Za-z0-9._-]{1,128}\z/', $incoming) === 1
             ? $incoming
             : (string) Str::uuid();
 
