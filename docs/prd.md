@@ -1,6 +1,6 @@
 # Gestão de Solicitações Internas
 
-**PRD · Versão 4.0 · 08/10/2026**
+**PRD · Versão 4.1 · 11/10/2026**
 
 ## Visão geral
 
@@ -155,7 +155,7 @@ Notificações por Discord e por e-mail.
 **Fase 4: expansão II**
 
 - **Disponibilização online:** até aqui, o sistema roda localmente.
-- **Sugestão de prioridade ou resumo do pedido por IA**, sempre como sugestão e com a decisão final de uma pessoa.
+- **IA como apoio**, sempre como sugestão e com a decisão final de uma pessoa: sugerir a prioridade ou um resumo do pedido e, antes de um pedido ser aberto, buscar numa base de conhecimento se a resposta já existe.
 - **Login com Google ou SSO da empresa.**
 - **Indicadores de tempo:** quanto um pedido leva até ser assumido e até ser decidido.
 - **Notificações em outros canais**, como Slack e Teams.
