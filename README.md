@@ -70,6 +70,22 @@ Para enviar de verdade pelo Gmail, basta mudar a configuração, sem tocar no c�
 
 Se o SMTP estiver errado ou fora do ar, assumir e decidir continuam funcionando, e os envios falham no `worker`, com novas tentativas e registro de cada uma.
 
+## Logs
+
+Depois do boot, a `api` e o `worker` só imprimem JSON, uma linha por registro, com o `request_id` da requisição (também no log dos jobs que ela disparou). Para ver:
+
+```bash
+docker compose logs -f api worker
+```
+
+Para seguir uma requisição, use o header `X-Request-Id` da resposta:
+
+```bash
+docker compose logs --no-log-prefix api worker | grep '^{' | jq -c 'select(.extra.request_id == "<id>")'
+```
+
+A preparação do boot (composer, migrations, seed) e a linha "Development Server started" saem em texto. Quem já tem o `backend/.env` precisa trocar `LOG_CHANNEL=stderr` e acrescentar `LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter`, e depois rodar `docker compose restart api worker`. Eventos, campos e o que nunca entra no log: [ADR 0013](docs/adr/0013-structured-json-logs.md).
+
 ## Usuários de demonstração
 
 Todos usam a senha `password`.
@@ -119,6 +135,7 @@ Front-end em Next.js e API em Laravel, separados, com MySQL e um `worker` para a
 | [0010](docs/adr/0010-invitation-token.md) | Token do convite: aleatório, guardado como hash e de uso único |
 | [0011](docs/adr/0011-password-reset-native-broker.md) | Recuperação de senha com o broker nativo do Laravel |
 | [0012](docs/adr/0012-bulk-actions-partial-success.md) | Ações em massa com sucesso parcial: `done` e `skipped` por pedido |
+| [0013](docs/adr/0013-structured-json-logs.md) | Logs em JSON no `stderr`, com `request_id` e eventos de negócio |
 
 Mais detalhes:
 - [Diagramas](docs/architecture/): os containers e o fluxo das notificações.
