@@ -4,7 +4,6 @@ namespace Tests\Feature\Auth;
 
 use App\Enums\Role;
 use App\Models\Area;
-use App\Models\InternalRequest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -31,31 +30,26 @@ class SeederTest extends TestCase
         $this->assertSame(0, User::whereNull('area_id')->count());
     }
 
-    public function test_seeded_users_can_log_in_with_the_local_password(): void
+    public function test_seed_creates_exactly_the_three_demo_users(): void
     {
         $this->seed();
 
-        foreach (['solicitante', 'analista', 'admin'] as $name) {
-            $this->postJson('/api/login', ['email' => "{$name}@empresa.com", 'password' => 'password'])
-                ->assertOk();
+        $expected = [
+            'carlos.dev.rocha+solicitante@gmail.com' => ['Carlos Solicitante', Role::Requester, 'Financeiro'],
+            'carlos.dev.rocha+analista@gmail.com' => ['Carlos Analista', Role::Analyst, 'Operações'],
+            'carlos.dev.rocha+admin@gmail.com' => ['Carlos Administrador', Role::Admin, 'Tecnologia'],
+        ];
+
+        $this->assertEqualsCanonicalizing(array_keys($expected), User::pluck('email')->all());
+
+        foreach ($expected as $email => [$name, $role, $area]) {
+            $user = User::where('email', $email)->firstOrFail();
+            $this->assertSame($name, $user->name);
+            $this->assertSame($role, $user->role);
+            $this->assertSame($area, $user->area->name);
+
+            $this->postJson('/api/login', ['email' => $email, 'password' => 'password'])->assertOk();
         }
-    }
-
-    public function test_seed_users_email_turns_the_seed_users_into_plus_addresses(): void
-    {
-        config(['app.seed_users_email' => 'pessoa@exemplo.com']);
-
-        $this->seed();
-
-        $this->assertEqualsCanonicalizing(
-            ['pessoa+solicitante@exemplo.com', 'pessoa+analista@exemplo.com', 'pessoa+admin@exemplo.com'],
-            User::pluck('email')->all(),
-        );
-        $requester = User::where('email', 'pessoa+solicitante@exemplo.com')->firstOrFail();
-        $this->assertGreaterThan(0, InternalRequest::count());
-        $this->assertSame(InternalRequest::count(), InternalRequest::where('requester_id', $requester->id)->count());
-
-        $this->postJson('/api/login', ['email' => 'pessoa+analista@exemplo.com', 'password' => 'password'])->assertOk();
     }
 
     public function test_seeding_in_production_creates_areas_and_no_users(): void

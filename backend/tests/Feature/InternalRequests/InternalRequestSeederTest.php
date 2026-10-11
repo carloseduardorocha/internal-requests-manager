@@ -16,8 +16,8 @@ class InternalRequestSeederTest extends TestCase
         $this->seed();
         $this->seed();
 
-        $requester = User::where('email', 'solicitante@empresa.com')->firstOrFail();
-        $analyst = User::where('email', 'analista@empresa.com')->firstOrFail();
+        $requester = User::where('email', 'carlos.dev.rocha+solicitante@gmail.com')->firstOrFail();
+        $analyst = User::where('email', 'carlos.dev.rocha+analista@gmail.com')->firstOrFail();
 
         $this->assertSame(10, InternalRequest::count());
         $this->assertSame(10, InternalRequest::where('requester_id', $requester->id)->count());
