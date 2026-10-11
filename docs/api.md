@@ -9,6 +9,7 @@ Fluxos e regras: [PRD](prd.md). Autenticação e valores de sessão: [ADR 0004](
 - Todos os endpoints exigem sessão, exceto o CSRF, o login, a recuperação de senha (`forgot-password` e `reset-password`) e as duas rotas públicas do convite (`GET` e `accept`, seção 6); por isso qualquer um pode responder `401` (e `419` nas escritas).
 - Respostas de recurso vêm dentro de `data`; a paginação padrão do Laravel acrescenta `links` e `meta`, com os limites na query da listagem.
 - Ordem das checagens: visibilidade (`404`: pedido inexistente, excluído ou de outra pessoa, para o solicitante) → perfil ou dono (`403`) → validação (`422`) → status (`409`).
+- Toda resposta traz o header `X-Request-Id`, exposto no CORS. Um `X-Request-Id` recebido com 1 a 128 caracteres, só letras sem acento, números, `.`, `_` e `-`, é devolvido igual; senão, vira um UUID novo. O mesmo id aparece nos logs ([ADR 0013](adr/0013-structured-json-logs.md)).
 - Mensagens em português (`APP_LOCALE=pt_BR`, [ADR 0001](adr/0001-layered-laravel-backend.md)).
 - Status: `open`, `in_review`, `approved`, `rejected`. Prioridade: `low`, `medium`, `high`. Perfil: `requester`, `analyst`, `admin`.
 
@@ -31,7 +32,7 @@ Formato `{ "message": "..." }`. Erros de validação (`422`) trazem também `err
 | 404 | Pedido inexistente, excluído ou de outra pessoa (para o solicitante); convite inválido, expirado ou usado |
 | 409 | Status fora da ordem, ou pedido que mudou de status no meio da ação |
 | 422 | Validação falhou, e-mail que já tem conta (ativa ou desativada) no convite, regra de usuários descumprida (seção 7), lista de IDs inválida nas ações em massa (seções 3 e 7), filtro inválido na listagem ou credencial inválida no login |
-| 429 | Login bloqueado por tentativas, ou mais de 6 pedidos por minuto por IP em `forgot-password` (sem revelar a conta); traz `Retry-After`, exposto no CORS para o front conseguir lê-lo |
+| 429 | Login bloqueado por tentativas, ou mais de 6 pedidos por minuto por IP em `forgot-password` (sem revelar a conta); traz `Retry-After`, exposto no CORS (como o `X-Request-Id`) para o front conseguir lê-lo |
 
 ## 1. Acesso
 

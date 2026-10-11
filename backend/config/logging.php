@@ -110,6 +110,9 @@ return [
                 'stream' => 'php://stderr',
             ],
             'formatter' => env('LOG_STDERR_FORMATTER'),
+            'formatter_with' => [
+                'includeStacktraces' => true,
+            ],
             'processors' => [PsrLogMessageProcessor::class],
         ],
 

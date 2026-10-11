@@ -6,6 +6,7 @@ use App\Enums\InternalRequestStatus;
 use App\Models\InternalRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class DeleteInternalRequest
@@ -33,5 +34,10 @@ class DeleteInternalRequest
             $current->save();
             $current->delete();
         });
+
+        Log::info('internal_request.deleted', [
+            'internal_request_id' => $internalRequest->getKey(),
+            'user_id' => $user->id,
+        ]);
     }
 }
