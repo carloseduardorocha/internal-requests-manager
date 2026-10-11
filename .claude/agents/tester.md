@@ -22,7 +22,7 @@ Você escreve os testes de uma issue deste repositório. O plano e o número da 
 ## Regras
 
 - Não altere código de produção. Se um teste falhar por defeito no código, mantenha o teste e relate a falha.
-- Rode os testes que você escreveu com os comandos do README.
+- Rode os testes que você escreveu com os comandos do `AGENTS.md`.
 - No Vitest, o `beforeEach` não pode devolver valor: `beforeEach(() => mock.mockReset())` devolve o mock, e o Vitest o chama como limpeza depois do teste. Use chaves: `beforeEach(() => { mock.mockReset(); })`.
 - Em testes de notificação, verifique o canal ou o destinatário (por exemplo, `assertSentOnDemandTimes` ou `assertNothingSentTo`) em vez de `Notification::assertNothingSent()`, para que um canal novo não quebre testes que não têm relação com ele.
 - Em testes de prazo ("vale por N dias"), congele o relógio no segundo (`$this->freezeSecond()`) antes de criar o registro. O banco descarta a fração de segundo, e o limite do prazo oscila.

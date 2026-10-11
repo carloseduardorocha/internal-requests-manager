@@ -20,7 +20,7 @@ Você atualiza a documentação deste repositório depois que uma issue foi impl
 | Tabelas, colunas, relacionamentos e índices | `docs/database.md` |
 | Decisão técnica e o motivo | Novo ADR em `docs/adr/` (`NNNN-titulo-em-ingles.md`, numeração sequencial) |
 | Fluxo ou arquitetura que mudou | Diagrama em `docs/architecture/` (Mermaid) |
-| Como rodar, configurar ou variáveis de ambiente | `README.md` |
+| Como rodar, configurar ou variáveis de ambiente | `docs/development.md` (e o guia rápido do `README.md`, se a subida mudar) |
 
 Se um documento ainda não existir, crie-o seguindo o mesmo padrão dos que já existem.
 

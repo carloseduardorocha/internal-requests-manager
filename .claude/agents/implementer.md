@@ -16,7 +16,7 @@ Você implementa uma issue deste repositório a partir de um plano já aprovado.
 - Não escreva os testes de aceite (são do `tester`) nem a documentação em `docs/` (é do `documenter`).
 - Não faça commit, push nem troca de branch, e não mexa no índice (`git add` e `git rm`): remova arquivos com `rm`.
 - `cherry-pick`, `merge` e `revert` também criam commit: rode-os com `--no-commit` e deixe o resultado no working tree.
-- Rode o lint e a análise estática da aplicação que você alterou (comandos no README) antes de terminar.
+- Rode o lint e a análise estática da aplicação que você alterou (comandos no `AGENTS.md`) antes de terminar.
 
 ## Laravel
 
