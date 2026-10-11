@@ -2,244 +2,245 @@
 
 Os pedidos internos costumam chegar por e-mail, mensagens e planilhas, sem dono nem histórico. Este produto reúne tudo num só lugar: quem pede registra e acompanha, quem analisa assume e decide com justificativa, e a gestão acompanha a operação por um painel. A equipe é avisada no Discord, e o solicitante, por e-mail.
 
-O porquê e as regras estão na [PRD](docs/prd.md#visão-geral).
+- **[PRD](docs/prd.md):** escopo, fluxos, regras e fases.
+- **[Board de Atividades](https://github.com/users/carloseduardorocha/projects/1):** issues por fase, cada uma com o plano aprovado e o PR que a fechou.
 
-## Como rodar
+Para rodar, vá direto ao [Guia rápido](#guia-rápido).
+
+## Organização do repositório
+
+**Raiz do repositório**: as duas aplicações, a documentação e o ambiente.
+
+```
+.
+├── backend/            API em Laravel
+├── frontend/           Interface em Next.js com TypeScript
+├── docs/               PRD, ADRs, diagramas, banco, API, design system e mockups
+├── .claude/            Skills e agentes usados no desenvolvimento
+├── .github/workflows/  CI separado para backend e frontend
+├── docker-compose.yml  Front, API, worker, MySQL e Mailpit
+└── AGENTS.md           Regras para os agentes de IA
+```
+
+**`backend/`**: cada requisição passa por Controller fino → Form Request → Action → Model ([ADR 0001](docs/adr/0001-layered-laravel-backend.md)).
+
+```
+app/
+├── Actions/          Um caso de uso por classe (AssumeInternalRequest, DecideInternalRequest…)
+├── Http/
+│   ├── Controllers/  Recebem a requisição e delegam para a Action
+│   ├── Requests/     Validação de entrada
+│   ├── Resources/    Formato JSON das respostas
+│   └── Middleware/   Conta ativa e request_id
+├── Policies/         Quem pode fazer o quê, por perfil e dono
+├── Enums/            Status (com as transições permitidas), prioridade, perfil
+├── Notifications/    Discord e e-mail, enviados pela fila
+├── Models/
+└── Listeners/        Registro de cada tentativa de notificação
+database/             Migrations, seeders e factories
+tests/                Feature (endpoints) e Unit (regras)
+```
+
+**`frontend/`**: organizado por fluxo da PRD ([ADR 0002](docs/adr/0002-feature-based-nextjs-frontend.md)).
+
+```
+src/
+├── app/              Só as rotas: (public) login, convite e senha; (app) pedidos, painel e usuários
+├── features/         Um módulo por fluxo: auth, requests, dashboard e users,
+│                     cada um com componentes, chamadas à API, hooks e tipos
+├── components/       Componentes compartilhados; ui/ tem a base do shadcn/ui
+├── hooks/            Hooks compartilhados (seleção, pesquisa com debounce)
+└── lib/              Cliente HTTP único e tratamento de erros da API
+```
+
+**`docs/`**:
+
+- [PRD](docs/prd.md)
+- [ADRs](docs/adr/)
+- [Diagramas](docs/architecture/)
+- [Modelo de dados](docs/database.md)
+- [Contrato da API](docs/api.md)
+- [Design system](docs/design-system.md) e [mockups](docs/mockups/)
+- [Desenvolvimento](docs/development.md)
+
+## Como foi desenvolvido
+
+O projeto foi feito com o Claude Code, num fluxo em que a IA executa e uma pessoa decide. As regras para os agentes estão no [AGENTS.md](AGENTS.md).
+
+| Etapa | Como |
+|---|---|
+| **Issue** | Cada fluxo da PRD vira uma issue por aplicação, com critérios de aceite ligados à PRD (skill [`new-issue`](.claude/skills/new-issue/SKILL.md)) |
+| **Plano** | A IA lê a issue, a PRD e o código, tira as dúvidas uma por vez e propõe um plano. O plano aprovado fica como comentário na issue (skill [`plan-issue`](.claude/skills/plan-issue/SKILL.md)) |
+| **Tela** | Antes do código, cada tela nova vira um mockup aprovado pela pessoa ([abaixo](#design-system-e-mockups)) |
+| **Implementação** | A skill [`implement-issue`](.claude/skills/implement-issue/SKILL.md) coordena quatro [agentes](.claude/agents/) numa worktree própria: `implementer` escreve o código; `tester` escreve os testes a partir dos critérios de aceite, sem olhar a implementação; `reviewer` revisa contra a PRD, o plano e as convenções; `documenter` atualiza a documentação |
+| **Commit e PR** | Conventional Commits (skill [`git-commit`](.claude/skills/git-commit/SKILL.md)). Cada PR fecha uma issue, passa pelo CI e é mergeado pela pessoa |
+
+Ficam com a pessoa: o escopo e a PRD, as decisões em aberto, a aprovação de cada plano, mockup e commit, e o merge. Quando algo dá errado, a regra que faltou vai para o `AGENTS.md`, para o agente ou para a skill.
+
+### Design system e mockups
+
+A interface segue um design system próprio, com a identidade verde e o logo oficial da Sicredi, documentado em [`docs/design-system.md`](docs/design-system.md):
+
+- tokens de cor para os temas claro e escuro, que alternam na interface;
+- cores e ícones de cada status e prioridade (o status nunca é indicado só pela cor);
+- tipografia (Exo 2, Nunito e JetBrains Mono para identificadores), arredondamento e densidade;
+- regras de interface: foco visível, alvos de toque de pelo menos 44px, ações em massa, uso do logo.
+
+A referência visual está em [`docs/mockups/design-system.html`](docs/mockups/design-system.html), e os valores no código, em `frontend/src/app/globals.css`.
+
+A skill [`frontend-project-style`](.claude/skills/frontend-project-style/SKILL.md) faz o design system valer em toda tela:
+
+1. Antes de qualquer código de front-end, a IA carrega o design system.
+2. No plano de uma issue com tela nova, ela gera um mockup em HTML, com dados reais do domínio, num visualizador que alterna as versões (v1, v2… ou opções A, B e C) e as larguras de 375px, 768px e 100%.
+3. A cada comentário da pessoa, sai uma nova versão, e as anteriores continuam lá para comparar.
+4. A versão aprovada vai para [`docs/mockups/`](docs/mockups/) e entra no plano da issue.
+5. Na implementação, a tela pronta é comparada com o mockup em 375px, 768px e 1280px.
+
+Assim, a discussão de layout acontece antes do código, e nenhuma tela é refeita por mudança de visual.
+
+## Perguntas técnicas do desafio
+
+O que foi entregue e as respostas às perguntas da seção 8.2 do desafio.
+
+### Entrega
+
+Todo o obrigatório (cadastro, consulta com pesquisa, filtros e ordenação, análise e decisão, painel, API e migrations) e os seis diferenciais: Docker, testes automatizados, autenticação e autorização, logs estruturados, integração com serviços externos (Discord e SMTP) e uso de IA ([como foi desenvolvido](#como-foi-desenvolvido)).
+
+| Fase da PRD | Entregue |
+|---|---|
+| [1: operação básica](https://github.com/carloseduardorocha/internal-requests-manager/milestone/1?closed=1) | Acesso, solicitações, análise e decisão, e painel |
+| [2: comunicação](https://github.com/carloseduardorocha/internal-requests-manager/milestone/2?closed=1) | Discord para a equipe e e-mail para o solicitante |
+| [3: extras](https://github.com/carloseduardorocha/internal-requests-manager/milestone/3?closed=1) | Convite, recuperação de senha, gestão de usuários, ações em massa e logs estruturados |
+
+### Evolução da solução
+
+#### Quais mudanças arquiteturais seriam necessárias para suportar o crescimento da solução?
+
+Hoje, sessão, cache e fila ficam todos no MySQL, junto com os dados. Com muitos acessos, isso sobrecarrega o banco. Para crescer, eu:
+- moveria sessão, cache e fila para o Redis, o que no Laravel é só configuração ([ADR 0005](docs/adr/0005-database-queue-and-retries.md));
+- rodaria a API e o `worker` em várias instâncias atrás de um balanceador. A API já não guarda estado local, então isso não exige mudar o código.
+
+#### Quais seriam os principais riscos técnicos identificados?
+
+O principal é que o banco faz tudo: pela simplicidade do escopo atual, dados, fila, sessão e cache usam o mesmo MySQL. É o primeiro gargalo e um ponto único de falha.
+
+#### Como garantir escalabilidade, disponibilidade e manutenibilidade da aplicação?
+
+- **Escalabilidade:** mais de uma instância da API e do `worker` (escala horizontal), com o Redis no lugar do MySQL para fila, cache e sessão.
+- **Disponibilidade:** monitoramento (Grafana ou Elastic APM, por exemplo) com alertas configurados para qualquer anomalia, sobre o health check `/up`, que já existe. As notificações já são assíncronas, então um serviço externo fora do ar não derruba o produto.
+- **Manutenibilidade:** um padrão de código definido desde o início (uma Action por caso de uso, autorização nas Policies, [ADRs](docs/adr/) para cada decisão) e um fluxo de desenvolvimento estruturado: PRD → issue → plano → desenvolvimento → testes e CI → produção ([como foi desenvolvido](#como-foi-desenvolvido)).
+
+#### Quais componentes ou camadas poderiam ser adicionados em uma evolução futura da arquitetura?
+
+Eu focaria primeiro em observabilidade:
+- **Laravel Horizon**, para acompanhar e gerir os jobs da fila.
+- **Centralização dos logs** (Graylog, por exemplo). Os logs já saem em JSON com `request_id` ([ADR 0013](docs/adr/0013-structured-json-logs.md)), prontos para serem coletados.
+
+Como funcionalidade, eu usaria **IA com uma base de conhecimento**: antes de criar o pedido, o sistema buscaria na base se a resposta já existe e a mostraria para a pessoa, que decide se ainda quer abrir o pedido. Isso evita pedidos repetidos e reduz a fila dos analistas.
+
+### Integração com sistemas externos
+
+O produto já tem duas integrações externas: o Discord, por webhook, e o e-mail, por SMTP. Para comunicar um sistema corporativo depois da aprovação, eu seguiria o mesmo caminho.
+
+#### Como realizaria esta integração?
+
+Começaria levantando o que o sistema de destino oferece: uma API, um webhook ou uma fila de mensagens. Se ele não oferecer nenhuma dessas, uma automação (com Python, por exemplo) pode fazer a ação no sistema.
+
+Do nosso lado, a aprovação dispara um job na fila, como as notificações já fazem. O job chama o sistema por um cliente atrás de uma interface, então trocar um mock pelo cliente real, ou um sistema por outro, não mexe na regra de negócio.
+
+#### Quais padrões ou tecnologias utilizaria?
+
+Depende do que o sistema de destino oferece:
+- **API REST ou webhook:** fila do Laravel e o HTTP client do Laravel, com timeout curto.
+- **Mensageria** (RabbitMQ, Kafka ou SQS): o job publica o evento, e o sistema corporativo consome no ritmo dele.
+- **Sem API:** uma automação em Python, rodando numa máquina virtual, por exemplo.
+
+#### Como trataria falhas de comunicação?
+
+Com novas tentativas e registro de cada erro, como as notificações já fazem: são 4 tentativas, com espera de 1, 5 e 15 minutos.
+- **Erro temporário** (timeout, sistema fora do ar, limite de requisições): tenta de novo.
+- **Erro permanente** (dados recusados pelo sistema): não insiste. Marca como falha e alerta.
+- **Tentativas esgotadas:** o job vai para `failed_jobs` e pode ser reprocessado depois que o problema for resolvido.
+
+#### Como garantiria rastreabilidade das operações realizadas?
+
+Em duas camadas, que já existem para as notificações:
+1. **No banco:** cada tentativa vira um registro, com pedido, canal, evento, número da tentativa, resultado, erro e data (hoje, a tabela `notification_logs`). A integração corporativa teria uma tabela igual.
+2. **Nos logs:** cada requisição recebe um `request_id`, que acompanha a ação de quem aprovou e o job que ela disparou ([ADR 0013](docs/adr/0013-structured-json-logs.md)). Com os logs centralizados, uma busca por esse id mostra a história toda.
+
+Além disso, o histórico do pedido já registra quem aprovou e quando. Com a integração, ele passaria a mostrar também a situação do envio (pendente, enviado ou com falha).
+
+#### Como evitaria impacto na experiência do usuário caso o sistema externo estivesse indisponível?
+
+- **Envio assíncrono:** a aprovação grava no banco e responde na hora. O envio acontece depois, no `worker`, então a pessoa não espera nenhum sistema externo.
+- **A decisão não depende do envio:** se o sistema estiver fora do ar, o pedido continua aprovado e o envio fica na fila, sendo tentado de novo até o sistema voltar.
+- **O erro técnico não chega a quem usa:** quem é avisado é a equipe que opera o sistema, por alerta, e não o analista que aprovou.
+- **O sistema lento não trava a fila:** com timeout curto, uma chamada presa não segura o `worker`. Com muitas falhas seguidas, um circuit breaker pausa os envios até o sistema voltar, sem acumular erros.
+
+## Guia rápido
 
 **Pré-requisito:** Docker com Compose. No Windows, use o Docker Desktop com a integração WSL ligada.
 
 ```bash
 git clone https://github.com/carloseduardorocha/internal-requests-manager.git
 cd internal-requests-manager
+cp backend/.env.example backend/.env
+```
+
+Antes de subir, ajuste o `backend/.env` se tiver as credenciais abaixo. Sem elas, tudo funciona igual: o Discord fica desligado, e os e-mails caem no Mailpit.
+
+**Se tiver o webhook do Discord**, preencha:
+
+```dotenv
+DISCORD_WEBHOOK_URL=<URL do webhook>
+```
+
+**Se tiver a configuração do e-mail**, troque estas variáveis (o arquivo traz um bloco comentado com as do Gmail):
+
+```dotenv
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=<conta>@gmail.com
+MAIL_PASSWORD=<senha de app>
+MAIL_FROM_ADDRESS=<conta>@gmail.com
+```
+
+Depois, suba tudo:
+
+```bash
 docker compose up -d --build
 ```
 
-A primeira subida demora alguns minutos, por causa do `composer install` e do `npm ci`. A cada subida, a API prepara o ambiente: na primeira, cria o `backend/.env` a partir do `backend/.env.example` e gera a chave; em todas, roda as migrations e o seed. O seed recria os usuários e os pedidos de exemplo que estiverem faltando, inclusive os que você editar ou excluir. Para acompanhar, use `docker compose logs -f api`. A API está pronta quando `/up` responde. O front-end roda em modo de desenvolvimento, então o primeiro acesso a cada página leva alguns segundos para compilar.
+A primeira subida demora alguns minutos, por causa do `composer install` e do `npm ci`. As migrations e o seed rodam sozinhos. Para acompanhar, use `docker compose logs -f api`.
 
 | Serviço | URL |
 |---|---|
 | Front-end | http://localhost:3000 |
 | API | http://localhost:8000 (health check em `/up`) |
-| Mailpit (e-mails enviados) | http://localhost:8025 |
-| MySQL | localhost:3306 (banco, usuário e senha no `docker-compose.yml`) |
+| Mailpit (e-mails, quando o Gmail não está configurado) | http://localhost:8025 |
 
-- Parar: `docker compose down`. Zerar o banco: `docker compose down -v`.
-- Se alguma porta já estiver em uso, copie o `.env.example` da raiz para `.env` e troque as portas.
-- O `worker` não recarrega o código: depois de mudar um job ou uma notificação, rode `docker compose restart worker`. A `api` não relê o `backend/.env`: depois de mudá-lo, rode `docker compose restart api worker`.
+Se mudar o `backend/.env` depois da subida, rode `docker compose restart api worker`. Portas em uso e outros detalhes: [desenvolvimento](docs/development.md).
 
-### Notificações
+### Usuários de demonstração
 
-As notificações saem por uma fila no banco, processada pelo serviço `worker` ([ADR 0005](docs/adr/0005-database-queue-and-retries.md)). Por isso, a ação de quem usa nunca espera o envio. Se um envio falhar, o sistema tenta de novo até 3 vezes, com espera de 1, 5 e 15 minutos, num total de 4 tentativas. Cada tentativa fica em `notification_logs`, e o job que esgota as tentativas vai para `failed_jobs`.
+Todos usam a senha `password`. Os e-mails caem numa caixa controlada pelo projeto.
 
-Os segredos das notificações ficam no `backend/.env`, que está fora do Git. Depois de mudá-lo, rode `docker compose restart api worker`. As worktrees recebem uma cópia dele (veja [Várias branches ao mesmo tempo](#várias-branches-ao-mesmo-tempo)).
-
-#### Discord
-
-O canal da equipe recebe uma mensagem quando um pedido é criado e quando é decidido. A mensagem traz o número, o título, a prioridade, o solicitante e a área, e um link para o pedido. Na decisão, entram também o resultado, quem decidiu e a justificativa.
-
-1. No Discord, vá em **Configurações do canal → Integrações → Webhooks → Novo webhook** e copie a URL.
-2. Preencha `DISCORD_WEBHOOK_URL=<a URL copiada>` no `backend/.env` e rode `docker compose restart api worker`.
-
-Com `DISCORD_WEBHOOK_URL` vazia (o padrão), nada vai ao Discord: nenhum job e nenhum registro. O resto do produto funciona normalmente. A URL é um segredo, porque quem a tem consegue postar no canal. Ela não vai para o Git e não é gravada nos jobs nem nos logs.
-
-#### E-mail
-
-O solicitante recebe um e-mail quando o pedido dele é assumido e quando é decidido. O e-mail traz o título, o novo status, quem assumiu ou decidiu, a justificativa (na decisão) e o botão "Ver pedido". O link de recuperação de senha também sai por aqui, pelo mesmo `worker`.
-
-O convite de conta (fluxo 6 da PRD) também é um e-mail, enviado pela mesma fila, e aparece no Mailpit. O link vale por `INVITATION_EXPIRE_DAYS` dias (padrão 7, no `backend/.env`).
-
-No desenvolvimento, não é preciso configurar nada. O `backend/.env.example` já aponta para o Mailpit, que recebe os e-mails sem entregá-los a ninguém. Para vê-los, abra http://localhost:8025.
-
-Para enviar de verdade pelo Gmail, basta mudar a configuração, sem tocar no código ([ADR 0007](docs/adr/0007-discord-webhook-and-smtp.md)):
-
-1. Na conta Google, ligue a verificação em duas etapas e crie uma **senha de app**.
-2. Ajuste estas variáveis no `backend/.env`. O `backend/.env.example` tem um bloco comentado com elas, menos o `MAIL_FROM_ADDRESS`, que fica fora do bloco.
-
-   ```dotenv
-   MAIL_HOST=smtp.gmail.com
-   MAIL_PORT=587
-   MAIL_USERNAME=<sua conta>@gmail.com
-   MAIL_PASSWORD=<senha de app>
-   MAIL_FROM_ADDRESS=<sua conta>@gmail.com
-   ```
-
-   O remetente precisa ser a própria conta, porque o Gmail reescreve um remetente diferente. A senha de app é um segredo.
-3. Aplique a mudança como indicado acima.
-
-Os destinatários são os e-mails dos [usuários de demonstração](#usuários-de-demonstração), que caem numa caixa controlada pelo projeto.
-
-Se o SMTP estiver errado ou fora do ar, assumir e decidir continuam funcionando, e os envios falham no `worker`, com novas tentativas e registro de cada uma.
-
-## Logs
-
-Depois do boot, a `api` e o `worker` só imprimem JSON, uma linha por registro, com o `request_id` da requisição (também no log dos jobs que ela disparou). Para ver:
-
-```bash
-docker compose logs -f api worker
-```
-
-Para seguir uma requisição, use o header `X-Request-Id` da resposta:
-
-```bash
-docker compose logs --no-log-prefix api worker | grep '^{' | jq -c 'select(.extra.request_id == "<id>")'
-```
-
-A preparação do boot (composer, migrations, seed) e a linha "Development Server started" saem em texto. Quem já tem o `backend/.env` precisa trocar `LOG_CHANNEL=stderr` e acrescentar `LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter`, e depois rodar `docker compose restart api worker`. Eventos, campos e o que nunca entra no log: [ADR 0013](docs/adr/0013-structured-json-logs.md).
-
-## Usuários de demonstração
-
-Todos usam a senha `password`.
-
-| E-mail | Perfil | O que dá para testar |
-|---|---|---|
-| `carlos.dev.rocha+solicitante@gmail.com` | Solicitante (Carlos Solicitante, Financeiro) | Criar, editar e excluir os próprios pedidos abertos; acompanhar o andamento |
-| `carlos.dev.rocha+analista@gmail.com` | Analista (Carlos Analista, Operações) | Ver todos os pedidos, assumir, aprovar ou rejeitar com justificativa; painel |
-| `carlos.dev.rocha+admin@gmail.com` | Administrador (Carlos Administrador, Tecnologia) | Tudo o que os outros perfis fazem, sobre qualquer pedido |
-
-- Os usuários só são criados nos ambientes `local` e `testing`. As áreas são criadas sempre.
-- O seed cria 10 pedidos do Carlos Solicitante: 6 abertos, 2 em análise com o Carlos Analista, 1 aprovado e 1 rejeitado.
-
-## Roteiro rápido
-
-Um caminho de ponta a ponta, em uns cinco minutos. Os fluxos completos estão na [PRD](docs/prd.md#fluxos).
-
-1. Entre como `carlos.dev.rocha+solicitante@gmail.com` e crie um pedido. Se o webhook estiver configurado, a mensagem aparece no Discord.
-2. Saia e entre como `carlos.dev.rocha+analista@gmail.com`. Abra o pedido novo na lista e clique em **Assumir análise**. O e-mail "Seu pedido #N está em análise" chega no [Mailpit](http://localhost:8025).
-3. No mesmo pedido, escreva uma justificativa, clique em **Aprovar** ou **Rejeitar** e confirme. O e-mail da decisão chega no Mailpit, e o Discord recebe a decisão.
-4. Abra o **Painel** e veja os totais por status e a distribuição por prioridade.
-5. Volte como `carlos.dev.rocha+solicitante@gmail.com`. O pedido aparece decidido, com a justificativa e o histórico de status, e não pode mais ser editado.
-
-## Arquitetura e decisões
-
-Front-end em Next.js e API em Laravel, separados, com MySQL e um `worker` para a fila. Tudo sobe com o Docker Compose.
-
-| ADR | Decisão |
+| E-mail | Perfil |
 |---|---|
-| [0001](docs/adr/0001-layered-laravel-backend.md) | Back-end em camadas: controller fino, Form Request, Action por caso de uso, Policy e Resource |
-| [0002](docs/adr/0002-feature-based-nextjs-frontend.md) | Front-end Next.js organizado por fluxo (`src/features/<fluxo>`) |
-| [0003](docs/adr/0003-mysql-database.md) | MySQL 8, com enums gravados como texto |
-| [0004](docs/adr/0004-sanctum-spa-authentication.md) | Sessão em cookie com Sanctum SPA, sem token no navegador |
-| [0005](docs/adr/0005-database-queue-and-retries.md) | Fila no banco, 4 tentativas e registro de cada envio |
-| [0006](docs/adr/0006-docker-compose.md) | Ambiente com Docker Compose, em cinco serviços |
-| [0007](docs/adr/0007-discord-webhook-and-smtp.md) | Discord por webhook e e-mail por SMTP |
-| [0008](docs/adr/0008-quality-tooling-and-ci.md) | Lint, análise estática, testes no MySQL e CI por aplicação |
-| [0009](docs/adr/0009-shadcn-ui-component-library.md) | shadcn/ui como base dos componentes |
-| [0010](docs/adr/0010-invitation-token.md) | Token do convite: aleatório, guardado como hash e de uso único |
-| [0011](docs/adr/0011-password-reset-native-broker.md) | Recuperação de senha com o broker nativo do Laravel |
-| [0012](docs/adr/0012-bulk-actions-partial-success.md) | Ações em massa com sucesso parcial: `done` e `skipped` por pedido |
-| [0013](docs/adr/0013-structured-json-logs.md) | Logs em JSON no `stderr`, com `request_id` e eventos de negócio |
+| `carlos.dev.rocha+solicitante@gmail.com` | Carlos Solicitante (Financeiro) |
+| `carlos.dev.rocha+analista@gmail.com` | Carlos Analista (Operações) |
+| `carlos.dev.rocha+admin@gmail.com` | Carlos Administrador (Tecnologia) |
 
-Mais detalhes:
-- [Diagramas](docs/architecture/): os containers e o fluxo das notificações.
-- [Contrato da API](docs/api.md).
-- [Modelo de dados](docs/database.md).
-- [Design system](docs/design-system.md) e [mockups aprovados](docs/mockups/).
+O seed cria 10 pedidos do Carlos Solicitante: 6 abertos, 2 em análise com o Carlos Analista, 1 aprovado e 1 rejeitado.
 
-## Entregue e pendente
+### Roteiro
 
-| Fase | Situação |
-|---|---|
-| [Fase 1: operação básica](https://github.com/carloseduardorocha/internal-requests-manager/milestone/1?closed=1) | Entregue: acesso, solicitações, análise e decisão, e painel |
-| [Fase 2: comunicação](https://github.com/carloseduardorocha/internal-requests-manager/milestone/2?closed=1) | Entregue: Discord para a equipe e e-mail para o solicitante |
-| [Fase 3: extras](https://github.com/carloseduardorocha/internal-requests-manager/milestone/3?closed=1) | Entregue: convite, recuperação de senha, gestão de usuários e ações na lista |
-| [Fase 4: expansão II](docs/prd.md#fases) | Não iniciada (veja [Evolução](#evolução)) |
+Para receber os e-mails na sua caixa, comece convidando a si mesmo:
 
-**Limitações conhecidas**
-
-- Roda só localmente. Os containers são de desenvolvimento, com o código montado do disco e o servidor embutido do PHP, e não há imagens nem guia de produção.
-- Se dois administradores se desativarem ao mesmo tempo, ou um desativar o outro enquanto o outro tira o perfil de administrador do primeiro, o sistema pode ficar sem administrador ativo ([ADR 0004](docs/adr/0004-sanctum-spa-authentication.md)).
-- Não há tela para ver `notification_logs` nem `failed_jobs`. Para reenviar o que falhou, rode `docker compose exec -u "$(id -u):$(id -g)" api php artisan queue:retry all`.
-- O e-mail usa o layout padrão do Laravel, sem a identidade visual do produto, e não há preferência de notificação por usuário.
-- O Discord tem um canal só, o da equipe.
-- Se o `worker` cair no meio de um envio, essa tentativa não fica registrada em `notification_logs` ([ADR 0005](docs/adr/0005-database-queue-and-retries.md)).
-- O painel mostra só contagens. Os tempos até assumir e até decidir ficam para a Fase 4.
-- Os checks do CI não são obrigatórios na `main`, e o [ADR 0008](docs/adr/0008-quality-tooling-and-ci.md) explica o que seria preciso para torná-los obrigatórios.
-
-**Critérios de priorização**
-
-As fases da [PRD](docs/prd.md#fases) seguem esta ordem:
-
-1. **Operação básica primeiro:** sem registrar, decidir e acompanhar pedidos, não há produto. Cada fluxo virou uma issue de API e uma de tela, na ordem da PRD.
-2. **Comunicação depois:** as notificações só têm valor quando o fluxo já funciona, e não podem atrasar nem quebrar quem usa. Por isso saem por uma fila, com novas tentativas e o registro de cada uma.
-3. **Extras em seguida:** convite, recuperação de senha, gestão de usuários e ações na lista tiram do suporte o trabalho manual com contas e agilizam o dia a dia, sem mudar o fluxo dos pedidos.
-4. **Expansão por último:** produção, SSO, IA, indicadores de tempo e novos canais ampliam o alcance de algo que já precisa estar estável.
-
-## Evolução
-
-O que a [Fase 4 da PRD](docs/prd.md#fases) prevê:
-
-- Disponibilização online.
-- Sugestão de prioridade ou resumo do pedido por IA, sempre com a decisão final de uma pessoa.
-- Login com Google ou SSO da empresa.
-- Indicadores de tempo até assumir e até decidir.
-- Notificações em outros canais, como Slack e Teams.
-
-O caminho técnico:
-
-- **Produção:** front e API em `app.<domínio>` e `api.<domínio>`, configurados só por variáveis de ambiente ([ADR 0004](docs/adr/0004-sanctum-spa-authentication.md)). Para isso, faltam imagens de produção e o deploy.
-- **Fila:** trocar o driver `database` por outro, como o Redis, é só configuração, sem mudar o código ([ADR 0005](docs/adr/0005-database-queue-and-retries.md)).
-- **Novos canais:** Slack e Teams podem seguir o padrão atual, como mais um canal nas mesmas Notifications do Laravel, com a mesma fila, as mesmas tentativas e o mesmo registro. Isso ainda não está decidido em ADR.
-- **Login com Google ou SSO:** pode entrar ao lado da sessão Sanctum ([ADR 0004](docs/adr/0004-sanctum-spa-authentication.md)), que continuaria sendo a sessão do produto. Isso também ainda não está decidido em ADR.
-
-## Desenvolvimento
-
-### Comandos
-
-Use sempre `-u "$(id -u):$(id -g)"`, para não criar arquivos de root.
-
-No back-end, prefixe os comandos com `docker compose exec -u "$(id -u):$(id -g)" api`:
-
-| Comando | O que faz |
-|---|---|
-| `composer lint` | Confere o estilo (Pint); `composer lint:fix` corrige |
-| `composer analyse` | Análise estática (Larastan) |
-| `composer test` | Testes (PHPUnit, MySQL `testing`) |
-| `php artisan migrate:fresh --seed` | Recria o banco com os dados iniciais |
-
-No front-end, prefixe os comandos com `docker compose exec -u "$(id -u):$(id -g)" frontend`:
-
-| Comando | O que faz |
-|---|---|
-| `npm run lint` | ESLint |
-| `npm run format:check` | Confere o Prettier; `npm run format` corrige |
-| `npm run typecheck` | Checagem de tipos |
-| `npm test` | Testes (Vitest) |
-| `npm run build` | Build de produção |
-
-Os testes nunca enviam ao Discord nem e-mail real, mesmo com os segredos configurados: o `phpunit.xml` força a URL do Discord vazia e um mailer de teste.
-
-O CI roda esses mesmos comandos no GitHub Actions, um workflow por aplicação ([ADR 0008](docs/adr/0008-quality-tooling-and-ci.md)).
-
-### Várias branches ao mesmo tempo
-
-Cada branch pode ter a própria worktree, com uma stack própria, ou seja, containers e banco separados:
-
-```bash
-git fetch
-git worktree add .claude/worktrees/<branch> -b <branch> origin/main
-cd .claude/worktrees/<branch>
-cp .env.example .env   # troque as portas, por exemplo 8001, 3001, 3307, 8026 e 1026
-cp ../../../backend/.env backend/.env     # seus segredos e configurações locais
-cp ../../../frontend/.env frontend/.env
-docker compose up -d --build
-```
-
-- As URLs da tabela de [Como rodar](#como-rodar) passam a usar as portas do `.env` da worktree. Essas portas valem também para a API (CORS, sessão e links das notificações), sem editar o `backend/.env`.
-- O cookie de sessão vale para `localhost` em qualquer porta. Para usar dois front-ends logados ao mesmo tempo, abra o segundo em outro perfil do navegador ou numa janela anônima.
-- Os `.env` de `backend/` e `frontend/` vêm do checkout principal. Ao criar a worktree, confira se o seu `backend/.env` tem todas as variáveis do `backend/.env.example` (o mesmo vale para o front) e complete o que faltar. O `.env` da raiz não é copiado, porque as portas mudam em cada worktree.
-- Para remover, rode `docker compose down -v` dentro da worktree e depois `git worktree remove .claude/worktrees/<branch>`.
-
-## Uso de IA
-
-O projeto foi desenvolvido com o Claude Code, num fluxo em que a IA executa e uma pessoa decide. As regras para os agentes estão no [AGENTS.md](AGENTS.md).
-
-1. **Issue:** cada fluxo da PRD vira uma issue por aplicação, com critérios de aceite ligados à PRD (skill [`new-issue`](.claude/skills/new-issue/SKILL.md)).
-2. **Plano:** a IA lê a issue, a PRD e o código, tira as dúvidas uma por vez e propõe um plano. O plano aprovado fica registrado como comentário na issue (skill [`plan-issue`](.claude/skills/plan-issue/SKILL.md)).
-3. **Implementação:** a skill [`implement-issue`](.claude/skills/implement-issue/SKILL.md) coordena quatro [agentes](.claude/agents/) numa worktree própria:
-   - o `implementer` escreve o código;
-   - o `tester` escreve os testes a partir dos critérios de aceite, de forma independente da implementação;
-   - o `reviewer` revisa contra a PRD, o plano e as convenções;
-   - o `documenter` atualiza a documentação.
-4. **PR:** o PR fecha uma issue só, passa pelo CI e é revisado e mergeado pela pessoa responsável.
-
-Ficam com a pessoa: o escopo e a PRD, as decisões em aberto, a aprovação de cada plano, de cada commit e dos mockups de tela, e o merge. Quando algo dá errado ou é corrigido, a regra que faltou vai para o `AGENTS.md`, para o agente ou para a skill, e não para um arquivo de lições à parte.
+1. Entre como **administrador**, abra **Usuários**, clique em **Convidar usuário** e convide o seu e-mail com o perfil **Solicitante**.
+2. Abra o e-mail do convite, clique em **Criar conta**, defina a senha e entre.
+3. Crie um pedido. Se o Discord estiver configurado, a mensagem chega no canal.
+4. Em outra janela anônima, entre como **analista**, abra o seu pedido e clique em **Assumir análise**. Você recebe o e-mail "em análise".
+5. Escreva uma justificativa e clique em **Aprovar** ou **Rejeitar**. Você recebe o e-mail da decisão, e o Discord recebe a decisão.
+6. Ainda como analista, abra o **Painel**.
+7. Volte à sua conta: o pedido aparece decidido, com a justificativa e o histórico, e não pode mais ser editado.

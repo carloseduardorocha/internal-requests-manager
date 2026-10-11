@@ -25,9 +25,67 @@ Antes de propor escopo, leia a PRD. Não duplique informação entre documentos:
 - Conventional Commits em inglês, sempre pela skill `/git-commit`.
 - Raiz do repositório e `docs/`: commit e merge direto na `main`. A documentação que acompanha uma issue de `backend/` ou `frontend/` (ADRs, `docs/api.md`, `docs/database.md`) vai no PR dela.
 - `backend/` e `frontend/`: sempre em branch própria e PR, fechando exatamente uma issue.
-- Planejar, implementar e testar sempre numa worktree própria em `.claude/worktrees/<branch>` (a da `main` para raiz e `docs/`), nunca no checkout principal. Como criar e subir a stack está no README. Ao terminar, remova a worktree e a stack dela, inclusive a da `main`, para nenhuma branch ficar presa.
+- Planejar, implementar e testar sempre numa worktree própria em `.claude/worktrees/<branch>` (a da `main` para raiz e `docs/`), nunca no checkout principal. Como criar e subir a stack está em [Ambiente de desenvolvimento](#ambiente-de-desenvolvimento). Ao terminar, remova a worktree e a stack dela, inclusive a da `main`, para nenhuma branch ficar presa.
 - Push junto com o commit aprovado: autorizar o commit autoriza o push.
 - Sem atribuição de IA em commits, PRs, issues e comentários: nada de `Co-Authored-By`, "Generated with Claude Code" ou equivalentes.
+
+## Ambiente de desenvolvimento
+
+O básico (subir, portas, notificações) está em `docs/development.md`.
+
+### Comandos
+
+Rode dentro do container, sempre com `-u "$(id -u):$(id -g)"`, para não criar arquivos de root. O `npx` e o `php` do host não funcionam.
+
+No back-end, prefixe com `docker compose exec -u "$(id -u):$(id -g)" api`:
+
+| Comando | O que faz |
+|---|---|
+| `composer lint` | Confere o estilo (Pint); `composer lint:fix` corrige |
+| `composer analyse` | Análise estática (Larastan) |
+| `composer test` | Testes (PHPUnit, MySQL `testing`) |
+| `php artisan migrate:fresh --seed` | Recria o banco com os dados iniciais |
+
+No front-end, prefixe com `docker compose exec -u "$(id -u):$(id -g)" frontend`:
+
+| Comando | O que faz |
+|---|---|
+| `npm run lint` | ESLint |
+| `npm run format:check` | Confere o Prettier; `npm run format` corrige |
+| `npm run typecheck` | Checagem de tipos |
+| `npm test` | Testes (Vitest) |
+| `npm run build` | Build de produção |
+
+Os testes nunca enviam ao Discord nem e-mail real: o `phpunit.xml` força a URL do Discord vazia e um mailer de teste. O CI roda esses mesmos comandos, um workflow por aplicação.
+
+### Logs
+
+A `api` e o `worker` imprimem JSON, uma linha por registro, com o `request_id` da requisição (também nos jobs que ela disparou): `docker compose logs -f api worker`. Para seguir uma requisição pelo header `X-Request-Id`:
+
+```bash
+docker compose logs --no-log-prefix api worker | grep '^{' | jq -c 'select(.extra.request_id == "<id>")'
+```
+
+Um `backend/.env` antigo precisa de `LOG_CHANNEL=stderr` e `LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter`.
+
+### Worktrees
+
+Cada worktree tem uma stack própria, com containers e banco separados:
+
+```bash
+git fetch
+git worktree add .claude/worktrees/<branch> -b <branch> origin/main
+cd .claude/worktrees/<branch>
+cp .env.example .env   # troque as portas, por exemplo 8001, 3001, 3307, 8026 e 1026
+cp ../../../backend/.env backend/.env     # segredos e configurações locais
+cp ../../../frontend/.env frontend/.env
+docker compose up -d --build
+```
+
+- As portas do `.env` da worktree valem também para a API (CORS, sessão e links das notificações), sem editar o `backend/.env`.
+- O cookie de sessão vale para `localhost` em qualquer porta. Para dois front-ends logados ao mesmo tempo, use outro perfil do navegador ou uma janela anônima.
+- Confira se o `backend/.env` copiado tem todas as variáveis do `backend/.env.example` (o mesmo vale para o front) e complete o que faltar. O `.env` da raiz não é copiado, porque as portas mudam em cada worktree.
+- Para remover: `docker compose down -v` dentro da worktree e depois `git worktree remove .claude/worktrees/<branch>`.
 
 ## Sessões em paralelo
 

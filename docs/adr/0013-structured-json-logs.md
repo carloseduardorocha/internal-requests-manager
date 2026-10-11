@@ -9,7 +9,7 @@ Para investigar um problema, é preciso ligar o que a API registrou ao que o `wo
 
 ## Decisão
 
-- **Formato e destino:** JSON no `stderr`, uma linha por registro (`LOG_CHANNEL=stderr` e `LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter`, no `backend/.env.example`). O stack trace de um erro vai na mesma linha. Cada linha traz `message`, `context`, `level`, `level_name`, `channel`, `datetime` e `extra`. Ver os logs: [README](../../README.md#logs).
+- **Formato e destino:** JSON no `stderr`, uma linha por registro (`LOG_CHANNEL=stderr` e `LOG_STDERR_FORMATTER=Monolog\Formatter\JsonFormatter`, no `backend/.env.example`). O stack trace de um erro vai na mesma linha. Cada linha traz `message`, `context`, `level`, `level_name`, `channel`, `datetime` e `extra`. Ver os logs: [AGENTS.md](../../AGENTS.md#logs).
 - **`request_id`:** o middleware global `AssignRequestId` grava o id no `Context` do Laravel, que o acrescenta ao `extra` de cada log e o leva no payload dos jobs. Assim, o `worker` loga o mesmo `request_id` da requisição que disparou o job. Jobs que não vêm de uma requisição ficam sem ele. O header `X-Request-Id` da resposta e a regra do header recebido estão em [api.md](../api.md#convenções).
 - **Eventos de negócio:** a mensagem é o nome estável do evento e o contexto leva só ids. Os eventos de pedido são logados depois do commit da transação, para não registrar o que um rollback desfez. As ações em massa logam um evento por pedido processado e nenhum para os pulados.
 
