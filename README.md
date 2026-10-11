@@ -66,7 +66,7 @@ Para enviar de verdade pelo Gmail, basta mudar a configuração, sem tocar no c�
    O remetente precisa ser a própria conta, porque o Gmail reescreve um remetente diferente. A senha de app é um segredo.
 3. Aplique a mudança como indicado acima.
 
-**Atenção:** os destinatários são os e-mails dos usuários do seed. Por padrão, eles usam `empresa.com`, que é um domínio real, de terceiros. Antes de ligar o Gmail, configure a `SEED_USERS_EMAIL` (veja [Usuários de demonstração](#usuários-de-demonstração)) para os e-mails de teste chegarem na sua caixa.
+Os destinatários são os e-mails dos [usuários de demonstração](#usuários-de-demonstração), que caem numa caixa controlada pelo projeto.
 
 Se o SMTP estiver errado ou fora do ar, assumir e decidir continuam funcionando, e os envios falham no `worker`, com novas tentativas e registro de cada uma.
 
@@ -92,30 +92,22 @@ Todos usam a senha `password`.
 
 | E-mail | Perfil | O que dá para testar |
 |---|---|---|
-| `solicitante@empresa.com` | Solicitante (Ana Souza, Financeiro) | Criar, editar e excluir os próprios pedidos abertos; acompanhar o andamento |
-| `analista@empresa.com` | Analista (Bruno Lima, Operações) | Ver todos os pedidos, assumir, aprovar ou rejeitar com justificativa; painel |
-| `admin@empresa.com` | Administrador (Carla Mendes, Tecnologia) | Tudo o que os outros perfis fazem, sobre qualquer pedido |
+| `carlos.dev.rocha+solicitante@gmail.com` | Solicitante (Carlos Solicitante, Financeiro) | Criar, editar e excluir os próprios pedidos abertos; acompanhar o andamento |
+| `carlos.dev.rocha+analista@gmail.com` | Analista (Carlos Analista, Operações) | Ver todos os pedidos, assumir, aprovar ou rejeitar com justificativa; painel |
+| `carlos.dev.rocha+admin@gmail.com` | Administrador (Carlos Administrador, Tecnologia) | Tudo o que os outros perfis fazem, sobre qualquer pedido |
 
 - Os usuários só são criados nos ambientes `local` e `testing`. As áreas são criadas sempre.
-- O seed cria 10 pedidos da Ana: 6 abertos, 2 em análise com o Bruno, 1 aprovado e 1 rejeitado.
-
-Para receber os e-mails de teste na sua caixa, preencha a `SEED_USERS_EMAIL` com o seu endereço, no `backend/.env`. Por exemplo, `SEED_USERS_EMAIL=voce@gmail.com` cria `voce+solicitante@gmail.com`, `voce+analista@gmail.com` e `voce+admin@gmail.com`, todos com a senha `password`, e esses passam a ser os logins. O `+` funciona no Gmail e na maioria dos provedores, mas não em todos.
-
-O seed procura os usuários pelo e-mail. Por isso, depois de ligar, trocar ou desligar a variável, recrie o banco. Sem isso, a próxima subida cria mais 3 usuários e duplica os pedidos de exemplo:
-
-```bash
-docker compose exec -u "$(id -u):$(id -g)" api php artisan migrate:fresh --seed
-```
+- O seed cria 10 pedidos do Carlos Solicitante: 6 abertos, 2 em análise com o Carlos Analista, 1 aprovado e 1 rejeitado.
 
 ## Roteiro rápido
 
 Um caminho de ponta a ponta, em uns cinco minutos. Os fluxos completos estão na [PRD](docs/prd.md#fluxos).
 
-1. Entre como `solicitante@empresa.com` e crie um pedido. Se o webhook estiver configurado, a mensagem aparece no Discord.
-2. Saia e entre como `analista@empresa.com`. Abra o pedido novo na lista e clique em **Assumir análise**. O e-mail "Seu pedido #N está em análise" chega no [Mailpit](http://localhost:8025).
+1. Entre como `carlos.dev.rocha+solicitante@gmail.com` e crie um pedido. Se o webhook estiver configurado, a mensagem aparece no Discord.
+2. Saia e entre como `carlos.dev.rocha+analista@gmail.com`. Abra o pedido novo na lista e clique em **Assumir análise**. O e-mail "Seu pedido #N está em análise" chega no [Mailpit](http://localhost:8025).
 3. No mesmo pedido, escreva uma justificativa, clique em **Aprovar** ou **Rejeitar** e confirme. O e-mail da decisão chega no Mailpit, e o Discord recebe a decisão.
 4. Abra o **Painel** e veja os totais por status e a distribuição por prioridade.
-5. Volte como `solicitante@empresa.com`. O pedido aparece decidido, com a justificativa e o histórico de status, e não pode mais ser editado.
+5. Volte como `carlos.dev.rocha+solicitante@gmail.com`. O pedido aparece decidido, com a justificativa e o histórico de status, e não pode mais ser editado.
 
 ## Arquitetura e decisões
 
