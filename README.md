@@ -65,7 +65,7 @@ src/
 
 ## Como foi desenvolvido
 
-O projeto foi feito com o Claude Code, num fluxo em que a IA executa e uma pessoa decide. As regras para os agentes estão no [AGENTS.md](AGENTS.md).
+O projeto foi feito com **desenvolvimento agêntico** (*agentic coding*), usando o Claude Code: agentes de IA planejam, implementam, testam, revisam e documentam, guiados por uma especificação (a PRD, os ADRs e os mockups), e uma pessoa decide em cada etapa. O objetivo é ganhar velocidade sem perder o controle: a especificação diz o que fazer, os agentes executam e nada entra sem aprovação. As regras para os agentes estão no [AGENTS.md](AGENTS.md).
 
 | Etapa | Como |
 |---|---|
